@@ -1,4 +1,5 @@
 # app/ 폴더를 GitHub Pages에 올립니다. main에 올라온 변경이 app/ 안에 있으면 자동으로 실행돼요.
+# 손으로 다시 올리려면: 저장소 → Actions → "앱 배포 (GitHub Pages)" → Run workflow
 name: 앱 배포 (GitHub Pages)
 
 on:
