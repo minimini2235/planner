@@ -1,0 +1,2576 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff"><link rel="manifest" href="manifest.json"><link rel="icon" href="icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="플래너">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>흑백 플래너</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&family=Gowun+Batang:wght@400;700&family=Jua&display=swap">
+<style>
+/* Layout: header = period on the left · 연/월/주 pill in the exact centre · 할일 / today / settings on the right.
+   Planner: year = 12 calendars; month = calendar (3/4) + weekly goals (1/4); week = the chosen week row unfolded.
+   할일 page: 할일 chips · 세부 chips · a time table (year/month/week) + 쌓아두기 on the right. */
+:root{
+  color-scheme:light;
+  --ink:#141414; --paper:#ffffff; --mute:#9b9b9b; --faint:#d2d2d2; --soft:#e4e4e4; --hair:#efefef; --hover:#f4f4f4; --tag:#f0f0ef; --sub:#5f5f5f; --line:#bdbdbd; --line2:#dadada;
+  --lw:1px; --hl:.5px; --r:4px; --ease:cubic-bezier(.4,0,.2,1);
+  --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:var(--font);font-weight:300}
+b,strong{font-weight:500}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:inherit}
+button:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+#app{display:flex;flex-direction:column;height:100%;min-height:520px;
+  padding-block:8px 18px;padding-left:max(22px,env(safe-area-inset-left,0px));padding-right:max(22px,env(safe-area-inset-right,0px))}
+#app.portrait{padding-block:6px 0;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+body.dnd{user-select:none;-webkit-user-select:none}
+
+/* ---------- header ---------- */
+header{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;border-bottom:var(--lw) solid var(--line);padding-bottom:6px;margin-bottom:12px;flex:none}
+.hl{display:flex;align-items:center;gap:1px;min-width:0}
+.ptl{font-size:18px;font-weight:400;line-height:1;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap;padding:0 4px;overflow:hidden;text-overflow:ellipsis}
+.ptl .dim{color:#a6a6a6;margin:0 .25em}
+.ptl small{font-size:11px;color:var(--mute);margin-left:7px}
+.arr{flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.arr:hover{background:var(--hover)}
+.arr svg{width:5px;height:7px;fill:#8f8f8f}
+.arr:hover svg{fill:var(--ink)}
+.pill{position:relative;display:grid;grid-template-columns:repeat(3,46px);height:30px;padding:3px;border-radius:999px;background:#f0f0f0}
+.pill button{position:relative;z-index:1;border-radius:999px;font-size:12.5px;color:#777;transition:color .25s}
+.pill button.on{color:var(--paper)}
+.pill .knob{position:absolute;left:3px;top:3px;width:46px;height:24px;border-radius:999px;background:var(--ink);transition:transform .34s var(--ease)}
+.hr{display:flex;justify-content:flex-end;align-items:center;gap:4px}
+.ib{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.ib:hover{background:var(--hover)}
+.ib svg{width:19px;height:19px}
+.ib.on{background:var(--ink)}
+.ib.on svg *{stroke:var(--paper)}
+.ib.on svg text{fill:var(--paper)}
+.portrait .ptl{font-size:15px}
+.portrait .pill{grid-template-columns:repeat(3,40px)}
+.portrait .pill .knob{width:40px}
+.portrait .hl .arr{display:none}
+.portrait .ib{width:26px}
+main{flex:1;min-height:0;position:relative}
+.portrait main{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:24px}
+.portrait main.pager{overflow:hidden;touch-action:none;padding-bottom:0}
+#pg{height:100%}
+.portrait #pg{height:auto}
+.portrait main.pager #pg{height:100%}
+.fadein{animation:fadein .3s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+/* ---------- rows & markers ---------- */
+.it{display:flex;align-items:flex-start;gap:.45em;font-size:12px;line-height:1.35;padding:1px 0;min-width:0}
+.it[data-drag]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.it .tx{flex:1;min-width:0;word-break:break-all;cursor:pointer}
+.it.done .tx{text-decoration:line-through;color:var(--mute)}
+.it .tag{flex:none;font-size:.78em;line-height:1.3;color:#777;background:var(--tag);border-radius:3px;padding:0 .4em;margin-top:.12em;white-space:nowrap}
+.it.rtn .tx,.it.step .tx{color:var(--sub)}
+.it.rtn.done .tx,.it.step.done .tx{color:var(--mute)}
+.it.msi .tx{font-weight:400}
+.it .aux{flex:none;font-size:.8em;color:#bbb;letter-spacing:.05em;padding-top:.12em}
+.ck{flex:none;width:.9em;height:.9em;margin-top:.225em;border:var(--lw) solid var(--ink);border-radius:.16em;display:inline-flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;color:var(--ink);font-style:normal}
+.ck i{font-style:normal;font-size:.72em;line-height:1}
+.ck.done{background:var(--ink);color:var(--paper)}
+.ck.ev{border-color:transparent}
+.ck.ev i{display:block;width:.34em;height:.34em;border-radius:50%;background:currentColor}
+.ck.ev.done{background:none;color:var(--ink)}
+.ck.ms{border-radius:50%}
+.ck.st{transform:scale(.78);border-color:#8a8a8a;border-radius:1px}
+.ck.st.done{border-color:var(--ink)}
+.ck.ghost{border-color:var(--faint);color:#c4c4c4}
+.ck.ghost.ev{border-color:transparent}
+.ck.def{cursor:inherit}
+.add{display:flex;align-items:flex-start;gap:.45em;font-size:12px;line-height:1.35;padding:1px 0}
+.add input{flex:1;min-width:0;border:0;outline:none;background:transparent;font-size:1em;line-height:1.35;padding:0}
+.add input::placeholder{color:#bdbdbd}
+.add .qt{display:flex;cursor:pointer}
+.dlist{display:flex;flex-direction:column;gap:1px}
+.dlist .it,.dlist .add{font-size:inherit}
+/* very light dividers: 일정 · 루틴 · 할일 · 할일 (→ 세부) */
+.gh{display:flex;align-items:center;gap:5px;font-size:.74em;color:#c2c2c2;line-height:1.2;margin:5px 0 2px;letter-spacing:.02em}
+.gh i{flex:1;border-top:var(--hl) solid var(--hair)}
+.gh.s{padding-left:.8em;color:#cdcdcd}
+.dlist>.gh:first-child{margin-top:0}
+.it.sum{cursor:pointer}
+.it.sum .tx{color:var(--sub)}
+.qchips{display:none;flex-wrap:wrap;gap:3px;padding:3px 0 2px}
+.add.qa:focus-within+.qchips,.qchips:focus-within{display:flex}
+.qchips button{font-size:10.5px;line-height:1.2;padding:2px 6px;border:var(--lw) solid var(--soft);border-radius:999px;color:#777;white-space:nowrap}
+.qchips button.s{border-style:dashed}
+.qchips button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.wadd{display:flex;align-items:center;gap:.45em;font-size:12px;color:#bbb;padding:2px 0;line-height:1.35}
+.wadd .ck{margin-top:0}
+.wadd:hover{color:var(--ink)}
+.drop-over{outline:1px dashed var(--ink);outline-offset:-3px}
+.dragging{opacity:.3}
+.ghostdrag{position:fixed;z-index:50;pointer-events:none;background:var(--paper);box-shadow:0 6px 22px rgba(0,0,0,.18);border-radius:5px;padding:3px 8px;font-size:12px;transform:translate(-50%,-120%);white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- year ---------- */
+.year{height:100%}
+.months{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px 30px;height:100%}
+.mm{display:flex;flex-direction:column;min-height:0;cursor:pointer}
+.mm .t{font-size:12px;height:18px;display:flex;align-items:flex-end;padding:0 0 3px 9px;flex:none}
+.mm:hover .t{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.mface{flex:1;min-height:0;border:var(--lw) solid var(--line);border-radius:var(--r);transition:background .15s}
+.mm:hover .mface{background:#f8f8f8}
+.mgrid{height:100%;padding:6px 8px;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(6,1fr);align-items:center;justify-items:center;font-size:10px}
+.mgrid span{display:inline-flex;align-items:center;justify-content:center;height:1.45em;min-width:1.7em;padding:0 2px;line-height:1;border-radius:2px;font-variant-numeric:tabular-nums}
+.mgrid span.td{background:var(--ink);color:var(--paper)}
+.portrait .months{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:8px 12px}
+.portrait .mgrid{padding:3px 4px;font-size:8.5px}
+.portrait .mm .t{font-size:11px;padding-left:5px}
+
+/* ---------- month & week boards: calendar 3/4 · weekly 1/4 ---------- */
+.board{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);grid-template-rows:18px minmax(0,1fr);column-gap:16px;height:100%}
+.dow{grid-column:1;grid-row:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));font-size:12px;align-items:end;padding-bottom:3px;min-width:0;overflow:hidden}
+.dow .dw{position:relative;text-align:center;white-space:nowrap}
+.dow .dw.sel{font-weight:500}
+.dn{position:absolute;left:4px;bottom:1px;display:inline-flex;align-items:center;height:12px;padding:0 2px;border-radius:2px;font-size:10px;font-style:normal;font-weight:300;line-height:1;color:#a8a8a8;pointer-events:none;font-variant-numeric:tabular-nums}
+.dn.td{background:var(--ink);color:var(--paper)}
+.dn.out{color:#d6d6d6}
+.wh{grid-column:2;grid-row:1;font-size:12px;display:flex;align-items:flex-end;gap:7px;padding-bottom:3px;letter-spacing:.04em;min-width:0;overflow:hidden;white-space:nowrap}
+.wh small{margin-left:auto;font-size:10px;color:var(--mute);letter-spacing:0}
+.cal,.days{grid-column:1;grid-row:2;border:var(--lw) solid var(--line);border-radius:var(--r);overflow:hidden;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-height:0;min-width:0}
+.cell{position:relative;border-right:var(--hl) solid var(--line2);border-bottom:var(--hl) solid var(--line2);overflow:hidden;min-height:0;min-width:0;contain:strict;cursor:pointer}
+.cell:nth-child(7n){border-right:0}
+.cell.last{border-bottom:0}
+.cell:hover{background:#fbfbfb}
+.cell .d{position:absolute;left:3px;top:3px;display:inline-flex;align-items:center;height:12px;font-size:10px;color:#a8a8a8;line-height:1;padding:0 2px;border-radius:2px;font-variant-numeric:tabular-nums;transition:opacity .3s}
+.cell.today .d{background:var(--ink);color:var(--paper)}
+.cell.out .d{color:#dcdcdc}
+.cb{position:absolute;left:0;right:0;top:17px;bottom:0;padding:1px 5px 4px;overflow:hidden;transition:top .5s var(--ease)}
+.cb .dlist{font-size:11px}
+.cb .it .tx{flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb .it .tag,.cb .gh{display:none}
+.wkbox{grid-column:2;grid-row:2;border:var(--lw) solid var(--line);border-radius:var(--r);overflow:hidden;display:grid;min-height:0;min-width:0}
+.wrow{border-bottom:var(--hl) solid var(--line2);padding:4px 8px;overflow:hidden;min-height:0;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.wrow:last-child{border-bottom:0}
+.month .wrow:hover{background:#fbfbfb}
+.wrow .wl{font-size:10px;color:#a8a8a8;letter-spacing:.04em;margin-bottom:1px;transition:opacity .3s}
+.wrow.now .wl{color:var(--ink)}
+.wrow .it,.wrow .wadd,.wrow .add{font-size:11.5px}
+.wkbox.one .wrow{cursor:default;padding:7px 9px;overflow:auto}
+.wkbox.one .wrow .it,.wkbox.one .wrow .wadd,.wkbox.one .wrow .add{font-size:12px}
+.dcol{border-right:var(--hl) solid var(--line2);padding:7px 5px;overflow:auto;min-width:0;cursor:copy}
+.dcol:last-child{border-right:0}
+.dcol .dlist{font-size:11px}
+.dcol.sel{background:#fafafa}
+.fbtn{display:flex;align-items:center;justify-content:center;width:12px;height:10px}
+.fbtn svg{width:9px;height:7px;fill:var(--ink)}
+/* month → week: the chosen week row unfolds to full height */
+.cal,.wkbox{transition:grid-template-rows .5s var(--ease)}
+.cell,.wrow{transition:opacity .22s ease,border-color .18s ease}
+.cell.fold,.wrow.fold{opacity:0;border-color:transparent}
+.unfold .cell:not(.fold),.unfold .wrow:not(.fold){border-bottom-color:transparent}
+.unfold .cell:not(.fold) .d,.unfold .wrow:not(.fold) .wl{opacity:0}
+.unfold .cell:not(.fold) .cb{top:6px;padding-top:1px}
+.unfold .cell:not(.fold) .cb .gh{display:flex}
+.unfold .cell:not(.fold) .cb .tag{display:inline}
+.unfold .cell:not(.fold) .cb .it .tx{white-space:normal;flex:1}
+
+/* tall screens */
+.portrait .board{grid-template-columns:minmax(0,1fr) minmax(0,0fr);column-gap:0;height:auto;grid-template-rows:16px auto}
+.portrait .dow{font-size:10px}
+.portrait .dn{font-size:8.5px;left:2px}
+.portrait .cell .d{font-size:9px;height:11px;left:2px;top:2px}
+.portrait .cb{top:14px;padding:0 2px 1px}
+.portrait .cb .dlist{font-size:8.5px}
+.portrait .dcol{padding:5px 2px}
+.portrait .dcol .dlist{font-size:9px}
+.portrait .unfold .cell:not(.fold) .cb{top:5px}
+.portrait .unfold .cell:not(.fold) .cb .dlist{font-size:9px}
+.portrait .wh,.portrait .wkbox{visibility:hidden}
+.portrait .board.v2{transition:grid-template-columns .45s var(--ease)}
+.portrait .board.v2 .wh,.portrait .board.v2 .wkbox{visibility:visible}
+.portrait .board.v2 .wkbox{width:76%;justify-self:center}
+.portrait .board.v2 .wh{width:76%;justify-self:center}
+.portrait .board.v2.pgoal{grid-template-columns:minmax(0,0fr) minmax(0,1fr)}
+.portrait .board.v2 .wrow .it,.portrait .board.v2 .wrow .wadd,.portrait .board.v2 .wrow .add{font-size:12.5px}
+.portrait .board.v2 .wrow .wl{font-size:11px}
+.pmsw{display:flex;justify-content:center;gap:2px;margin:-4px 0 8px}
+.pmsw button{font-size:11.5px;padding:3px 12px;border-radius:999px;color:#888}
+.pmsw button.on{background:var(--hover);color:var(--ink)}
+.pagehint{text-align:center;font-size:10px;color:#bbb;letter-spacing:.04em;padding:6px 0 2px}
+.pwk{margin-top:14px}
+.pwk .wh{font-size:12px;padding-bottom:4px;display:flex;gap:7px}
+.pwk .wkbox{border:var(--lw) solid var(--line);border-radius:var(--r)}
+.pwk .wrow{cursor:default;padding:8px 10px}
+.pwk .wrow .it,.pwk .wrow .wadd,.pwk .wrow .add{font-size:14px;padding:2px 0}
+.qbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--paper);border-top:var(--lw) solid var(--soft);padding:8px max(14px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px))}
+.qbar .qchips{display:none;padding:0 0 7px}
+.qbar:focus-within .qchips{display:flex}
+.qbar .add{font-size:15px;align-items:center}
+.qbar .add .ck{margin-top:0}
+.qbar .day{font-size:11px;color:var(--mute);white-space:nowrap}
+.portrait main.qpad{padding-bottom:76px}
+.slide-up{animation:slideUp .3s var(--ease)}
+.slide-down{animation:slideDown .3s var(--ease)}
+.slide-left{animation:slideLeft .28s var(--ease)}
+.slide-right{animation:slideRight .28s var(--ease)}
+@keyframes slideUp{from{transform:translateY(36px);opacity:0}to{transform:none;opacity:1}}
+@keyframes slideDown{from{transform:translateY(-36px);opacity:0}to{transform:none;opacity:1}}
+@keyframes slideLeft{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes slideRight{from{transform:translateX(-40px);opacity:0}to{transform:none;opacity:1}}
+
+/* ---------- 할일 page ---------- */
+.hal{display:flex;flex-direction:column;height:100%;gap:8px}
+.hrow{display:flex;align-items:center;gap:6px;overflow-x:auto;flex:none;padding:1px 1px 3px;scrollbar-width:none}
+.hrow::-webkit-scrollbar{display:none}
+.hchip{flex:none;display:flex;align-items:center;gap:7px;height:34px;padding:0 13px 0 5px;border-radius:999px;border:var(--lw) solid var(--soft);font-size:13px;color:#555;transition:background .15s,border-color .15s}
+.hchip:first-child{padding:0 14px}
+.hchip small{font-size:10px;color:var(--mute);font-variant-numeric:tabular-nums}
+.hchip:hover{border-color:var(--faint)}
+.hchip.on{border-color:var(--ink);color:var(--ink);box-shadow:inset 0 0 0 .5px var(--ink)}
+.hrow.s .hchip{height:26px;padding:0 11px;font-size:12px;gap:6px}
+.hrow.s .hchip.on{background:var(--ink);color:var(--paper);box-shadow:none}
+.hrow.s .hchip.on small{color:#bbb}
+.hrow .add{flex:none;width:96px;font-size:12px;padding:0 4px}
+.hrow.s .hint{font-size:11px;color:#bbb;padding-left:4px}
+.ring{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.ring svg circle{fill:none}
+.ring .rin{position:relative;font-size:.46em;line-height:1}
+.hbody{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);grid-template-rows:18px auto;column-gap:16px;margin-top:4px;align-items:start}
+.hbody.wide{grid-template-columns:minmax(0,1fr)}
+.hbody .whl{grid-column:1;font-size:12px;letter-spacing:.04em;display:flex;align-items:flex-end;gap:8px;padding-bottom:3px}
+.hbody .whl small{font-size:10px;color:var(--mute);letter-spacing:0}
+.htable{grid-column:1;grid-row:2;border:var(--lw) solid var(--line);border-radius:var(--r);min-width:0}
+#app:not(.portrait) main.scroll{overflow-y:auto;padding-right:2px}
+.ht{display:grid;min-width:0}
+.hh{position:sticky;top:0;z-index:3;background:var(--paper);font-size:12px;padding:6px 10px 5px;border-bottom:var(--hl) solid var(--soft);display:flex;align-items:center;gap:6px;white-space:nowrap;min-width:0;overflow:hidden;border-radius:var(--r) var(--r) 0 0}
+.hh small{font-size:10px;color:var(--mute);margin-left:auto}
+.hh.c2{top:26px;border-radius:0}
+.hh.cat{padding:4px 10px;border-bottom:0;font-size:11.5px;color:var(--sub);height:26px}
+.hh.subh{cursor:pointer}
+.hh.subh:hover{background:#fafafa}
+.hlab{display:flex;align-items:center;gap:5px;padding:0 0 0 9px;font-size:11px;color:var(--sub);border-top:var(--hl) solid var(--hair);font-variant-numeric:tabular-nums;min-height:22px}
+.hlab b{font-weight:400;font-size:12px;color:var(--ink)}
+.hlab span{font-size:9.5px;color:#b0b0b0;letter-spacing:.04em}
+.hlab.blk,.pc.blk{border-top:var(--hl) solid var(--faint)}
+.hlab.td b{background:var(--ink);color:var(--paper);border-radius:2px;padding:0 3px}
+.hlab.go{cursor:pointer}
+.hlab.go:hover b{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.hwk{display:flex;align-items:center;justify-content:center;font-size:10.5px;color:#9a9a9a;letter-spacing:.03em;border-top:var(--hl) solid var(--faint);border-right:var(--hl) solid var(--hair);writing-mode:horizontal-tb}
+.hwk:hover{background:var(--hover);color:var(--ink)}
+.hwk.td{color:var(--ink)}
+.pc{position:relative;border-top:var(--hl) solid var(--hair);border-left:var(--hl) solid var(--hair);cursor:copy;display:flex;align-items:center;min-width:0;min-height:30px}
+.pc:hover{background:#fbfbfb}
+.pc.td{background:#fafafa}
+.ht.week .pc,.ht.week .hlab{min-height:44px}
+.ht.month .pc,.ht.month .hlab{min-height:22px}
+.ht.year .pc,.ht.year .hlab{min-height:34px}
+.ht.week .pc:not(.none){min-height:64px}
+.pin{display:flex;flex-direction:column;justify-content:center;gap:3px;padding:4px 8px 4px calc(10px + var(--n)*5px);min-width:0;width:100%}
+.ht.month .pin{padding-top:2px;padding-bottom:2px;gap:1px}
+.pm{position:relative;z-index:2;display:flex;align-items:center;gap:7px;min-width:0;font-size:12.5px;line-height:1.3;-webkit-touch-callout:none;user-select:none}
+.pm .ck{margin-top:0;font-size:12px}
+.pdot{flex:none;width:18px;height:18px;border-radius:50%;border:var(--lw) solid var(--ink);background:var(--paper);font-size:9.5px;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;transition:transform .15s}
+.pdot:hover{transform:scale(1.08)}
+.pm.done .pdot{background:var(--ink);color:var(--paper)}
+.pm.now .pdot{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--ink)}
+.pm.late .pdot{border-style:dashed}
+.pm .pt{min-width:0;cursor:pointer;word-break:keep-all}
+.pm.done .pt{color:var(--mute);text-decoration:line-through}
+.pm small{flex:none;font-size:10px;color:var(--mute);font-variant-numeric:tabular-nums;margin-left:auto}
+.pm .tag{flex:none;font-size:10px;color:#777;background:var(--tag);border-radius:3px;padding:0 5px}
+.pst{position:relative;z-index:2;display:flex;align-items:center;gap:7px;font-size:11px;color:#9a9a9a;min-width:0}
+.pst button{flex:none;width:10px;height:10px;margin:0 4px;border-radius:2px;border:var(--lw) solid #b3b3b3;background:var(--paper)}
+.pst button.done{background:var(--ink);border-color:var(--ink)}
+.pst.done span{text-decoration:line-through;color:#bbb}
+.pst.dotonly span{display:none}
+.pst span{cursor:pointer;flex:1;min-width:0}   /* the whole row opens it, not only the letters */
+.pst span:hover,.pm .pt:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.pm.rtn.run .pt{color:var(--mute)}
+.pm.rtn.run .pdot{border-color:var(--faint);box-shadow:none}
+/* 할일 루틴: a plain square at its end, never the ring or the dashed "late" border */
+.pm.rtn .pdot{box-shadow:none;border-style:solid}
+.ldot.run i{background:#c4c4c4}
+/* a 루틴's last day: the same size as its other days, only darker */
+.pst.end{color:var(--ink)}
+.pst.end button{border-color:var(--ink)}
+.pst button:disabled{cursor:default}
+/* 설정 → 할일 페이지 연 · 월 표시: one row of on/off chips */
+.hfrow{display:flex;gap:6px;flex-wrap:wrap}
+.hft{height:32px;padding:0 16px;border:var(--lw) solid var(--soft);border-radius:999px;font-size:13px;color:#888;transition:background .15s,color .15s}
+.hft:hover{border-color:var(--faint)}
+.hft.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+/* 삭제 → 정말 삭제하시겠습니까? */
+.foot.ask{background:#fafafa}
+.askq{display:flex;flex-direction:column;font-size:13.5px;gap:2px}
+.askq small{font-size:11px;color:var(--mute)}
+.delseg{height:30px}
+.vopt .fdel{position:absolute;top:4px;right:6px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:4px;color:#aaa;font-size:13px}
+.vopt .fdel:hover{background:var(--hover);color:var(--ink)}
+.vopt{position:relative}
+.fontadd{display:flex;gap:6px;margin-top:10px}
+.fontadd input{flex:1;min-width:0;border:var(--lw) solid var(--soft);border-radius:6px;padding:6px 10px;font-size:13px;outline:none;background:transparent}
+.fontadd input:focus{border-color:var(--ink)}
+/* 설정 → 데이터: backup */
+.bakrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+#imptext,#baktext{display:block;width:100%;height:96px;margin-top:8px;border:var(--lw) solid var(--soft);border-radius:6px;padding:8px;font:11.5px/1.4 ui-monospace,Consolas,monospace;resize:vertical;background:transparent;color:inherit;outline:none}
+#imptext:focus,#baktext:focus{border-color:var(--ink)}
+.impask{margin-top:10px;padding:10px 12px;border:var(--lw) solid var(--ink);border-radius:8px;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.impask b{font-weight:500}
+.impask small{color:var(--mute);font-size:11.5px}
+.bakmsg{margin-top:8px;font-size:12px;color:var(--sub);line-height:1.5}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--paper);font-size:13px;padding:9px 14px;border-radius:10px;display:flex;gap:14px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:calc(100% - 32px)}
+.toast button{color:var(--paper);text-decoration:underline;text-underline-offset:3px;font-size:13px;white-space:nowrap}
+.ht.month .pm{font-size:11.5px}
+.ht.month .pm .pt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 1 · 표: a running milestone shows as a bar on the cell's left edge (one bar per lane) */
+.ln{position:absolute;top:0;bottom:0;pointer-events:none}
+.ht.v1 .ln{left:calc(var(--j)*5px + 1px);width:3px;background:#d4d4d4}
+.ht.v1 .ln.now{background:#8c8c8c}
+/* 2 · 로드맵: each 세부할일 is one long line (lanes side by side); circles sit on their line */
+.ht.v2 .pc,.ht.v2 .hlab{border-top-color:transparent;border-left-color:transparent}
+.ht.v2 .pc.blk,.ht.v2 .hlab.blk{border-top:var(--hl) dashed var(--soft)}
+.ht.v2 .pc:hover{background:transparent}
+.ht.v2 .ln{left:calc(20px + var(--j)*16px);width:3px;margin-left:-1.5px;background:#cfcfcf;border-radius:0}
+.ht.v2 .ln.now{background:#7d7d7d}
+.ht.v2 .ln.start{top:50%}
+.ht.v2 .ln.end{bottom:50%}
+.ht.v2 .ln.start.end{display:none}
+.ht.v2 .ln.base{width:1px;margin-left:-.5px;background:#ececec;top:0;bottom:0}
+.ht.v2 .pin{padding-left:calc(26px + var(--n)*16px)}
+.ht.v2 .pdot{position:absolute;left:calc(20px + var(--j)*16px - 12px);width:24px;height:24px;font-size:11px}
+.ht.v2 .pm{position:static}
+.ht.v2 .pm>.pdot{z-index:3}
+.ht.v2 .pst{position:static}
+.ht.v2 .pst button{position:absolute;left:calc(20px + var(--j)*16px - 5px);margin:0}
+.ht.v2 .pin{position:relative}
+.ht.v2.month .pdot{width:20px;height:20px;font-size:10px;left:calc(20px + var(--j)*16px - 10px)}
+.ht.v2 .pm.gen{padding-left:0}
+/* 3 · 목록 */
+.hlist{display:flex;flex-direction:column}
+.hb{border-top:var(--hl) solid var(--soft);padding:8px 12px 10px}
+.hb:first-child{border-top:0}
+.hb.td{background:#fbfbfb}
+.hbh{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.hbl{font-size:12.5px;font-weight:400}
+.hbl[data-act]:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.going{font-size:10.5px;color:#888;border:var(--hl) solid var(--faint);border-radius:999px;padding:0 7px}
+.hbadd{margin-left:auto;width:22px;height:22px;border-radius:50%;color:#bbb;font-size:14px}
+.hbadd:hover{background:var(--hover);color:var(--ink)}
+.hbb{display:flex;flex-direction:column;gap:3px;padding-left:2px}
+.hbb .ld{font-size:10px;color:#aaa;margin-top:3px;font-variant-numeric:tabular-nums}
+.hbb .nil{color:#ddd;font-size:12px}
+.hlist .pdot{width:18px;height:18px}
+/* going down a level */
+.ht [data-rk],.hlist [data-rk]{transition:max-height .45s var(--ease),min-height .45s var(--ease),padding .45s var(--ease),opacity .3s ease}
+.xa{overflow:hidden}
+.xf{max-height:0!important;min-height:0!important;padding-top:0!important;padding-bottom:0!important;opacity:0;border-color:transparent!important}
+.hstack{grid-column:2;grid-row:2;border:var(--lw) solid var(--line);border-radius:var(--r);padding:7px 9px;display:flex;flex-direction:column;gap:1px;position:sticky;top:0;max-height:calc(100vh - 150px);overflow:auto}
+.hbody .whs{grid-column:2;grid-row:1;font-size:12px;display:flex;align-items:flex-end;gap:7px;padding-bottom:3px;letter-spacing:.04em}
+.whs small{font-size:10px;color:var(--mute)}
+.hstack .it,.hstack .add,.hstack .wadd{font-size:12px}
+.hstack .note2{font-size:10.5px;color:#bbb;line-height:1.5;padding-top:12px}
+.empty{color:var(--mute);font-size:13px;line-height:1.6;padding:16px}
+.empty b{display:block;color:var(--ink);font-weight:400;font-size:14px}
+.portrait .hal{height:auto}
+.portrait .hbody{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;row-gap:6px}
+.portrait .hbody>*{grid-column:1!important;grid-row:auto!important}
+.portrait .hh{position:static}
+.portrait .hstack{min-height:120px}
+
+/* week page extras */
+.sb{border:var(--hl) solid #e3e3e3;border-radius:5px;margin:2px -4px 3px;padding:0 3.5px 2px}
+.sb .sl{display:block;font-size:.72em;color:#bdbdbd;line-height:1.5;letter-spacing:.02em}
+.whb{font:inherit;letter-spacing:inherit}
+.whb:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.wlist{display:flex;flex-direction:column;gap:1px;min-height:0}
+.wrow .it.sum .tx{color:var(--sub)}
+.days.one{grid-template-columns:minmax(0,1fr)}
+.days.one .dcol{border-right:0;padding:12px 12px 20px}
+.days.one .dlist{font-size:14px;gap:2px}
+.portrait .dow .dw{cursor:pointer;padding-bottom:1px}
+.portrait .dow .dw.sel{color:var(--ink);font-weight:500;box-shadow:inset 0 -1.5px 0 var(--ink)}
+.dwrap{height:100%;overflow:auto;touch-action:pan-y}
+.qa.h .ck{margin-top:.225em}
+.sd b{font-weight:400;color:var(--ink)}
+.portrait .board.v2 .cal{transition:border-color .3s}
+.portrait .board.v2.pgoal .cal{border-color:transparent}
+
+/* month weekly rows: same geometry as a calendar cell (label like a date number, list below) so three rows always fit */
+.month .wrow{position:relative;display:block;padding:0}
+.month .wrow .wl{position:absolute;left:7px;top:3px;margin:0;line-height:12px;height:12px}
+.month .wrow .wlist{position:absolute;left:0;right:0;top:17px;bottom:0;padding:1px 8px 4px;overflow:hidden;transition:top .5s var(--ease)}
+.month .wrow .wlist .it,.month .wrow .wlist .wadd{font-size:11px}
+.unfold .wrow:not(.fold) .wlist{top:6px;padding-top:1px}
+.portrait .board.v2 .month .wrow .wlist .it{font-size:12.5px}
+.portrait .board.v2 .wrow .wlist .it,.portrait .board.v2 .wrow .wlist .wadd{font-size:12.5px}
+.portrait .board.v2 .wrow .wlist{top:20px}
+.cb .wadd{font-size:inherit;padding:1px 0}
+.cb .wadd .ck,.dcol .wadd .ck{margin-top:0}
+.dcol .wadd{font-size:inherit;margin-top:2px}
+.portrait .board.week.v2{grid-template-rows:16px auto}
+.portrait .board.week .wkbox{height:auto}
+/* one-line bar (version 3) */
+.qpop{position:fixed;z-index:40;display:flex;align-items:center;gap:8px;height:44px;padding:0 6px 0 12px;background:var(--paper);border:var(--lw) solid var(--ink);border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,.14);animation:qpin .16s var(--ease)}
+@keyframes qpin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.qpop.bottom{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));top:auto}
+.qpm{flex:none;display:flex;align-items:center;gap:5px;font-size:12px;color:#777;padding:4px 8px 4px 4px;border-radius:999px;white-space:nowrap}
+.qpm .ck{margin:0;font-size:13px}
+.qpm:not(.still):hover{background:var(--hover);color:var(--ink)}
+#qin{flex:1;min-width:90px;border:0;outline:none;background:transparent;font-size:14px;padding:0}
+#qin::placeholder{color:#bdbdbd}
+.qps{flex:0 1 auto;max-width:56%;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.qps::-webkit-scrollbar{display:none}
+.qps.warn{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.qc,.qd{flex:none;font-size:11.5px;line-height:1.2;padding:4px 9px;border:var(--lw) solid var(--soft);border-radius:999px;color:#666;white-space:nowrap}
+.qc.on,.qd.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.qc.back{border-color:var(--ink);color:var(--ink)}
+.qd{padding:4px 7px}
+/* 할일 table: never spill into the next column; a faint + on hover */
+.pc{overflow:hidden}
+.pm .pt{overflow-wrap:anywhere}
+.pcplus{position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:13px;color:#c8c8c8;opacity:0;pointer-events:none}
+.pc:hover .pcplus{opacity:1}
+.ht.v2 .pcplus{right:6px}
+.portrait .board.v2 .days{transition:border-color .3s}
+.portrait .board.v2.pgoal .days{border-color:transparent}
+
+/* 할일 · month by weeks */
+.ht.month.range .pc,.ht.month.range .hlab{min-height:44px}
+.ht.range .pm .pn{display:none}
+.pn{display:none;font-style:normal;font-size:10px;color:var(--mute);margin-right:5px;font-variant-numeric:tabular-nums}
+/* 배치 2·3: rows = 세부할일, columns = time */
+.htable{overflow-x:auto}
+.ht.tp .tlab{position:sticky;top:0;z-index:2;background:var(--paper);display:flex;align-items:baseline;justify-content:center;gap:4px;padding:6px 2px 5px;font-size:11px;color:var(--sub);border-bottom:var(--hl) solid var(--soft);border-left:var(--hl) solid var(--hair);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ht.tp .tlab b{font-weight:400;font-size:12px;color:var(--ink)}
+.ht.tp .tlab span{font-size:9.5px;color:#b0b0b0}
+.ht.tp .tlab.blk{border-left-color:var(--faint)}
+.ht.tp .tlab.td b{background:var(--ink);color:var(--paper);border-radius:2px;padding:0 3px}
+.ht.tp .tlab.go{cursor:pointer}
+.ht.tp .tlab.go:hover b{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.hwk.t{border-top:0;border-right:0;border-left:var(--hl) solid var(--faint);border-bottom:var(--hl) solid var(--hair);height:22px}
+.ht.tp .hh.v{position:sticky;left:0;top:auto;z-index:2;border-radius:0;border-bottom:var(--hl) solid var(--hair);border-right:var(--hl) solid var(--soft);white-space:normal;align-items:center}
+.ht.tp .hh.cat.v{height:auto;flex-direction:column;justify-content:center;gap:4px;font-size:11px;text-align:center}
+.ht.tp .hh.subh.v small{margin-left:auto}
+.ht.tp .hh.corner{top:0;border-bottom:var(--hl) solid var(--soft)}
+.ht.tp .pc{min-height:64px;align-items:flex-start;border-top:var(--hl) solid var(--hair)}
+.ht.tp .pc.blk{border-left:var(--hl) solid var(--faint);border-top:var(--hl) solid var(--hair)}
+.ht.tp .pin{padding:calc(8px + var(--n)*5px) 6px 6px 6px}
+.ht.tp .pm{font-size:11.5px}
+.ht.tp .pm .pt{white-space:normal}
+.ht.tp.v1 .ln{left:0;right:0;top:calc(var(--j)*5px + 1px);bottom:auto;width:auto;height:3px}
+/* 로드맵 on its side: each 세부할일 is one long horizontal track; circles sit on it, words below */
+.ht.tp.v2 .pc,.ht.tp.v2 .hh.v{border-top-color:transparent}
+.ht.tp.v2 .ln{left:0;right:0;top:calc(16px + var(--j)*16px);bottom:auto;width:auto;height:3px;margin:-1.5px 0 0}
+.ht.tp.v2 .ln.base{height:1px;margin-top:-.5px;left:0;right:0}
+.ht.tp.v2 .ln.start{left:50%;top:calc(16px + var(--j)*16px)}
+.ht.tp.v2 .ln.end{right:50%;bottom:auto}
+.ht.tp.v2 .ln.start.end{display:none}
+.ht.tp.v2 .pin{padding:calc(30px + (var(--n) - 1)*16px) 6px 6px}
+.ht.tp.v2 .pdot{position:absolute;left:calc(50% - 11px + var(--k)*24px);top:calc(16px + var(--j)*16px - 11px);width:22px;height:22px}
+.ht.tp.v2 .pm .pn{display:inline}
+.ht.tp.v2 .pst button{position:absolute;left:calc(50% - 5px);top:calc(16px + var(--j)*16px - 5px);margin:0}
+.ht.tp.v2 .pst span{display:none}
+.ht.tp.v2 .pst{position:static;height:0}
+/* 배치 3: lists on the left, 보관함 underneath */
+.hal.tp3{display:grid;grid-template-columns:150px minmax(0,1fr);column-gap:18px;align-items:start;height:auto}
+.hside{display:flex;flex-direction:column;gap:14px;position:sticky;top:0}
+.hal.tp3 .hrow{flex-direction:column;align-items:stretch;overflow:visible;gap:5px}
+.hal.tp3 .hrow .hchip{justify-content:flex-start}
+.hal.tp3 .hrow .add{width:auto}
+.hal.tp3 .hbody{grid-template-columns:minmax(0,1fr);grid-template-rows:18px auto 26px auto;margin-top:0}
+.hal.tp3 .htable{grid-row:2}
+.hal.tp3 .whs{grid-column:1;grid-row:3}
+.hal.tp3 .hstack{grid-column:1;grid-row:4;position:static;max-height:none;flex-direction:row;flex-wrap:wrap;gap:3px 18px;align-items:center}
+.hal.tp3 .hstack .gh{flex-basis:100%}
+.hal.tp3 .hstack .note2{flex-basis:100%;padding-top:4px}
+
+/* ===== chosen versions: square marks for milestones everywhere, same weight as other text ===== */
+.it.msi .tx{font-weight:inherit}
+.pdot{width:13px;height:13px;border-radius:2px;font-size:0;border:var(--lw) solid var(--ink)}
+.pm.done .pdot{background:var(--ink)}
+.pm.now .pdot{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--ink)}
+.pdot.g{border-color:#8a8a8a}
+.pm.gen.done .pdot{background:var(--ink);border-color:var(--ink)}
+.ht.v2 .pdot,.ht.v2.month .pdot{width:13px;height:13px;left:calc(20px + var(--j)*16px - 6.5px)}
+.hlist .pdot{width:13px;height:13px}
+/* 1-2: no wrapping — the column widens to fit */
+.ht.wide .pm .pt{white-space:nowrap;overflow:visible}
+.ht.wide .pc{overflow:visible}
+/* 2 · 3 turned on its side: entries stand side by side on the track, words under each mark, nothing cut */
+.ht.tp .pm .pt{white-space:nowrap}
+.ht.tp.v2 .pin{flex-direction:row;align-items:flex-start;flex-wrap:nowrap;gap:14px;padding:0 10px 8px;justify-content:flex-start}
+.ht.tp.v2 .pm{position:relative;flex-direction:column;align-items:flex-start;gap:0;padding-top:calc(16px + (var(--n) - 1)*16px + 12px)}
+.ht.tp.v2 .pdot{position:absolute;left:0;top:calc(16px + var(--j)*16px - 6.5px);width:13px;height:13px}
+.ht.tp.v2 .pm small{margin:1px 0 0}
+.ht.tp.v2 .pst{position:relative;height:auto;padding-top:calc(16px + (var(--n) - 1)*16px)}
+.ht.tp.v2 .pst button{left:0;top:calc(16px + var(--j)*16px - 5px)}
+.ht.tp .pc{overflow:visible}
+
+/* title parts that slide in and out with the 연/월/주 knob */
+.ptl{display:inline-flex;align-items:baseline}
+.ts{display:inline-block;overflow:hidden;white-space:nowrap;transition:max-width .34s var(--ease),opacity .28s ease}
+.ts.off{max-width:0;opacity:0}
+.ts .tv{font-weight:inherit}
+
+/* ===== round 14 ===== */
+/* title: 2026 11 week4 — no dots, tight, week a little smaller; 2026 / 11 open the year / month */
+.ptl .ts{padding-left:.34em}
+.ptl .ts.y{padding-left:0}
+.ptl .ts.w{font-size:.8em}
+.ptl button.ts,.ptl button.tv{font:inherit;color:inherit;letter-spacing:inherit;line-height:inherit;cursor:pointer;border-radius:3px}
+.ptl button.ts:hover,.ptl button.tv:hover{background:var(--hover)}
+/* narrower weekly-goal column (month and week alike, so the unfold still lines up) */
+.board{grid-template-columns:minmax(0,4.4fr) minmax(0,1fr)}
+/* Mon… row and WEEKLY row on one baseline */
+.dow,.wh{height:18px;line-height:14px;align-items:flex-end;padding-bottom:3px;font-size:12px}
+.dow .dw{line-height:14px}
+.wh>span,.wh>.whb{line-height:14px;display:block}
+.wh .fbtn{align-self:center;margin-bottom:-2px}
+/* the same square for every to-do (daily shares included) */
+.ck.st{transform:none;border-color:var(--ink);border-radius:.16em}
+/* routine marks (설정 → 루틴 표시) */
+.ck.rt i{display:none}
+.ck.rt.rk-rsq{border-radius:.3em}
+.ck.rt.rk-dot i{display:block;width:.26em;height:.26em;border-radius:50%;background:currentColor;font-size:inherit}
+.ck.rt.rk-dot.done i{background:var(--paper)}
+/* 형광펜: the whole row gets the same-size stripe, whatever the length of the words */
+#app.hl-ev .board .it.k-ev,#app.hl-td .board .it.k-td,#app.hl-rt .board .it.k-rt,
+#app.hl-ev .pwk .it.k-ev,#app.hl-td .pwk .it.k-td,#app.hl-rt .pwk .it.k-rt{border-radius:2px;margin:1px -3px;padding:0 3px}
+#app.hl-ev .board .it.k-ev{background:var(--hl-ev)}
+#app.hl-td .board .it.k-td{background:var(--hl-td)}
+#app.hl-rt .board .it.k-rt{background:var(--hl-rt)}
+.board .it.done{background-blend-mode:normal}
+.hlrow{display:flex;align-items:center;gap:7px;padding:6px 0}
+.hlrow .it{width:84px;font-size:13px;flex:none}
+.sw3{width:24px;height:24px;border-radius:5px;background:var(--c);border:var(--lw) solid transparent;font-size:11px;color:#aaa}
+.sw3.none{background:var(--paper);border-color:var(--soft)}
+.sw3.on{box-shadow:0 0 0 1.5px var(--ink)}
+/* 요약 끄기: rows grow to show everything */
+.board.month.full{height:auto;grid-template-rows:18px auto}
+.full .cell{contain:none}
+.full .cb{position:static;padding-top:19px}
+.full .cell .d{z-index:1}
+.full .wrow .wlist{position:static;padding-top:19px}
+.full .cb .it .tx{white-space:normal}
+#app:not(.portrait) main.scroll #pg{height:auto}
+/* 할일 marks: 일반 = square · 이정표 = larger circle · 루틴 = routine mark */
+.pdot.g{border-radius:2px;border-color:var(--ink)}
+.pdot.c{width:17px;height:17px;border-radius:50%}
+.pdot.r.rk-rsq{border-radius:4px}
+.pdot.r.rk-dot{border-radius:2px}
+.pdot.r.rk-dot::after{content:"";display:block;width:4px;height:4px;margin:auto;border-radius:50%;background:var(--ink)}
+.pm.done .pdot,.rn.done .pdot{background:var(--ink)}
+.pm.done .pdot.r.rk-dot::after,.rn.done .pdot.r.rk-dot::after{background:var(--paper)}
+.ht.v2 .pdot.c{width:17px;height:17px;left:calc(20px + var(--j)*16px - 8.5px)}
+.ht.tp.v2 .pdot.c{left:-2px;top:calc(16px + var(--j)*16px - 8.5px)}
+.until{font-style:normal;color:var(--mute);font-size:.86em}
+.pm.star .pt{font-weight:inherit}
+/* 로드맵 2 · one unbroken path per 세부할일 */
+.htable.road{border:0;overflow:visible}
+.rmap{display:grid;grid-template-columns:repeat(var(--cols),minmax(170px,1fr));gap:0 22px;align-items:start}
+.rcol{min-width:0;display:flex;flex-direction:column;padding:0 0 10px}
+.rhd{display:flex;align-items:baseline;gap:6px;font-size:13px;padding:2px 0 10px;border-bottom:var(--lw) solid var(--line);margin-bottom:6px;text-align:left}
+.rhd span{font-size:10.5px;color:var(--mute)}
+.rhd small{margin-left:auto;font-size:10px;color:var(--mute)}
+.rpath{position:relative;display:flex;flex-direction:column}
+.rstep{position:relative;padding:7px 0}
+.rstep::before{content:"";position:absolute;left:46px;top:0;bottom:0;width:1.5px;margin-left:-.75px;background:#d9d9d9}
+.rstep:first-child::before{top:50%}
+.rstep:last-child::before{bottom:50%}
+.rstep:only-child::before{display:none}
+.rstep.on::before{background:#7d7d7d;width:3px;margin-left:-1.5px;top:-50%}
+.rstep.on:first-child::before{top:0}
+.rn{position:relative;z-index:1;display:grid;grid-template-columns:34px 24px minmax(0,1fr);align-items:center;column-gap:0;font-size:12.5px;-webkit-touch-callout:none;user-select:none}
+.rn .rd{font-size:10px;color:#a0a0a0;text-align:right;padding-right:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rn .rk{justify-self:center;position:static;transform:none;margin:0;background:var(--paper)}
+.rn .pdot.g,.rn .pdot.r{width:13px;height:13px}
+.rn .rt{padding-left:6px;line-height:1.35;overflow-wrap:anywhere;cursor:pointer}
+.rn.done .rt{color:var(--mute);text-decoration:line-through}
+.rn.now .pdot{box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--ink)}
+.rn.today .rd{color:var(--ink)}
+.rn .tick{width:15px;height:0;border-top:1.5px dashed var(--ink);background:none}
+.rn.step .rk.sq{width:9px;height:9px;border:var(--lw) solid #a8a8a8;border-radius:2px}
+.rn.step .rk.sq.done{background:var(--ink);border-color:var(--ink)}
+.rn.step .rt{font-size:11px;color:#9a9a9a}
+.rnil{font-size:11.5px;color:#c8c8c8;padding:8px 0 4px 40px}
+.rcol>.wadd{margin:4px 0 0 40px}
+/* turned on its side: each 세부할일 is a row, the path runs left → right */
+.rmap.tp{grid-template-columns:minmax(0,1fr);gap:16px}
+.rmap.tp .rcol{display:grid;grid-template-columns:110px minmax(0,1fr) auto;align-items:center;column-gap:12px;border-bottom:var(--hl) solid var(--soft);padding:4px 0 10px}
+.rmap.tp .rhd{border:0;margin:0;padding:0;flex-direction:column;align-items:flex-start;gap:2px}
+.rmap.tp .rhd small{margin-left:0}
+.rmap.tp .rpath{flex-direction:row;overflow-x:auto;padding-bottom:2px}
+.rmap.tp .rstep{padding:0 10px}
+.rmap.tp .rstep::before{left:0;right:0;top:28px;bottom:auto;width:auto;height:1.5px;margin:0}
+.rmap.tp .rstep:first-child::before{left:50%;top:28px}
+.rmap.tp .rstep:last-child::before{right:50%;bottom:auto}
+.rmap.tp .rstep.on::before{height:3px;margin-top:-.75px;left:-50%}
+.rmap.tp .rstep.on:first-child::before{left:0}
+.rmap.tp .rn{grid-template-columns:auto;grid-template-rows:18px 22px auto;justify-items:center;min-width:76px;max-width:150px}
+.rmap.tp .rn .rd{padding:0;text-align:center}
+.rmap.tp .rn .rt{padding:2px 0 0;text-align:center;white-space:nowrap}
+.rmap.tp .rnil{padding:6px 0}
+.rmap.tp .rcol>.wadd{margin:0}
+.hal.tp3 .rmap.tp .rcol{grid-template-columns:110px minmax(0,1fr) auto}
+.rn.later .rd{color:#bbb}
+
+/* ===== round 15 ===== */
+#app.hl-hg .board .it.k-hg{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hl-hg)}
+.qend{display:flex;align-items:center;gap:3px;font-size:11px;color:#999;flex:none}
+.qend input{font-size:11px;border:var(--lw) solid var(--soft);border-radius:999px;padding:2px 6px;background:var(--paper)}
+.chip.star{border-color:var(--soft);color:#555}
+.chip.star.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+/* roadmap: a firm line separates the date column, so the road lines read as roads, not table lines */
+.ht .hlab,.ht .hwk,.ht .hh.corner{border-right:var(--lw) solid var(--line)}
+.ht.v2 .pc.blk{border-top-color:transparent}
+.ht.v2 .hlab.blk{border-top:var(--hl) solid var(--soft)}
+.ht.v2 .hlab{border-top-color:transparent}
+.ht.v2 .hlab.blk{border-top-color:var(--soft)}
+
+/* ===== round 16 ===== */
+/* 할일: the dates and the roadmap are two separate blocks */
+.htable:has(.ht.split){border:0;border-radius:0}
+.ht.split .hh.corner{border:var(--lw) solid var(--line);border-bottom:var(--hl) solid var(--soft);border-radius:var(--r) var(--r) 0 0}
+.ht.split .hlab{border-left:var(--lw) solid var(--line);border-right:var(--lw) solid var(--line)}
+.ht.split .hlab.rl{border-bottom:var(--lw) solid var(--line);border-radius:0 0 var(--r) var(--r)}
+.ht.split .hh.top,.ht.split .hh.cat{border-top:var(--lw) solid var(--line)}
+.ht.split .hh.cf,.ht.split .pc.cf{border-left:var(--lw) solid var(--line)}
+.ht.split .hh.cl,.ht.split .pc.cl{border-right:var(--lw) solid var(--line)}
+.ht.split .hh.cf{border-top-left-radius:var(--r)}
+.ht.split .hh.cl{border-top-right-radius:var(--r)}
+.ht.split .hh.c2.cf,.ht.split .hh.c2.cl{border-radius:0}
+.ht.split .pc.rl{border-bottom:var(--lw) solid var(--line)}
+.ht.split .pc.rl.cf{border-bottom-left-radius:var(--r)}
+.ht.split .pc.rl.cl{border-bottom-right-radius:var(--r)}
+.ht.split.v2 .pc.cf{border-left-color:var(--line)}
+.ht.split .pc.cf .ln{margin-left:0}
+/* 연 / 월: everything except 이정표 is just a small dot */
+.dots{display:flex;flex-wrap:wrap;gap:4px;padding:2px 0 0 2px}
+.mdot{width:6px;height:6px;border-radius:50%;background:#9a9a9a}
+.mdot.done{background:#d0d0d0}
+.ht.v2 .dots{padding-left:0}
+/* the one-row bar: range button + small calendar */
+.qc.cal{display:flex;align-items:center;gap:5px}
+.qci{width:13px;height:13px}
+.qc.more{color:#999}
+.qcal{position:absolute;right:8px;top:calc(100% + 6px);width:252px;background:var(--paper);border:var(--lw) solid var(--ink);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);padding:10px 10px 8px;z-index:2}
+.qcal.up{top:auto;bottom:calc(100% + 6px)}
+.qcal.warn{animation:shake .3s}
+.qcal.warn .hint{color:var(--ink)}
+.qch{display:flex;align-items:center;justify-content:space-between;padding:0 2px 6px;font-size:13px}
+.qch b{font-weight:400}
+.qch button{width:26px;height:24px;border-radius:6px;font-size:15px;color:#777}
+.qch button:hover{background:var(--hover);color:var(--ink)}
+.qcg{display:grid;grid-template-columns:repeat(7,1fr);row-gap:2px;text-align:center}
+.qcg span{font-size:10px;color:#aaa;padding-bottom:3px}
+.qcd{height:28px;font-size:12px;font-variant-numeric:tabular-nums;border-radius:6px;position:relative}
+.qcd:hover{background:var(--hover)}
+.qcd.out{color:#cfcfcf}
+.qcd.td{font-weight:500}
+.qcd.in,.qcd.s,.qcd.e{box-shadow:inset 0 -2px 0 var(--ink);border-radius:0}
+.qcd.s,.qcd.e{background:var(--ink);color:var(--paper);border-radius:6px;box-shadow:none}
+.qcd.open:hover{box-shadow:inset 0 -2px 0 #bbb}
+.qcf{display:flex;align-items:center;gap:6px;padding-top:8px;font-size:11px;color:#999}
+.qcf span{margin-right:auto}
+.qcf button{font-size:11px;padding:3px 9px;border-radius:999px;border:var(--lw) solid var(--soft);color:#666}
+.qcf button.ok{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.qpop.bottom .qcal{right:0;left:0;margin:auto}
+
+/* ===== round 17 ===== */
+#app.hl-hg .board .it.k-hg,#app.hl-hg .pwk .it.k-hg{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hl-hg)}
+/* 할일: names sit above the two boxes, like Mon… above the calendar */
+.ht.split .hh{border:0!important;border-radius:0!important;padding:0 10px 4px;align-items:flex-end;font-size:12px}
+.ht.split .hh.cat{font-size:11px;color:var(--mute);padding-bottom:2px}
+.ht.split .hlab.r0{border-top:var(--lw) solid var(--line);border-radius:var(--r) var(--r) 0 0}
+.ht.split .hlab.r0.rl{border-radius:var(--r)}
+.ht.split .pc.r0{border-top:var(--lw) solid var(--line)}
+.ht.split .pc.r0.cf{border-top-left-radius:var(--r)}
+.ht.split .pc.r0.cl{border-top-right-radius:var(--r)}
+/* marks: 일정 = dot */
+.pdot.e{width:7px;height:7px;border:0;border-radius:50%;background:var(--ink);margin:0 3px}
+.pm.done .pdot.e{background:var(--ink)}
+.ht.v2 .pdot.e{width:7px;height:7px;left:calc(20px + var(--j)*16px - 3.5px);margin:0}
+.pm.ev.done .pt{color:var(--mute);text-decoration:line-through}
+/* 연 · 월: tiny dots on the road line, one under another */
+.ldots{position:absolute;left:20px;top:0;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;z-index:2;pointer-events:none}
+.ldots i{width:4px;height:4px;border-radius:50%;background:#7d7d7d;pointer-events:auto}
+.ldots i.done{background:#c9c9c9}
+.ht.v1 .ldots{left:6px}
+/* the dots run down the road line below the named things, never on top of them */
+.pin>.ldots{position:static;transform:none;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:3px;padding:2px 0;margin-left:calc(20px - (26px + var(--n)*16px) - 2px)}
+.ht.v1 .pin>.ldots{margin-left:-4px}
+
+/* ===== round 18 ===== */
+.hbody.b2{grid-template-rows:auto;margin-top:6px}
+.hbody.b2 .htable{grid-row:1}
+.hstackw{grid-column:2;grid-row:1;position:sticky;top:0;align-self:start}
+.hstackw .whs{height:22px;display:flex;align-items:flex-end;gap:7px;padding:0 0 4px 2px;font-size:12px}
+.hstackw .hstack{position:static;max-height:calc(100vh - 170px)}
+.ht.split .hh{position:static}
+.ht.split .hh.corner{font-size:11px;color:var(--sub);padding:0 0 4px 2px;white-space:nowrap;letter-spacing:.02em}
+.ht.split .pc:not(.cf){border-left:0;box-shadow:inset .5px 0 0 var(--hair)}
+/* 루틴 on the 할일 page: the same square */
+.pdot.r,.pdot.r.rk-rsq,.pdot.r.rk-dot{border-radius:2px}
+.pdot.r.rk-dot::after{display:none}
+/* 연 · 월: a tiny dot on the road line, in its date order */
+.ldot{position:relative;height:7px}
+.ldot i{position:absolute;top:1.5px;left:calc(20px - (26px + var(--n)*16px) - 2px);width:4px;height:4px;border-radius:50%;background:#7d7d7d}
+.ldot.done i{background:#c9c9c9}
+.ht.v1 .ldot i{left:-4px}
+/* the small calendar: 끝 없음 switch, ✕ to close */
+.qch .x{margin-left:4px;font-size:12px}
+.qch b{margin-right:auto;margin-left:6px}
+.qch{justify-content:flex-start}
+.qcf .sw{display:flex;align-items:center;gap:6px;border:0;padding:0;color:#666}
+.qcf .sw i{position:relative;width:28px;height:16px;border-radius:999px;background:#ddd;transition:background .2s}
+.qcf .sw i::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--paper);transition:transform .2s}
+.qcf .sw.on{color:var(--ink)}
+.qcf .sw.on i{background:var(--ink)}
+.qcf .sw.on i::after{transform:translateX(12px)}
+.qcd.on{box-shadow:inset 0 -2px 0 #bdbdbd;border-radius:0}
+
+/* ===== round 19 ===== */
+/* rows filed under a 할일 wear that 할일's own colour */
+#app.hl-hc .board .it.k-hg,#app.hl-hc .pwk .it.k-hg{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hc)}
+.sw4{position:relative;flex:none;width:30px;height:17px;border-radius:999px;background:#ddd;transition:background .2s}
+.sw4 i{position:absolute;left:2px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--paper);transition:transform .2s}
+.sw4.on{background:var(--ink)}
+.sw4.on i{transform:translateX(13px)}
+.hltx{font-size:12.5px}
+.hltx small{color:var(--mute);font-size:11px}
+/* the small calendar: always on screen; 끝 없음 switch and 완료 side by side */
+.qcal{position:fixed;width:256px}
+.qcf{flex-direction:column;align-items:stretch;gap:7px}
+.qcf .hint{margin:0;font-size:11px;color:#999}
+.qcb{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qcf .sw{display:flex;flex-direction:row;align-items:center;gap:7px;white-space:nowrap;flex:none;border:0;padding:0;font-size:12px;color:#777}
+.qcf .sw i{flex:none;display:block}
+.qcf .sw span{display:inline}
+.qcf .ok{margin-left:auto;font-size:12px;padding:4px 14px;border-radius:999px;background:var(--ink);color:var(--paper);border:0}
+/* while a row stretches open */
+.ht.split .pc.xr0,.ht.split .hlab.xr0{border-top:var(--lw) solid var(--line)!important}
+.ht.split .pc.xrl,.ht.split .hlab.xrl{border-bottom:var(--lw) solid var(--line)!important}
+.qcal{position:absolute}
+
+/* ===== round 20 ===== */
+/* the bar: 세부 chips just under it on the left, 취소 / 완료 under it on the right, a question above it when needed */
+.qunder{position:absolute;left:10px;right:0;top:calc(100% + 6px);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;pointer-events:none}
+.qsubs,.qact{pointer-events:auto}
+.qsubs{display:flex;flex-wrap:wrap;gap:4px;max-width:70%;background:var(--paper);border:var(--lw) solid var(--soft);border-radius:14px;padding:5px;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.qsubs.need{border-color:var(--ink);animation:shake .3s}
+.qact{display:flex;gap:5px;flex:none}
+.qact button{font-size:12px;padding:5px 13px;border-radius:999px;background:var(--paper);border:var(--lw) solid var(--soft);color:#666;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.qact button.ok{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.qask{position:absolute;left:8px;right:8px;bottom:calc(100% + 8px);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--ink);color:var(--paper);font-size:12.5px;padding:8px 10px 8px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:qpin .16s var(--ease)}
+.qask button{font-size:12px;padding:3px 10px;border-radius:999px;border:var(--lw) solid #555;color:#ddd;margin-left:auto}
+.qask button+button{margin-left:0}
+.qask button.ok{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.qc.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+/* the edit sheet: same pieces, more room */
+.qc.cal.big{font-size:13px;padding:6px 12px;gap:7px}
+.qc.cal.big small{color:#999;font-size:11px;margin-left:4px}
+.qc.cal.big.on small{color:#ccc}
+.ecal{padding:4px 18px 10px}
+.ecal .qcal{position:static;width:100%;max-width:300px;box-shadow:none;border-color:var(--soft)}
+/* 할일: 이정표 a little bigger; names never run into each other */
+.pdot.c,.ht.v2 .pdot.c{width:20px;height:20px}
+.ht.v2 .pdot.c{left:calc(20px + var(--j)*16px - 10px)}
+.ht.split .hh{min-width:0;overflow:hidden;white-space:nowrap;text-align:left;font:inherit;font-size:12px;cursor:pointer}
+.ht.split .hh .nm{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ht.split .hh.cat{display:flex;gap:6px;align-items:flex-end}
+.ht.split .hh.cat .ring{flex:none}
+.ht.split .hh:hover .nm{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.hchip{min-width:0;white-space:nowrap}
+.pm .pt{min-width:0}
+/* columns that leave slide away sideways */
+.ht [data-col]{transition:transform .3s var(--ease),opacity .25s ease}
+.ht .slideout{opacity:0;transform:translateX(36px)}
+
+/* ===== round 21 ===== */
+.ht .slideL{opacity:0;transform:translateX(-40px)}
+.ht .slideR{opacity:0;transform:translateX(40px)}
+#ed{position:relative}
+#edcal #qcal{position:fixed;z-index:30;width:256px;animation:qpin .16s var(--ease)}
+#ed #rsub>div>.row{border-top-color:transparent;padding-top:0}
+#ed #rcat>div>.row{padding-bottom:6px}
+
+/* 할일 table: near the road line = make something (+ by the line); far out = open that month / week / day */
+.ht .pcplus{left:calc(26px + var(--n)*16px);right:auto;top:50%;font-size:14px;color:#bbb}
+.ht.v1 .pcplus{left:12px}
+.ht .pc:hover .pcplus{opacity:1}
+.ht .pc.far{cursor:zoom-in}
+.ht .pc.far .pcplus{opacity:0}
+.ht .pc:not(.far){cursor:copy}
+.ht .pc:not(.none) .pcplus{display:none}
+
+/* no lines between 세부할일 columns inside a 할일 box */
+.ht.split .pc:not(.cf){box-shadow:none;border-left:0}
+
+/* ===== round 22 ===== */
+.cpick{position:relative;width:22px;height:22px;border-radius:50%;border:var(--lw) dashed #bbb;display:inline-flex;align-items:center;justify-content:center;color:#999;font-size:13px;cursor:pointer;overflow:hidden;background:var(--c,transparent)}
+.cpick.on{border:2px solid var(--paper);box-shadow:0 0 0 1.5px var(--ink);color:transparent}
+.cpick.sm{width:24px;height:24px;border-radius:5px}
+.cpick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:0;padding:0}
+.hlrow .sw3,.cpick.sm{width:21px;height:21px}
+.hlrow{gap:5px}
+.ydot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:auto}
+/* year page: little dots under a date */
+.mgrid span{flex-direction:column;position:relative}
+.mgrid span .yd{position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);display:flex;gap:1.5px;font-style:normal}
+.mgrid span .yd i{width:4px;height:4px;border-radius:50%}
+.mgrid span.td .yd{bottom:-4px}
+
+/* ---------- sheets (editor · settings) ---------- */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;z-index:10;padding:16px;animation:fadein .15s ease}
+.sheet{background:var(--paper);border-radius:12px;width:min(560px,100%);max-height:90vh;overflow-x:hidden;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.12)}
+@media (max-width:560px){.ov{align-items:flex-end;padding:0}.sheet{border-radius:14px 14px 0 0;width:100%;padding-bottom:env(safe-area-inset-bottom,0px)}}
+.rw{display:grid;grid-template-rows:1fr;transition:grid-template-rows .28s var(--ease)}
+.rw>div{overflow:hidden;min-height:0}
+.rw.off{grid-template-rows:0fr}
+.rw+.rw>div>.row{border-top:var(--hl) solid var(--soft)}
+.row{display:flex;align-items:center;gap:10px;padding:10px 16px;min-height:46px}
+.row.sm{min-height:38px;padding-block:7px}
+.k{width:30px;flex:none;font-size:11px;color:var(--mute);letter-spacing:.04em}
+.k.w{width:48px}
+.ttl{font-size:14px;font-weight:400;white-space:nowrap}
+.ttl small{color:var(--mute);font-size:12px;margin-left:6px}
+.sheet input[type=date]{border:0;outline:none;background:transparent;font-size:14px;padding:0;min-width:0}
+.sp{flex:1}
+.seg{display:inline-flex;border:var(--lw) solid var(--soft);border-radius:5px;overflow:hidden;flex:none;height:26px}
+.seg button{font-size:12px;padding:0 11px;color:#777;display:flex;align-items:center;gap:5px}
+.seg button+button{border-left:var(--lw) solid var(--soft)}
+.seg button .ck{margin:0;cursor:inherit}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.seg button.on .ck{border-color:var(--paper);color:var(--paper)}
+.seg button.on .ck.nb{border-color:transparent}
+.chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.chip{border:var(--lw) solid var(--c);border-radius:var(--r);padding:3px 9px;font-size:12px;line-height:1.3;transition:background .15s}
+.chip.on{background:var(--t)}
+.chips .hint{font-size:11px;color:#bbb}
+.pen{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.pen:hover{background:var(--hover)}
+.pen svg{width:15px;height:15px}
+.txt{flex:1;min-width:0;border:0;outline:none;font-size:15px;background:transparent;padding:2px 0}
+.txt::placeholder{color:#c2c2c2}
+.dws{display:flex;gap:4px;flex-wrap:wrap}
+.dws button{width:30px;height:28px;border-radius:var(--r);font-size:13px;border:var(--lw) solid transparent}
+.dws button.on{background:var(--ink);color:var(--paper)}
+.dws.warn button{border-color:#c33}
+.foot{display:flex;align-items:center;gap:6px;padding:10px 16px 12px;border-top:var(--hl) solid var(--soft);flex-wrap:wrap}
+.btn{font-size:13px;padding:5px 14px;border:var(--lw) solid var(--ink);border-radius:var(--r);white-space:nowrap}
+.btn.dark{background:var(--ink);color:var(--paper)}
+.btn.quiet{border-color:var(--soft);color:#888}
+.btn.quiet:hover{border-color:var(--ink);color:var(--ink)}
+.note{font-size:11px;color:var(--mute)}
+
+/* settings */
+.sheet.set{width:min(520px,100%)}
+.shead{display:flex;align-items:center;padding:16px 20px 12px;position:sticky;top:0;background:var(--paper);z-index:2;border-bottom:var(--hl) solid var(--soft)}
+.shead h4{margin:0;font-size:16px;font-weight:400}
+.shead .btn{margin-left:auto;font-size:13px;padding:5px 14px}
+.sec{padding:16px 20px 14px}
+.sec+.sec{border-top:var(--hl) solid var(--soft)}
+.sh{font-size:14px;font-weight:500;margin-bottom:2px}
+.sd{font-size:12px;color:var(--mute);margin-bottom:10px;line-height:1.5}
+.srow{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px}
+.srow .lab{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mks{display:inline-flex;align-items:stretch;height:30px;border:var(--lw) solid var(--soft);border-radius:6px;overflow:hidden;flex:none}
+.mko{width:32px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:background .15s}
+.mko+.mko,.mkc{border-left:var(--lw) solid var(--soft)}
+.mko .ck{margin:0;cursor:inherit}
+.mko:hover{background:var(--hover)}
+.mko.on{background:var(--ink)}
+.mko.on .ck{border-color:var(--paper);color:var(--paper)}
+.mko.on .ck.nb{border-color:transparent}
+.mkc{width:46px;border-top:0;border-right:0;border-bottom:0;text-align:center;font-size:12px;outline:none;padding:0 2px;background:transparent}
+.mkc::placeholder{color:#b5b5b5}
+.mkc.on{background:var(--ink);color:var(--paper)}
+.mks.big{height:auto;border:0;border-radius:0;gap:6px;flex-wrap:wrap;overflow:visible}
+.mks.big .mko,.mks.big .mkc{width:auto;min-width:62px;height:52px;border:var(--lw) solid var(--soft);border-radius:6px;flex-direction:column;gap:5px;font-size:11px;color:#666;padding:0 8px}
+.mks.big .mko .ck{font-size:15px}
+.mks.big .mko.on{background:var(--paper);border-color:var(--ink);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.mks.big .mko.on .ck{border-color:var(--ink);color:var(--ink)}
+.mks.big .mko.on .ck.nb{border-color:transparent}
+.mks.big .mkc{width:74px;font-size:15px}
+.mks.big .mkc.on{background:var(--paper);color:var(--ink);border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.clist{display:flex;flex-direction:column;border:var(--lw) solid var(--soft);border-radius:8px;overflow:hidden}
+.crow{display:flex;align-items:center;gap:8px;min-height:48px;padding:0 12px 0 6px;background:var(--paper);font-size:14px}
+.crow+.crow,.cdiv+.crow{border-top:var(--hl) solid var(--soft)}
+.crow.dragging{box-shadow:0 4px 16px rgba(0,0,0,.14);position:relative;z-index:2}
+.hd{flex:none;width:20px;height:32px;display:flex;align-items:center;justify-content:center;color:#bdbdbd;cursor:grab;touch-action:none;font-size:14px;user-select:none}
+.hd:hover{color:var(--ink)}
+.crow .cn{flex:1;min-width:0;color:#555}
+.crow .cn small{color:var(--mute);font-size:11px;margin-left:6px}
+.crow .nm{flex:1;min-width:0;border:var(--lw) solid transparent;border-radius:var(--r);outline:none;font-size:14px;padding:4px 6px;margin-left:-6px;background:transparent}
+.crow .nm:hover{border-color:var(--soft)}
+.crow .nm:focus{border-color:var(--ink)}
+.crow .emo{flex:none;width:30px;height:28px;text-align:center;border:var(--lw) solid var(--soft);border-radius:var(--r);outline:none;font-size:14px;padding:0;background:transparent}
+.crow .emo:focus{border-color:var(--ink)}
+.sw{flex:none;position:relative;width:16px;height:16px;border-radius:50%;background:var(--c);cursor:pointer}
+.sw input{position:absolute;inset:-6px;opacity:0;cursor:pointer;width:28px;height:28px;border:0;padding:0}
+.sw.none{background:transparent;border:var(--lw) dashed #aaa}
+.sw.base{background:transparent;border:var(--lw) solid var(--faint);cursor:default}
+.nocol,.crow .x{flex:none;width:24px;height:24px;border-radius:var(--r);color:#aaa;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center}
+.nocol:hover,.crow .x:hover{background:var(--hover);color:var(--ink)}
+.xsp{flex:none;width:24px}
+.cdiv{height:3px;background:var(--hover)}
+.addc{display:flex;align-items:center;gap:8px;font-size:13px;color:#777;height:36px;padding:0 12px;margin-top:8px;border:var(--lw) dashed var(--faint);border-radius:8px;width:100%}
+.addc:hover{border-color:var(--ink);color:var(--ink)}
+.set .seg{height:30px}
+.set .seg button{font-size:13px;padding:0 12px}
+.snote{font-size:12px;color:var(--mute);padding:12px 0 2px}
+.hint{font-size:11px;color:var(--mute);margin-top:8px}
+.txt:focus-visible,.add input:focus-visible,.nm:focus-visible,.mkc:focus-visible,.emo:focus-visible{outline:none}
+@media (max-width:520px){.row{gap:8px;padding-inline:12px}.sec,.shead,.foot{padding-left:16px;padding-right:16px}.seg button{padding:0 8px}.crow{gap:6px}.crow .mks .mko{width:28px}.crow .mkc{width:36px}}
+/* sheet extras */
+.ov.still{animation:none}
+.sheet .txt.sm{font-size:13.5px}
+.rw.warn .k{color:#c33}
+.rw.warn .chips .chip{border-style:dashed}
+.tabs{display:flex;border-bottom:var(--hl) solid var(--soft);padding:0 10px}
+.tabs button{flex:1;height:44px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;color:#999;border-bottom:2px solid transparent;margin-bottom:-.5px}
+.tabs button .ck{margin:0}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+.sheet.v2 .rw+.rw>div>.row{border-top:0}
+.sheet.v2 .row{min-height:42px;padding-block:7px}
+.sw2{width:22px;height:22px;border-radius:50%;background:var(--c);border:2px solid var(--paper);box-shadow:0 0 0 1px transparent}
+.sw2.on{box-shadow:0 0 0 1.5px var(--ink)}
+.vopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.vopt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:10px 12px;border:var(--lw) solid var(--soft);border-radius:8px}
+.vopt b{font-size:11px;font-weight:400;color:var(--mute)}
+.vopt span{font-size:14px}
+.vopt small{font-size:11px;color:var(--mute);line-height:1.45}
+.vopt:hover{border-color:var(--faint)}
+.vopt.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.dws button{width:32px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+</style>
+
+<div id="app"></div>
+
+<script>
+(() => {
+const KEY = 'bw-planner-demo-v1';
+const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DOW_U = ['M','T','W','T','F','S','S'];
+const DOW_L = ['m','t','w','t','f','s','s'];
+const DOW_K = ['월','화','수','목','금','토','일'];
+const coarse = matchMedia('(pointer: coarse)').matches;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE = 'cubic-bezier(.4,0,.2,1)';
+
+/* ---------- dates ---------- */
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const pIso = s => new Date(s+'T00:00:00');
+const mk = (y,m) => `${y}-${pad(m+1)}`;
+const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const isoAdd = (k,n) => iso(addDays(pIso(k), n));
+const dowOf = d => (d.getDay()+6)%7;
+const mondayOf = d => addDays(d, -dowOf(d));
+const md = k => { const d = pIso(k); return `${d.getMonth()+1}.${d.getDate()}`; };
+const OPEN = '9999-12-31';   // a 할일 루틴 with 끝 없음: its "last day" never comes, so every date comparison still works
+function monthGrid(y,m){
+  const first = new Date(y,m,1), last = new Date(y,m+1,0); let cur = mondayOf(first); const w = [];
+  while (cur <= last){ w.push(Array.from({length:7},(_,i)=>addDays(cur,i))); cur = addDays(cur,7); }
+  return w;
+}
+const today = new Date(); today.setHours(0,0,0,0);
+const TODAY = iso(today);
+const dday = k => { const n = Math.round((pIso(k) - pIso(TODAY))/864e5); return n===0 ? 'D-day' : n>0 ? `D-${n}` : `D+${-n}`; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2,10);
+const segm = (typeof Intl!=='undefined' && Intl.Segmenter) ? new Intl.Segmenter('ko',{granularity:'grapheme'}) : null;
+const graphemes = s => segm ? [...segm.segment(s)].map(x=>x.segment) : [...s];
+const clip = (s,n) => graphemes(s).slice(0,n).join('');
+const lastOf = ym => iso(new Date(+ym.slice(0,4), +ym.slice(5,7), 0));
+const monthDue = ym => ym===TODAY.slice(0,7) ? TODAY : lastOf(ym);   // a month's default day: today in this month, else its last day (past months stay in the past)
+const sameDayIn = (ym, k) => { const d = k ? pIso(k).getDate() : 28, e = lastOf(ym); return `${ym}-${pad(Math.min(d, +e.slice(8)))}`; };
+
+/* ---------- store ----------
+   days[iso] [{id,text,type:'event'|'todo',done,memo?,cat?,sub?}]   weeks[mon] [{id,text,done,cat?,sub?}] = weekly goals
+   routines [{id,text,dows,start,end?}]  rdone['iso|rid']
+   할일: cats [{id,name,color,emoji}] → subs [{id,cat,name}] → ms (milestones) [{id,sub,text,due,dows,done,created}]
+         small daily steps run from the day after the previous milestone up to its due day; sdone['iso|msid']
+   stack.all [{id,text,done,cat?,sub?}] = 쌓아두기 (not yet scheduled)
+   set {ver:1|2|3 (how things are created), pmv:1|2 (tall-screen month page), hv:1|2|3 (할일 page: 표 · 로드맵 · 목록)}
+   ms.start (optional) lets milestones run at the same time; stack items carry kind 'ms'|'todo' */
+/* ---------- keeping the data safe across updates ----------
+   · KEY never changes — a new key would make the saved data look gone.
+   · SCHEMA is the shape of the data; MIGRATIONS turn an older shape into the new one, step by step, never dropping anything.
+   · KEY+'-backup' holds a copy taken once a day (and right before a migration); unreadable data is put aside, never overwritten. */
+const SCHEMA = 2;
+const MIGRATIONS = {
+  2: s => { s.rskip ||= {}; s.sskip ||= {}; }   // 1 → 2: routine days removed one by one
+};
+const store = {
+  get: k => { try { return localStorage.getItem(k); } catch(e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); return true; } catch(e) { return false; } }
+};
+const isData = s => !!(s && typeof s==='object' && s.days && typeof s.days==='object');
+function loadData(){
+  const raw = store.get(KEY); if (!raw) return null;
+  try { const s = JSON.parse(raw); if (isData(s)) return s; } catch(e) {}
+  store.set(`${KEY}-broken-${Date.now()}`, raw);   // can't read it: set it aside untouched, then try the last good copy
+  try { const b = JSON.parse(store.get(KEY+'-backup')); if (isData(b)) return b; } catch(e) {}
+  return null;
+}
+let S = loadData();
+const FRESH = !S;
+if (!S) S = seed();
+else {
+  const day = new Date().toISOString().slice(0,10);
+  if ((S.schema||1) < SCHEMA || store.get(KEY+'-backup-day')!==day){ store.set(KEY+'-backup', JSON.stringify(S)); store.set(KEY+'-backup-day', day); }
+}
+for (let v = (S.schema||1) + 1; v <= SCHEMA; v++) MIGRATIONS[v]?.(S);
+S.schema = SCHEMA;
+ensure();
+function ensure(){
+  S.set ||= {}; S.set.ver ||= 1; if (S.set.ver===2) S.set.ver = 1; S.set.pmv ||= 1; S.set.hl ||= 1;
+  // chosen after comparing the demo versions: one-line bar · roadmap · weeks-only month · milestones-only year
+  Object.assign(S.set, {ver:3, hv:2, hm:2, hy:3, pmv:2});
+  S.set.hlc ||= {}; S.set.sum ||= 1; S.set.ys ||= {}; delete S.set.ys.star; delete S.set.ys.hal;   // (those two year-page options are gone)
+  S.rskip ||= {}; S.sskip ||= {};   // routine days removed one by one: 'iso|id'
+  Object.assign(S.set, {rmk:'sq', hl:4, rm:1});   // chosen: square routine mark · 1-2 wide layout · table roadmap
+  S.rdone ||= {}; S.sdone ||= {}; S.goals ||= {}; S.weeks ||= {}; S.routines ||= []; S.days ||= {}; S.cats ||= [];
+  if (!S.cats.some(c => c.id==='base')) S.cats.unshift({id:'base',name:'기본',color:null});
+  // example 할일 · 루틴 only on a brand-new start — never mixed into data someone already has (or brings in from a backup)
+  if (!S.subs && !FRESH){ S.subs = []; S.v2 = true; }
+  if (!S.subs){
+    const d = n => isoAdd(TODAY, n);
+    if (!catById('c1')) S.cats.push({id:'c1',name:'공부',color:'#4a78c8'});
+    if (!S.cats.some(c => c.name==='음악')) S.cats.push({id:'c3',name:'음악',color:'#7a68c4'});
+    const mus = S.cats.find(c => c.name==='음악').id;
+    catById('c1').emoji ||= '📘'; catById(mus).emoji ||= '🎸';
+    S.subs = [{id:'s1',cat:'c1',name:'수학'},{id:'s2',cat:'c1',name:'영어'},{id:'s3',cat:mus,name:'일렉기타'}];
+    S.backlog = {
+      s1:[{id:uid(),text:'확률과 통계',done:false},{id:uid(),text:'기하 개념 정리',done:false},{id:uid(),text:'기출 3개년 풀기',done:false}],
+      s2:[{id:uid(),text:'단어 2000개',done:false}],
+      s3:[{id:uid(),text:'펜타토닉 스케일',done:false},{id:uid(),text:'곡 하나 완곡',done:false}]
+    };
+    S.ms = [
+      {id:'m1',sub:'s1',text:'수열 끝내기',due:d(-4),dows:[0,1,2,3,4],done:true,created:d(-20)},
+      {id:'m2',sub:'s1',text:'미적분 1단원',due:d(9),dows:[0,2,4],done:false,created:d(-4)},
+      {id:'m3',sub:'s1',text:'미적분 2단원',due:d(24),dows:[0,2,4],done:false,created:d(-4)},
+      {id:'m4',sub:'s3',text:'기본 코드 10개',due:d(12),dows:[1,3,5],done:false,created:d(-2)},
+      {id:'m5',sub:'s2',text:'단어 500개',due:d(6),dows:[0,1,2,3,4,5,6],done:false,created:d(-6)}
+    ];
+    for (let i=1;i<=3;i++){ const k = d(-i), w = dowOf(pIso(k)); if ([0,2,4].includes(w)) S.sdone[`${k}|m2`] = true; S.sdone[`${k}|m5`] = true; }
+  }
+  S.ms ||= [];
+  if (!S.v2 && !FRESH) S.v2 = true;
+  if (!S.v2 && catById('c1')){
+    S.v2 = true;
+    const me = n => iso(new Date(today.getFullYear(), today.getMonth()+n+1, 0)), m1 = iso(new Date(today.getFullYear(), today.getMonth(), 1));
+    if (!S.subs.some(s => s.id==='s4')) S.subs.push({id:'s4',cat:'c1',name:'국어'});
+    if (!S.subs.some(s => s.id==='s5')) S.subs.push({id:'s5',cat:'c1',name:'과학'});
+    S.ms.push(
+      {id:uid(),sub:'s1',text:'수2 책 끝',due:isoAdd(me(1),-10),dows:[0,2,4],done:false,created:m1},
+      {id:uid(),sub:'s4',text:'주간국어 한 달치 끝',due:me(0),dows:[0,3],done:false,created:m1},
+      {id:uid(),sub:'s4',text:'주간국어 2권',due:me(1),dows:[0,3],done:false,created:m1},
+      {id:uid(),sub:'s5',text:'과학 개념',due:me(1),dows:[2,5],done:false,created:m1},
+      {id:uid(),sub:'s5',text:'기출 1회독',due:me(2),dows:[2,5],done:false,created:m1},
+      {id:uid(),sub:'s2',text:'모의고사 3회',due:me(1),dows:[5,6],done:false,created:m1});
+  }
+  if (!S.stack){
+    const all = [];
+    for (const [sid, l] of Object.entries(S.backlog || {})){ const s = S.subs.find(x => x.id===sid);
+      l.forEach(i => all.push({id:i.id, text:i.text, done:!!i.done, ...(s ? {cat:s.cat, sub:sid} : {})})); }
+    if (S.inbox) [...(S.inbox.now||[]), ...(S.inbox.later||[])].forEach(i => all.push({id:i.id, text:i.text, done:!!i.done, ...(i.cat?{cat:i.cat}:{}), ...(i.sub?{sub:i.sub}:{})}));
+    S.stack = {all};
+  }
+  // stale week goals from earlier versions: keep only valid categories
+  if (!S.wkSeed && !FRESH) S.wkSeed = true;
+  if (!S.wkSeed){ S.wkSeed = true; const mon = iso(mondayOf(today)); const w = L('weeks', mon); if (!w.length) w.push({id:uid(),text:'방 청소',done:false}); }
+}
+let saveWarned = false;
+function save(){
+  S.saved = Date.now();
+  if (store.set(KEY, JSON.stringify(S))) { saveWarned = false; return; }
+  if (!saveWarned){ saveWarned = true; toast('저장하지 못했어요. 설정 → 데이터에서 백업을 저장해 두세요.'); }   // full storage or blocked: say so once
+}
+function toast(msg, btn){   // a small note at the bottom; btn = [label, onClick]
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status');
+  t.innerHTML = `<span>${esc(msg)}</span>${btn ? `<button>${esc(btn[0])}</button>` : ''}`;
+  if (btn) t.querySelector('button').onclick = () => { t.remove(); btn[1](); };
+  document.body.appendChild(t); if (!btn) setTimeout(() => t.remove(), 4000);
+}
+// another tab or window of the planner saved: take its data instead of overwriting it later
+addEventListener('storage', e => {
+  if (e.key!==KEY || !e.newValue) return;
+  try { const s = JSON.parse(e.newValue); if (isData(s)){ S = s; ensure(); if (!st.ed && !st.qp) render(); } } catch(err) {}
+});
+function L(coll, key){ S[coll] ||= {}; return (S[coll][key] ||= []); }
+function cats(){ return S.cats; }
+function catById(id){ return S.cats.find(c => c.id===id); }
+const catOf = id => catById(id) || catById('base');
+const userCats = () => S.cats.filter(c => c.id!=='base');
+const rById = id => S.routines.find(r => r.id===id);
+const rOn = k => { const w = dowOf(pIso(k)); return S.routines.filter(r => r.dows.includes(w) && r.start<=k && (!r.end || k<r.end) && !S.rskip?.[`${k}|${r.id}`]); };
+const rDone = (k,rid) => !!S.rdone[`${k}|${rid}`];
+const subById = id => S.subs.find(s => s.id===id);
+const subsOf = cid => S.subs.filter(s => s.cat===cid);
+const allSubs = () => userCats().flatMap(c => subsOf(c.id));
+const msOf = sid => S.ms.filter(m => m.sub===sid).sort((a,b) => (a.due||'~').localeCompare(b.due||'~'));
+const msById = id => S.ms.find(m => m.id===id);
+// a milestone runs from its own start (if one was set) or from the day after the previous one / the day it was made —
+// never past its own due day, so a milestone moved earlier can't run backwards and push its neighbours onto a second line
+function msStart(m){
+  const cap = k => m.due && k > m.due ? m.due : k;
+  if (m.start) return cap(m.start);
+  const list = msOf(m.sub), i = list.indexOf(m), prev = list.slice(0,i).reverse().find(x => x.due && x.due!==OPEN);   // one with no end never "comes before"
+  return cap(prev && isoAdd(prev.due,1) > m.created ? isoAdd(prev.due,1) : m.created);
+}
+function stepDays(m){ const out = []; if (!m.due) return out; let k = msStart(m);
+  for (let i=0; k<=m.due && i<400; i++, k = isoAdd(k,1)) if (m.dows.includes(dowOf(pIso(k)))) out.push(k); return out; }
+const stepsOn = k => S.ms.filter(m => m.due && k<=m.due && k>=msStart(m) && m.dows.includes(dowOf(pIso(k))) && subById(m.sub) && !S.sskip?.[`${k}|${m.id}`]);
+const msDueOn = k => [];   // a routine's last day is just another day of it
+const sDone = (k,id) => !!S.sdone[`${k}|${id}`];
+function progSub(sid){ // what's been done under this 세부할일: its 할일 on the calendar (일반 · 이정표), its weekly goals and its 할일 루틴 — not what's still in the 보관함
+  const a = [...Object.values(S.days).flat().filter(i => i.sub===sid && i.type!=='event'), ...Object.values(S.weeks).flat().filter(i => i.sub===sid)];   // routines don't count
+  return {done:a.filter(x=>x.done).length, all:a.length}; }
+function progCat(cid){ return subsOf(cid).map(s => progSub(s.id)).reduce((a,b) => ({done:a.done+b.done, all:a.all+b.all}), {done:0, all:0}); }
+const pct = p => p.all ? Math.round(p.done/p.all*100) : 0;
+const catLabel = c => c?.emoji || graphemes(c?.name||'?')[0] || '?';
+function setCS(o, cat, sub){
+  if (cat && cat!=='base' && catById(cat)) o.cat = cat; else delete o.cat;
+  if (sub && subById(sub) && subById(sub).cat===o.cat) o.sub = sub; else delete o.sub;
+}
+function seed(){
+  const d = n => iso(addDays(today,n)), mon = iso(mondayOf(today)), first = mk(today.getFullYear(), today.getMonth())+'-01';
+  const it = (text,type='todo',done=false,cat) => ({id:uid(),text,type,done,...(cat?{cat}:{})});
+  const s = {
+    set:{ver:1, pmv:1},
+    cats:[{id:'base',name:'기본',color:null},{id:'c1',name:'공부',color:'#4a78c8',emoji:'📘'},{id:'c2',name:'집안일',color:'#d0893f',emoji:'🧺'}],
+    days:{
+      [d(-3)]:[it('가족 모임','event',true),it('빨래','todo',true,'c2')],
+      [d(-2)]:[it('팀 회의','event',true),it('메일 답장','todo',true)],
+      [d(-1)]:[it('보고서 작성','todo',true,'c1'),it('서류 제출')],
+      [d(0)]:[it('스터디','event'),it('병원 예약','event'),it('과제 제출','todo',false,'c1'),it('장보기','todo',true,'c2'),it('약 먹기 (점심 먹고)')],
+      [d(1)]:[it('면접','event')],
+      [d(3)]:[it('발표 준비','todo',false,'c1')]
+    },
+    goals:{}, weeks:{[mon]:[{id:uid(),text:'방 청소',done:true}]}, wkSeed:true,
+    routines:[{id:'r1',text:'아침 스트레칭',dows:[0,1,2,3,4,5,6],start:first},{id:'r2',text:'물 2L 마시기',dows:[0,2,4],start:first}],
+    rdone:{}
+  };
+  for (let i=1;i<=5;i++) s.rdone[`${d(-i)}|r1`] = true;
+  return s;
+}
+
+/* ---------- view state ---------- */
+const st = { view:'month', hal:false, y:today.getFullYear(), m:today.getMonth(), wk:mondayOf(today), sel:dowOf(today),
+  portrait:false, pm:'cal', qtype:'todo', qcat:null, qsub:null, ed:null, setOpen:false, refocus:null, anim:null, busy:false,
+  hcat:'all', hsub:'all', htype:'todo', qp:null, padd:null, dslide:null, wadd:null, knob:null, slide:null, lastView:null, dirty:false };
+const VIDX = {year:0, month:1, week:2};
+
+/* ---------- markers: 일정 = dot (done → only struck through), 할일 = empty box, 루틴 = ↻ box, 이정표 = circle ---------- */
+function mark(kind, done, extra=''){
+  const c = `ck ${kind}${done?' done':''}${extra?' '+extra:''}`;
+  return kind==='rt' ? `<span class="${c} rk-${S.set.rmk}"><i></i></span>` : `<span class="${c}"><i></i></span>`;
+}
+const KIND = {event:'ev', todo:'td', routine:'rt', ms:'rt', bl:'td'};
+function ring(p, size, color, inner, stroke=3){
+  const r = (size - stroke)/2, c = 2*Math.PI*r;
+  return `<span class="ring" style="width:${size}px;height:${size}px;font-size:${size}px"><svg viewBox="0 0 ${size} ${size}" aria-hidden="true">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="#e8e8e8" stroke-width="${stroke}"/>
+    ${p>0?`<circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color||'#141414'}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${(c*p/100).toFixed(2)} ${c.toFixed(2)}"/>`:''}</svg><span class="rin">${inner}</span></span>`;
+}
+const arrow = dir => `<svg viewBox="0 0 6 8" aria-hidden="true"><path d="${dir<0?'M6 0V8L0 4Z':'M0 0V8L6 4Z'}"/></svg>`;
+const roadSvg = `<svg viewBox="0 0 20 20" fill="none" stroke="#141414" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 18.2V2.6"/><path d="M5.5 3.4h9.8l-2.3 3.2 2.3 3.2H5.5"/></svg>`;   // 할일 page: one flag
+const calSvg = () => `<svg viewBox="0 0 20 20" fill="none" stroke="#141414" stroke-width="1.1" stroke-linecap="round"><rect x="2.5" y="3.8" width="15" height="13.7" rx="2"/><path d="M2.5 7.4h15M6.5 2.3v3M13.5 2.3v3"/></svg>`;   // planner: a plain, empty calendar
+const foldBtn = `<button class="fbtn" data-act="goMonth" aria-label="월간으로 접기"><svg viewBox="0 0 9 7"><path d="M0 0h9L4.5 7z"/></svg></button>`;
+function gearSvg(){
+  let t = '';
+  for (let i=0;i<8;i++){ const a = i*Math.PI/4, c = Math.cos(a), s = Math.sin(a);
+    t += `<line x1="${(10+5.6*c).toFixed(2)}" y1="${(10+5.6*s).toFixed(2)}" x2="${(10+8*c).toFixed(2)}" y2="${(10+8*s).toFixed(2)}"/>`; }
+  return `<svg viewBox="0 0 20 20" fill="none" stroke="#141414"><g stroke-width="2.6">${t}</g><circle cx="10" cy="10" r="5.6" stroke-width="1.1"/><circle cx="10" cy="10" r="2.2" stroke-width="1.1"/></svg>`;
+}
+
+/* ---------- one row ---------- */
+function itemRow(ref, kind, done, text, {tag='', drag=false, cls='', hc=null} = {}){
+  return `<div class="it${cls?' '+cls:''}${hc?' k-hg':''}${done?' done':''}" data-ref="${ref}"${drag?' data-drag':''}${hc?` style="--hc:${hc}"`:''}>${mark(kind,done)}<span class="tx">${esc(text)}</span>${tag}</div>`;
+}
+const tagOf = (cat, sub) => sub && subById(sub) ? `<span class="tag">${esc(subById(sub).name)}</span>`
+  : cat && cat!=='base' && catById(cat) ? `<span class="tag">${esc(catById(cat).name)}</span>` : '';
+const hcOf = i => { const c = catById(i?.cat) || catById(subById(i?.sub)?.cat); return c && c.id!=='base' && c.color ? c.color + '30' : null; };   // a 할일's own colour, light
+const kOf = (i, base) => base;   // (old: filed under a 할일 → the 할일 colour
+const tdRow = (k, i) => itemRow(`days|${k}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i)});
+const evRow = (k, i) => itemRow(`days|${k}|${i.id}`, 'ev', i.done, i.text, {drag:true, cls:'k-ev', hc:hcOf(i)});
+const rtRow = (k, x) => itemRow(`rt|${k}|${x.r.id}`, 'rt', x.done, x.r.text, {cls:'rtn k-rt'});
+const msRow = (m, tag) => itemRow(`ms||${m.id}`, 'td', m.done, m.text, {drag:true, cls:'msi k-td', hc:hcOf(m), tag: tag ? tagOf(null, m.sub) : ''});
+const stRow = (k, x) => itemRow(`ss|${k}|${x.m.id}`, 'td', x.done, x.m.text, {cls:'step k-td', hc:hcOf(x.m)});
+
+/* ---------- one day ---------- */
+function dayData(k){
+  const items = L('days',k);
+  return {ev: items.filter(i => i.type==='event'), td: items.filter(i => i.type!=='event'),
+    rts: rOn(k).map(r => ({r, done:rDone(k,r.id)})), due: msDueOn(k), steps: stepsOn(k).map(m => ({m, done:sDone(k,m.id)}))};
+}
+// week page: 일정 · 루틴 · 할일 · each 할일, split by very light labelled lines; each 세부할일 sits in a hairline box
+const lab = t => `<div class="gh"><span>${t}</span><i></i></div>`;
+function dayList(k){ // week page: 일정 · 루틴 · 할일 · each 할일 and its 세부할일, in that order — no lines, no boxes
+  const {ev, td, rts, due, steps} = dayData(k);
+  let h = ev.map(i => evRow(k,i)).join('') + rts.map(x => rtRow(k,x)).join('') + td.filter(i => !i.cat || !catById(i.cat)).map(i => tdRow(k,i)).join('');
+  userCats().forEach(c => {
+    const ci = td.filter(i => i.cat===c.id);
+    h += ci.filter(i => !i.sub || !subById(i.sub)).map(i => tdRow(k,i)).join('');
+    subsOf(c.id).forEach(s => { h += due.filter(m => m.sub===s.id).map(m => msRow(m)).join('') + ci.filter(i => i.sub===s.id).map(i => tdRow(k,i)).join('') + steps.filter(x => x.m.sub===s.id).map(x => stRow(k,x)).join(''); });
+  });
+  return `<div class="dlist">${h}</div>`;
+}
+// month cell: when it doesn't fit, fold routines, then to-dos, then events — but only a group of two or more
+function cellHTML(k, lvl=0){
+  const {ev, td, rts, due, steps} = dayData(k);
+  const sum = (kind, label, txt) => `<div class="it sum" data-act="goDay" data-iso="${k}">${mark(kind,false,'def')}<span class="tx">${label} ${txt}</span></div>`;
+  let h = lvl>=3 && ev.length>1 ? sum('ev','일정',ev.length) : ev.map(i => evRow(k,i)).join('');
+  h += lvl>=1 && rts.length>1 ? sum('rt','루틴',`${rts.filter(x=>x.done).length}/${rts.length}`) : rts.map(x => rtRow(k,x)).join('');
+  const n = due.length + td.length + steps.length, dn = due.filter(m=>m.done).length + td.filter(i=>i.done).length + steps.filter(x=>x.done).length;
+  h += lvl>=2 && n>1 ? sum('td','할일',`${dn}/${n}`) : due.map(m => msRow(m)).join('') + td.map(i => tdRow(k,i)).join('') + steps.map(x => stRow(k,x)).join('');
+  return `<div class="dlist">${h}${PLUS(`days|${k}`)}</div>`;
+}
+function fitCells(){
+  if (S.set.sum===2) return syncRows();
+  app.querySelectorAll('.month .cb[data-iso]').forEach(b => {
+    if (b.closest('.cell.out')) return;
+    const k = b.dataset.iso;
+    for (let lvl=0; lvl<=3; lvl++){ b.innerHTML = cellHTML(k, lvl); if (b.scrollHeight <= b.clientHeight + 1) return; }
+  });
+  app.querySelectorAll('.month .wrow[data-w]').forEach(r => { // weekly goals fold the same way
+    const w = r.dataset.w, l = r.querySelector('.wlist');
+    for (let lvl=0; lvl<=2; lvl++){ l.innerHTML = weekContent(w, lvl, true); if (l.scrollHeight <= l.clientHeight + 1) return; }
+  });
+}
+// 요약 끄기: every row grows to show everything; calendar rows and weekly rows keep the same height
+function syncRows(){
+  const cal = app.querySelector('.month .cal'), wk = app.querySelector('.month .wkbox'); if (!cal) return;
+  app.querySelectorAll('.month .cb[data-iso]').forEach(b => { if (!b.closest('.cell.out')) b.innerHTML = cellHTML(b.dataset.iso, 0); });
+  app.querySelectorAll('.month .wrow[data-w]').forEach(r => { r.querySelector('.wlist').innerHTML = weekContent(r.dataset.w, 0, true); });
+  const n = +cal.dataset.rows, auto = Array(n).fill('auto').join(' ');
+  [cal, wk].forEach(el => { if (el) el.style.transition = 'none'; });   // measuring must not play the unfold animation
+  cal.style.gridTemplateRows = auto; if (wk) wk.style.gridTemplateRows = auto;
+  const cells = [...cal.children], rows = [...(wk?.children || [])];
+  const hs = Array.from({length:n}, (_,i) => Math.max(st.portrait ? 64 : 96, ...cells.slice(i*7, i*7+7).map(c => c.offsetHeight), rows[i] ? rows[i].offsetHeight : 0));
+  const t = hs.map(h => h + 'px').join(' ');
+  cal.style.gridTemplateRows = t; if (wk) wk.style.gridTemplateRows = t;
+  void cal.offsetHeight; requestAnimationFrame(() => [cal, wk].forEach(el => { if (el) el.style.transition = ''; }));
+}
+function sizeCal(){ // tall screens: the month (and the unfolded week) fill the screen, cells never shorter than wide
+  if (!st.portrait || st.hal || (S.set.sum===2 && st.view==='month')) return;
+  const el = app.querySelector('.board .cal, .board .days'); if (!el) return;
+  el.style.height = '';
+  const main = app.querySelector('main'), board = app.querySelector('.board'), rows = monthGrid(st.y, st.m).length;
+  const room = Math.floor(main.getBoundingClientRect().bottom - el.getBoundingClientRect().top - (st.view==='month' ? 26 : 14));
+  const h = Math.max(Math.ceil(board.clientWidth * rows / 7) + 2, room);
+  el.style.height = h + 'px';
+  const wb = app.querySelector('.board .wkbox'); if (wb) wb.style.height = h + 'px';
+  main.classList.toggle('pager', st.view==='month' && h <= room + 2);
+}
+const layout = () => { if (!st.hal && (st.view==='month' || st.view==='week')){ sizeCal(); if (st.view==='month') fitCells(); } };
+const weekTitle = () => `${st.y}<span class="dim">·</span>${st.m+1}<span class="dim">·</span>week ${weekIndex()+1}`;
+function weekIndex(){ const i = monthGrid(st.y, st.m).findIndex(w => iso(w[0])===iso(st.wk)); return i<0 ? 0 : i; }
+
+/* ---------- header ---------- */
+function header(){
+  const v = st.view, i = VIDX[v], from = st.knob ?? i;
+  const seg = [['year','연'],['month','월'],['week','주']].map(([k,l]) => `<button class="${v===k?'on':''}" data-act="view" data-v="${k}">${l}</button>`).join('');
+  // the title always holds year · month · week; parts slide open/shut as the view changes (starting from the last view)
+  const ttl = `<button class="ts y" data-act="view" data-v="year" title="연">${st.y}</button><span class="ts m${from<1?' off':''}"><button class="tv" data-act="view" data-v="month" title="월">${st.m+1}</button></span><span class="ts w${from<2?' off':''}"><b class="tv">week${weekIndex()+1}</b></span>`;
+  return `<header><div class="hl"><button class="arr" data-act="prev" aria-label="이전">${arrow(-1)}</button><span class="ptl">${ttl}</span><button class="arr" data-act="next" aria-label="다음">${arrow(1)}</button></div>
+    <div class="pill" role="tablist"><span class="knob" style="transform:translateX(${from*100}%)" data-to="${i}"></span>${seg}</div>
+    <div class="hr"><button class="ib${st.hal?' on':''}" data-act="hal" title="할일" aria-label="할일 페이지">${roadSvg}</button>
+      <button class="ib" data-act="today" title="오늘 (${today.getMonth()+1}월)" aria-label="오늘의 월 페이지">${calSvg()}</button>
+      <button class="ib" data-act="settings" title="설정" aria-label="설정">${gearSvg()}</button></div></header>`;
+}
+
+/* ---------- year: twelve calendars, nothing else ---------- */
+function yearView(){
+  return `<div class="year"><div class="months">` + Array.from({length:12}, (_,m) => {
+    const first = new Date(st.y,m,1), n = new Date(st.y,m+1,0).getDate();
+    let cells = '';
+    for (let i=0;i<dowOf(first);i++) cells += '<span></span>';
+    for (let d=1; d<=n; d++){ const k = iso(new Date(st.y,m,d)), dots = yearDots(k);
+      cells += `<span${k===TODAY?' class="td"':''}>${d}${dots ? `<em class="yd">${dots}</em>` : ''}</span>`; }
+    return `<div class="mm" data-act="goMonthOf" data-m="${m}"><div class="t">${m+1}</div><div class="mface"><div class="mgrid">${cells}</div></div></div>`;
+  }).join('') + `</div></div>`;
+}
+
+// 설정 → 연 페이지에 표시: up to three small dots under a date, each in its colour
+function yearDots(k){
+  const y = S.set.ys || {}; if (!Object.values(y).some(Boolean)) return '';
+  const out = [], items = S.days[k] || [];
+  const add = (c, t) => { if (out.length < 3 && !out.some(o => o.c===c)) out.push({c, t}); };
+  items.forEach(i => {   // 일정 · 할일 (이정표 counts as a 할일) · 루틴 — by kind only
+    if (i.type==='event' && y.event) add(ydotColor('event'), i.text);
+    else if (i.type!=='event' && y.todo) add(ydotColor('todo'), i.text); });
+  if (y.routine && rOn(k).length) add(ydotColor('routine'), '루틴');
+  if (y.routine) stepsOn(k).forEach(m => add(ydotColor('routine'), m.text));
+  return out.map(o => `<i style="background:${o.c}" title="${esc(o.t)}"></i>`).join('');
+}
+
+/* ---------- weekly goals: this week's milestones + what was added here. Same square marks, same type, no name tags on the month page ---------- */
+function weekContent(mon, lvl=0, inMonth=false){
+  const ms = []; for (let i=0;i<7;i++){ const k = isoAdd(mon,i); L('days',k).forEach(it => { if (it.star && it.type!=='event') ms.push({k, it, done:it.done}); }); }
+  const items = L('weeks', mon), sum = (label, l) => `<div class="it sum">${mark('td',false,'def')}<span class="tx">${label} ${l.filter(x=>x.done).length}/${l.length}</span></div>`;
+  let h = lvl>=1 && ms.length>1 ? sum('이정표', ms) : ms.map(({k, it}) => itemRow(`days|${k}|${it.id}`, 'td', it.done, it.text, {drag:true, cls:'k-td', hc:hcOf(it)})).join('');
+  h += lvl>=2 && items.length>1 ? sum('목표', items) : items.map(i => itemRow(`weeks|${mon}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i)})).join('');
+  return h + PLUS(`weeks|${mon}`, '주간 목표 추가');
+}
+
+/* ---------- month ---------- */
+function monthView(){
+  const g = monthGrid(st.y, st.m), rows = Array(g.length).fill('1fr').join(' '), nowMon = iso(mondayOf(today));
+  let cells = '';
+  g.forEach((w,wi) => w.forEach(d => {
+    const last = wi===g.length-1 ? ' last' : '', k = iso(d), out = d.getMonth()!==st.m;
+    cells += `<div class="cell${out?' out':''}${k===TODAY?' today':''}${last}" data-iso="${k}" data-act="goDay"${out?'':` data-drop="days|${k}"`}>
+      <span class="d">${out?'':d.getDate()}</span><div class="cb" data-iso="${k}"></div></div>`;
+  }));
+  const wrows = g.map((w,i) => { const k = iso(w[0]);
+    return `<div class="wrow${k===nowMon?' now':''}" data-act="goWeek" data-w="${k}" data-drop="weeks|${k}"><div class="wl">week ${i+1}</div><div class="wlist">${weekContent(k, 0, true)}</div></div>`; }).join('');
+  const v2 = st.portrait, goal = v2 && st.pm==='goal';
+  return (v2 ? pmSwitch() : '') + `<div class="board month${v2?' v2':''}${goal?' pgoal':''}${S.set.sum===2?' full':''}"><div class="dow">${DOW.map(s => `<span class="dw">${s}</span>`).join('')}</div>
+    <div class="wh"><span>WEEKLY</span></div>
+    <div class="cal" data-rows="${g.length}" style="grid-template-rows:${rows}">${cells}</div>
+    <div class="wkbox" style="grid-template-rows:${rows}">${wrows}</div></div>`
+    + (st.portrait ? `<div class="pagehint">위아래로 넘겨 다른 달로 · 옆으로 넘겨 달력/주간목표</div>` : '');
+}
+
+/* ---------- week (tall screens: the box holds only the chosen day; 달력 ⇄ 주간목표 like the month) ---------- */
+const pmSwitch = () => `<div class="pmsw"><button class="${st.pm==='goal'?'':'on'}" data-act="pm" data-v="cal">${st.view==='week'?'하루':'달력'}</button><button class="${st.pm==='goal'?'on':''}" data-act="pm" data-v="goal">주간목표</button></div>`;
+function weekView(){
+  const days = Array.from({length:7}, (_,i)=>addDays(st.wk,i)), wi = weekIndex(), mon = iso(st.wk), P = st.portrait, goal = P && st.pm==='goal';
+  const heads = days.map((d,i) => `<span class="dw${P && i===st.sel?' sel':''}"${P?` data-act="sel" data-i="${i}"`:''}>${DOW[i]}<i class="dn${iso(d)===TODAY?' td':''}${d.getMonth()!==st.m?' out':''}">${d.getDate()}</i></span>`).join('');
+  const col = (d,i) => { const k = iso(d);
+    return `<div class="dcol" data-drop="days|${k}" data-iso="${k}" data-i="${i}">${dayList(k)}${PLUS(`days|${k}`)}</div>`; };
+  const cols = P ? `<div class="days one" id="oneday"><div class="dwrap${st.dslide?' slide-'+st.dslide:''}">${col(days[st.sel], st.sel)}</div></div>` : `<div class="days">${days.map(col).join('')}</div>`;
+  const box = `<div class="wkbox one" style="grid-template-rows:1fr"><div class="wrow" data-drop="weeks|${mon}">${weekContent(mon)}</div></div>`;
+  return (P ? pmSwitch() : '') + `<div class="board week${P?' v2':''}${goal?' pgoal':''}"><div class="dow">${heads}</div><div class="wh">${foldBtn}<button class="whb" data-act="goMonth" title="월간으로 접기">WEEK ${wi+1}</button></div>${cols}${box}</div>`
+    + (P ? `<div class="pagehint">옆으로 넘겨 다른 날로 · 요일을 눌러 이동</div>` : '');
+}
+function qchips(){
+  const cs = userCats().map(c => `<button type="button" class="${st.qcat===c.id?'on':''}" data-act="qcat" data-c="${c.id}">${c.emoji?esc(c.emoji)+' ':''}${esc(c.name)}</button>`).join('');
+  const ss = st.qcat ? subsOf(st.qcat).map(s => `<button type="button" class="s${st.qsub===s.id?' on':''}" data-act="qsub" data-s="${s.id}">${esc(s.name)}</button>`).join('') : '';
+  return `<div class="qchips">${cs}${ss}</div>`;
+}
+
+/* ---------- 할일 page: 할일 chips · 세부 chips · time (연/월/주) · 보관함 ----------
+   things here are 이정표 (finish by a day; small daily shares lead up to it) or 일반 (a plain to-do on a day).
+   보관함 = not applied yet; drag in and out of it. Views: 1 표 · 2 로드맵 · 3 목록 */
+function visSubs(){
+  if (st.hcat==='all') return allSubs();
+  if (st.hsub==='all') return subsOf(st.hcat);
+  return [subById(st.hsub)].filter(Boolean);
+}
+function halRows(){
+  if (st.view==='week') return Array.from({length:7}, (_,i) => { const d = addDays(st.wk,i), k = iso(d);
+    return {key:k, rk:k, a:k, b:k, lab:`<b>${d.getDate()}</b><span>${DOW[i]}</span>`, blk:true, td:k===TODAY}; });
+  if (st.view==='month'){ const g = monthGrid(st.y, st.m), rows = [], first = mk(st.y,st.m)+'-01', last = lastOf(mk(st.y,st.m));
+    if (S.set.hm===2) return g.map((w,wi) => { const mon = iso(w[0]), a = mon<first ? first : mon, b = iso(w[6])>last ? last : iso(w[6]);  // weeks only, like weekly goals
+      return {key:b, rk:'w:'+mon, a, b, wi, mon, range:true, go:`data-act="halWeek" data-w="${mon}"`, lab:`<b>week ${wi+1}</b>`, blk:true, td:mon===iso(mondayOf(today))}; });
+    g.forEach((w,wi) => w.forEach(d => { if (d.getMonth()!==st.m) return; const k = iso(d);
+      rows.push({key:k, rk:k, a:k, b:k, wi, mon:iso(w[0]), lab:`<b>${d.getDate()}</b><span>${DOW_U[dowOf(d)]}</span>`, blk:dowOf(d)===0 || d.getDate()===1, td:k===TODAY}); }));
+    return rows; }
+  return Array.from({length:12}, (_,m) => ({key:mk(st.y,m), rk:mk(st.y,m), a:mk(st.y,m)+'-01', b:iso(new Date(st.y,m+1,0)), m, range:true, go:`data-act="halMonth" data-m="${m}"`, lab:`<b>${m+1}월</b>`, blk:true,
+    td: st.y===today.getFullYear() && m===today.getMonth()}));
+}
+// milestones that overlap in time get their own lane, so things running together sit side by side
+function lanesOf(sid){
+  const list = msOf(sid).filter(m => m.due).map(m => ({m, a:msStart(m), b:m.due})).sort((x,y) => x.a.localeCompare(y.a) || x.b.localeCompare(y.b));
+  const ends = [], lane = {};
+  list.forEach(x => { // only a milestone given its own start can truly overlap; the rest always stay on lane 0
+    let j = x.m.start ? ends.findIndex(e => e < x.a) : 0; if (j<0){ j = ends.length; ends.push(''); }
+    if (!ends.length) ends.push(''); ends[j] = ends[j] > x.b ? ends[j] : x.b; lane[x.m.id] = j; });
+  return {lane, n: Math.max(1, ends.length), list};
+}
+const dayTodos = (sid, a, b) => Object.keys(S.days).filter(k => k>=a && k<=b).sort()   // 일정 and 할일 filed under this 세부할일
+  .flatMap(k => L('days',k).filter(i => i.sub===sid).map(i => ({k, i})));
+// in the 할일 page: 일반 = square, 이정표 (a starred 일반) = a larger circle, 루틴 (finish-by with daily shares) = routine mark
+// 할일 page. 주: everything. 연 · 월: 일정 and 이정표 in full; 기본 할일 and 루틴 only as tiny dots sitting on the road line
+// 설정 → 할일 페이지 표시: for each view (연 · 월 · 주) and kind, 'full' (named, as on the 주 page) · 'dot' (a tiny dot on the road) · 'none'
+// 주 always shows everything by name; 연 · 월 show a kind by name when it's switched on, otherwise as a tiny dot
+const HFULL_DEF = {star:true, event:true, todo:false, routine:false};
+const fullIn = kind => S.set.hfull?.[kind] ?? HFULL_DEF[kind];
+const showOf = (view, kind) => view==='week' || fullIn(kind) ? 'full' : 'dot';
+// one 루틴 row: its last day and its other days look the same, only the colour differs (lighter = not the last day)
+function pstHTML(m, ref, done, end, j){
+  const tog = ref ? ` data-act="tog" data-ref="${ref}"` : ' disabled';
+  const open = ref && ref.startsWith('ss|') ? `data-act="editDay" data-ref="${ref}"` : `data-act="editMs" data-id="${m.id}"`;
+  return `<div class="pst${end?' end':''}${done?' done':''}" style="--j:${j}"${end?` data-ref="ms||${m.id}" data-drag`:''}><button class="${done?'done':''}"${tog} title="${esc(m.text)}" aria-label="${esc(m.text)} 체크"></button><span ${open}>${esc(m.text)}</span></div>`;
+}
+function entriesOf(s, r, L2){
+  const list = msOf(s.id), dayMode = !r.range, view = st.view, out = [];
+  const dot = (k, cls, title) => out.push({k, o:1, h:`<div class="ldot${cls}" title="${title}"><i></i></div>`});
+  // 일정 · 이정표 · 기본 할일
+  dayTodos(s.id, r.a, r.b).forEach(({k:d, i}) => {
+    const ev = i.type==='event', mode = showOf(view, ev ? 'event' : i.star ? 'star' : 'todo');
+    if (mode==='none') return;
+    if (mode==='dot') return dot(d, i.done ? ' done' : '', `${md(d)} ${esc(i.text)}`);
+    out.push({k:d, h:`<div class="pm gen${ev?' ev':''}${i.star?' star':''}${i.done?' done':''}" style="--j:0" data-ref="days|${d}|${i.id}" data-drag><button class="pdot ${ev?'e':i.star?'c':'g'}" data-act="tog" data-ref="days|${d}|${i.id}" aria-label="${esc(i.text)} 완료 표시"></button><span class="pt" data-act="editDay" data-ref="days|${d}|${i.id}">${esc(i.text)}</span>${!dayMode?`<small>${md(d)}</small>`:''}</div>`});
+  });
+  // 루틴: a day row shows it on each of its days; a week / month row shows it once, however many days it has there
+  const rmode = showOf(view, 'routine');
+  if (rmode!=='none') list.filter(m => m.due && msStart(m) <= r.b && m.due >= r.a && (dayMode || !m.done || m.due <= r.b)).forEach(m => {
+    if (dayMode){
+      const end = m.due===r.key && !S.sskip?.[`${r.key}|${m.id}`];   // a last day removed on its own is gone here too, as in the planner
+      if (!end && !stepsOn(r.key).includes(m)) return;
+      const ref = end ? `ms||${m.id}` : `ss|${r.key}|${m.id}`, done = end ? m.done : sDone(r.key, m.id);
+      if (rmode==='dot') return dot(r.key, done ? ' done' : end ? '' : ' run', esc(m.text));
+      out.push({k:r.key, o:2, h:pstHTML(m, ref, done, end, L2.lane[m.id]||0)});
+    } else {
+      const end = m.due <= r.b, k = end ? m.due : (msStart(m) > r.a ? msStart(m) : r.a);
+      if (rmode==='dot') return dot(k, m.done ? ' done' : end ? '' : ' run', esc(m.text));
+      out.push({k, o:2, h:pstHTML(m, end ? `ms||${m.id}` : null, m.done, end, 0)});
+    }
+  });
+  return out.sort((x,y) => x.k.localeCompare(y.k) || (x.o||0)-(y.o||0)).map(x => x.h).join('');
+}
+function dotsOf(){ return ''; }
+// 로드맵 2: one unbroken path per 세부할일 — only the things themselves, in date order, joined by the line
+function halRange(){
+  if (st.view==='year') return [`${st.y}-01-01`, `${st.y}-12-31`];
+  if (st.view==='month') return [mk(st.y,st.m)+'-01', lastOf(mk(st.y,st.m))];
+  return [iso(st.wk), isoAdd(iso(st.wk),6)];
+}
+function halRoad(){
+  const subs = visSubs();
+  if (!subs.length) return `<div class="empty"><b>세부할일이 없습니다</b>위에서 할일을 고르고 “+ 세부”로 세부할일(예: 공부 → 수학)을 만들어 주세요.</div>`;
+  const [A, B] = halRange(), yr = st.view==='year', two = new Set(subs.map(s => s.cat)).size > 1, tp = S.set.hl===2 || S.set.hl===3;
+  const def = TODAY>=A && TODAY<=B ? TODAY : B;
+  const cols = subs.map(s => {
+    const list = msOf(s.id), cur = list.find(m => !m.done);
+    const nodes = [];
+    list.filter(m => m.due && m.due>=A && m.due<=B).forEach(m => nodes.push({k:m.due, o:1, h:`<div class="rn rtn${m.done?' done':''}${m===cur?' now':''}" data-ref="ms||${m.id}" data-drag><span class="rd">${md(m.due)}</span><button class="rk pdot r rk-${S.set.rmk}" data-act="tog" data-ref="ms||${m.id}" aria-label="완료"></button><span class="rt" data-act="editMs" data-id="${m.id}">${esc(m.text)}</span></div>`}));
+    dayTodos(s.id, A, B).filter(({i}) => !yr || i.star).forEach(({k,i}) => nodes.push({k, o:2, h:`<div class="rn gen${i.star?' star':''}${i.done?' done':''}" data-ref="days|${k}|${i.id}" data-drag><span class="rd">${md(k)}</span><button class="rk pdot ${i.star?'c':'g'}" data-act="tog" data-ref="days|${k}|${i.id}" aria-label="완료"></button><span class="rt" data-act="editDay" data-ref="days|${k}|${i.id}">${esc(i.text)}</span></div>`}));
+    // a 루틴 still running past the end of this page shows where it ends
+    list.filter(m => !m.done && m.due && m.due>B && msStart(m)<=B).forEach(m => nodes.push({k:B+'~', o:3, h:`<div class="rn rtn later${m===cur?' now':''}" data-ref="ms||${m.id}" data-drag><span class="rd">${m.due===OPEN ? '계속' : md(m.due)}</span><button class="rk pdot r rk-${S.set.rmk}" data-act="tog" data-ref="ms||${m.id}" aria-label="완료"></button><span class="rt" data-act="editMs" data-id="${m.id}">${esc(m.text)}<em class="until"> →</em></span></div>`}));
+    if (TODAY>=A && TODAY<=B){
+      nodes.push({k:TODAY, o:0, h:`<div class="rn today"><span class="rd">오늘</span><span class="rk tick"></span><span class="rt"></span></div>`});
+      stepsOn(TODAY).filter(m => m.sub===s.id).forEach(m => { const d = sDone(TODAY, m.id);
+        nodes.push({k:TODAY, o:0.5, h:`<div class="rn step${d?' done':''}"><span class="rd"></span><button class="rk sq${d?' done':''}" data-act="tog" data-ref="ss|${TODAY}|${m.id}" aria-label="오늘 몫"></button><span class="rt">${esc(m.text)} · 오늘 몫</span></div>`}); });
+    }
+    nodes.sort((x,y) => x.k.localeCompare(y.k) || x.o - y.o);
+    // the line between two things is drawn dark while a 루틴 is running through it
+    const runs = k => { k = k.slice(0,10); return list.some(m => !m.done && m.due && msStart(m) <= k && m.due >= k); };
+    const body = nodes.map((n,i) => `<div class="rstep${i && runs(n.k) && runs(nodes[i-1].k) ? ' on' : ''}">${n.h}</div>`).join('') || `<div class="rnil">아직 없음</div>`;
+    return `<section class="rcol" data-drop="pc|${s.id}|${def}"><button class="rhd" data-act="hsub" data-s="${s.id}" data-c="${s.cat}">${two?`<span>${esc(catById(s.cat).name)}</span>`:''}${esc(s.name)}<small>${pct(progSub(s.id))}%</small></button>
+      <div class="rpath">${body}</div>${PLUS(`pc|${s.id}|${def}`)}</section>`;
+  }).join('');
+  return `<div class="rmap${tp?' tp':''}" style="--cols:${subs.length}">${cols}</div>`;
+}
+function lanesHTML(s, r, L2){ // a stretch is drawn while a milestone is running
+  const cur = msOf(s.id).find(m => !m.done);
+  let h = S.set.hv===2 ? Array.from({length:st.view==='week' ? L2.n : 1}, (_,j) => `<i class="ln base" style="--j:${j}"></i>`).join('') : ''; // every lane is a full track, so no circle ever floats off its line
+  return h;   // the road is one even line — a routine's stretch isn't painted on it
+}
+function halTable(){
+  const subs = visSubs();
+  if (!subs.length) return `<div class="empty"><b>세부할일이 없습니다</b>위에서 할일을 고르고 “+ 세부”로 세부할일(예: 공부 → 수학)을 만들어 주세요.</div>`;
+  // the dates (week / day / month) in one box; each 할일 gets its own roadmap box, with gaps between them
+  const rows = halRows(), groups = userCats().map(c => ({c, subs:subs.filter(s => s.cat===c.id)})).filter(g => g.subs.length);
+  const two = false, top = 1, last = rows.length-1;   // no small 할일 name row above the 세부할일 names (the chips on top already say it)
+  const cols = ['64px'], place = {};
+  groups.forEach(g => { cols.push('14px'); g.start = cols.length+1; g.subs.forEach(s => { place[s.id] = cols.length+1; cols.push('minmax(max-content,1fr)'); }); });
+  const what = st.view==='year' ? `${st.y}` : st.view==='month' ? `${st.y}.${st.m+1}` : `${st.y}.${st.m+1}.w${weekIndex()+1}`;
+  let h = `<div class="hh corner" style="grid-row:1/${top+1};grid-column:1">${what}</div>`;
+  if (two) groups.forEach(g => { h += `<button class="hh cat cf cl" data-col="c:${g.c.id}" data-fk="g:${g.c.id}" data-act="hcat" data-c="${g.c.id}" title="${esc(g.c.name)} 전체" style="grid-row:1;grid-column:${g.start}/span ${g.subs.length}">${ring(pct(progCat(g.c.id)), 18, g.c.color, esc(catLabel(g.c)), 2)}<span class="nm">${esc(g.c.name)}</span></button>`; });
+  rows.forEach((r,i) => { h += `<div class="hlab${r.blk?' blk':''}${r.td?' td':''}${r.go?' go':''}${i===last?' rl':''}${i===0?' r0':''}" data-rk="${r.rk}"${r.go?` ${r.go} title="열어 보기"`:''} style="grid-row:${i+top+1};grid-column:1">${r.lab}</div>`; });
+  groups.forEach(g => g.subs.forEach((s,ci) => {
+    const col = place[s.id], L2 = lanesOf(s.id), edge = (ci===0 ? ' cf' : '') + (ci===g.subs.length-1 ? ' cl' : '');
+    h += `<button class="hh subh${two?' c2':' top'}${edge}" data-col="${s.id}" data-fk="h:${s.id}" style="grid-row:${top};grid-column:${col}" data-act="hsub" data-s="${s.id}" data-c="${s.cat}"><span class="nm">${esc(s.name)}</span><small>${pct(progSub(s.id))}%</small></button>`;
+    rows.forEach((r,i) => {
+      const inner = entriesOf(s, r, L2) + dotsOf(s, r);
+      h += `<div class="pc${r.blk?' blk':''}${r.td?' td':''}${inner?'':' none'}${edge}${i===last?' rl':''}${i===0?' r0':''}" data-col="${s.id}" data-fk="c:${s.id}:${r.rk}" data-rk="${r.rk}" style="grid-row:${i+top+1};grid-column:${col};--n:${st.view==='week' ? L2.n : 1}" data-act="plus" data-t="pc|${s.id}|${r.key}" data-drop="pc|${s.id}|${r.key}">${lanesHTML(s, r, L2)}<div class="pin">${inner}</div><span class="pcplus" aria-hidden="true">+</span></div>`;
+    });
+  }));
+  return `<div class="ht split ${st.view}${rows[0]?.range?' range':''} v${S.set.hv} wide" style="grid-template-columns:${cols.join(' ')};grid-template-rows:${two?'22px ':''}22px repeat(${rows.length},auto)">${h}</div>`;
+}
+// 배치 2·3: the same table turned on its side — 세부할일 as rows, time running left to right
+function halTableT(subs){
+  const rows = halRows(), two = new Set(subs.map(s => s.cat)).size > 1, c0 = two ? 3 : 2, dmon = st.view==='month' && !rows[0].range, top = dmon ? 2 : 1;
+  const cw = 'minmax(max-content,1fr)';   // columns grow to the words, never cut them
+  let h = `<div class="hh corner" style="grid-row:1/${top+1};grid-column:1/${c0}"></div>`;
+  if (dmon) monthGrid(st.y, st.m).forEach((w,wi) => { const idx = rows.map((r,i) => r.wi===wi ? i : -1).filter(i => i>=0); if (!idx.length) return;
+    h += `<button class="hwk t${iso(w[0])===iso(mondayOf(today))?' td':''}" data-act="halWeek" data-w="${iso(w[0])}" style="grid-row:1;grid-column:${idx[0]+c0}/${idx[idx.length-1]+c0+1}">week ${wi+1}</button>`; });
+  rows.forEach((r,i) => { h += `<div class="tlab${r.blk?' blk':''}${r.td?' td':''}${r.go?' go':''}"${r.go?` ${r.go}`:''} style="grid-row:${top};grid-column:${i+c0}">${r.lab}</div>`; });
+  if (two){ let rr = top+1; userCats().forEach(cat => { const n = subs.filter(s => s.cat===cat.id).length; if (!n) return;
+    h += `<div class="hh cat v" style="grid-row:${rr}/span ${n};grid-column:1">${ring(pct(progCat(cat.id)), 18, cat.color, esc(catLabel(cat)), 2)}${esc(cat.name)}</div>`; rr += n; }); }
+  subs.forEach((s,si) => {
+    const row = si+top+1, L2 = lanesOf(s.id);
+    h += `<div class="hh subh v" style="grid-row:${row};grid-column:${c0-1}" data-act="hsub" data-s="${s.id}" data-c="${s.cat}">${esc(s.name)}<small>${pct(progSub(s.id))}%</small></div>`;
+    rows.forEach((r,i) => { const inner = entriesOf(s, r, L2);
+      h += `<div class="pc${r.blk?' blk':''}${r.td?' td':''}${inner?'':' none'}" style="grid-row:${row};grid-column:${i+c0};--n:${L2.n}" data-act="plus" data-t="pc|${s.id}|${r.key}" data-drop="pc|${s.id}|${r.key}">${lanesHTML(s, r, L2)}<div class="pin">${inner}</div><span class="pcplus" aria-hidden="true">+</span></div>`; });
+  });
+  return `<div class="ht tp ${st.view}${rows[0].range?' range':''} v${S.set.hv}" style="grid-template-columns:${two?'64px ':''}84px repeat(${rows.length},${cw});grid-template-rows:${dmon?'22px ':''}30px repeat(${subs.length},auto)">${h}</div>`;
+}
+// 3 · 목록: only what's there, block by block (days · weeks · months)
+function halList(){
+  const subs = visSubs(); if (!subs.length) return halTable();
+  const one = subs.length===1, sid1 = one ? subs[0].id : '';
+  let blocks;
+  if (st.view==='week') blocks = halRows().map(r => ({key:r.key, a:r.a, b:r.b, lab:`${pIso(r.key).getDate()} ${DOW[dowOf(pIso(r.key))]}`, td:r.td}));
+  else if (st.view==='month') blocks = monthGrid(st.y, st.m).map((w,wi) => ({key:'w:'+iso(w[0]), a:iso(w[0]), b:iso(w[6]), lab:`week ${wi+1}`, act:`data-act="halWeek" data-w="${iso(w[0])}"`, td:iso(w[0])===iso(mondayOf(today))}));
+  else blocks = Array.from({length:12}, (_,m) => ({key:mk(st.y,m), a:mk(st.y,m)+'-01', b:iso(new Date(st.y,m+1,0)), lab:`${m+1}월`, act:`data-act="halMonth" data-m="${m}"`, td:st.y===today.getFullYear() && m===today.getMonth()}));
+  const tagS = sid => one ? '' : `<span class="tag">${esc(subById(sid).name)}</span>`;
+  return `<div class="hlist">` + blocks.map(bk => {
+    const going = subs.flatMap(s => msOf(s.id).filter(m => !m.done && m.due && msStart(m)<=bk.b && m.due>bk.b));
+    const ev = [];
+    subs.forEach(s => { const list = msOf(s.id);
+      list.filter(m => m.due && m.due>=bk.a && m.due<=bk.b).forEach(m => ev.push({k:m.due, ms:true, h:`<div class="pm${m.done?' done':''}" data-ref="ms||${m.id}" data-drag><button class="pdot" data-act="tog" data-ref="ms||${m.id}"></button><span class="pt" data-act="editMs" data-id="${m.id}">${esc(m.text)}</span>${tagS(s.id)}</div>`}));
+      if (!(st.view==='year' && S.set.hy===3)) dayTodos(s.id, bk.a, bk.b).forEach(({k,i}) => ev.push({k, h:`<div class="pm gen${i.done?' done':''}" data-ref="days|${k}|${i.id}" data-drag>${mark('td',i.done)}<span class="pt" data-act="editDay" data-ref="days|${k}|${i.id}">${esc(i.text)}</span>${tagS(s.id)}</div>`})); });
+    const msFirst = st.view==='year' && S.set.hy===1, days = !(st.view==='month' && S.set.hm===2) && !msFirst;
+    ev.sort((x,y) => (msFirst ? (y.ms?1:0)-(x.ms?1:0) : 0) || x.k.localeCompare(y.k));
+    let body = '', last = '';
+    ev.forEach(x => { if (x.k!==last && st.view!=='week' && days){ body += `<div class="ld">${md(x.k)}</div>`; last = x.k; } body += x.h; });
+    const end = st.view==='year' ? monthDue(bk.key) : bk.b;
+    return `<section class="hb${bk.td?' td':''}" data-rk="${bk.key}" data-drop="pc|${sid1}|${st.view==='year'?bk.key:end}">
+      <div class="hbh"><button class="hbl" ${bk.act||''}>${bk.lab}</button>${going.map(m => `<span class="going">${esc(m.text)} 진행 중</span>`).join('')}<button class="hbadd" data-act="plus" data-t="pc|${sid1}|${st.view==='year'?bk.key:end}" aria-label="추가">+</button></div>
+      <div class="hbb">${body || '<span class="nil">—</span>'}</div></section>`;
+  }).join('') + `</div>`;
+}
+function hquick(add, where){ // version 3: tap the mark to switch 이정표 / 일반
+  return `<div class="add qa h" data-add="${add}"><span class="qt" data-act="qth" title="이정표 · 일반">${mark(st.htype==='ms'?'ms':'td',false,'ghost')}</span><input placeholder="${st.htype==='ms'?'+ 이정표':'+ 일반'}${where?' · '+where:''}" data-day="${where||''}" autocomplete="off" enterkeyhint="done" aria-label="추가"></div>`;
+}
+function stackHTML(){
+  const all = L('stack','all'), v3 = S.set.ver===3;
+  const groups = st.hsub==='all' ? subsOf(st.hcat).map(s => ({name:s.name, list:all.filter(i => i.sub===s.id)}))   // only things filed under a 세부할일
+    : [{name:'', list:all.filter(i => i.sub===st.hsub)}];
+  const n = groups.flatMap(g => g.list).filter(x => !x.done).length;
+  let h = groups.filter(g => g.list.length).map(g => (g.name ? lab(esc(g.name)) : '') +
+    g.list.map(x => itemRow(`stack|all|${x.id}`, x.kind==='ms' ? 'rt' : x.kind==='event' ? 'ev' : x.star ? 'ms' : 'td', x.done, x.text, {drag:true})).join('')).join('');
+  const sub = st.hsub==='all' ? '' : st.hsub;
+  h += PLUS(`stack|${st.hcat}|${sub}`, '보관함에 추가');
+  return {html: h + `<div class="note2">보관함은 아직 적용하지 않은 것들입니다. 왼쪽 날짜로 끌어 놓으면 적용되고, 왼쪽에서 여기로 끌어 오면 빠집니다.</div>`, n};
+}
+function halView(){
+  if (st.hcat!=='all' && !catById(st.hcat)) st.hcat = 'all';
+  if (st.hsub!=='all' && (!subById(st.hsub) || st.hcat==='all' || subById(st.hsub).cat!==st.hcat)) st.hsub = 'all';
+  const r1 = `<div class="hrow"><button class="hchip${st.hcat==='all'?' on':''}" data-act="hcat" data-c="all">전체</button>` +
+    userCats().map(c => `<button class="hchip${st.hcat===c.id?' on':''}" data-act="hcat" data-c="${c.id}">${ring(pct(progCat(c.id)), 26, c.color, esc(catLabel(c)), 2)}<span>${esc(c.name)}</span><small>${pct(progCat(c.id))}%</small></button>`).join('') +
+    `<div class="add" data-add="cats|"><input placeholder="+ 할일" autocomplete="off" enterkeyhint="done" aria-label="할일 추가"></div></div>`;
+  const all = st.hcat==='all';
+  const r2 = all ? '' : `<div class="hrow s"><button class="hchip${st.hsub==='all'?' on':''}" data-act="hsub" data-s="all">전체</button>` +
+    subsOf(st.hcat).map(s => `<button class="hchip${st.hsub===s.id?' on':''}" data-act="hsub" data-s="${s.id}" data-c="${s.cat}">${esc(s.name)}<small>${pct(progSub(s.id))}%</small></button>`).join('') +
+    `<div class="add" data-add="subs|${st.hcat}"><input placeholder="+ 세부" autocomplete="off" enterkeyhint="done" aria-label="세부할일 추가"></div></div>`;
+  const what = st.view==='year' ? `${st.y}` : st.view==='month' ? `${st.y}.${st.m+1}` : `${st.m+1}월 week ${weekIndex()+1}`;
+  const hint = '';
+  const sk = st.hcat==='all' ? null : stackHTML();   // 보관함 whenever a 할일 is chosen
+  const tp3 = S.set.hl===3 && !st.portrait;
+  return `<div class="hal${tp3?' tp3':''}">${tp3?`<div class="hside">${r1}${r2}</div>`:r1+r2}<div class="hbody b2${sk?'':' wide'}">
+    <div class="htable${S.set.rm===2?' road':''}">${S.set.rm===2 ? halRoad() : halTable()}</div>${sk ? `<div class="hstackw"><div class="whs">보관함<small>${sk.n||''}</small></div><div class="hstack" data-drop="stack|all">${sk.html}</div></div>` : ''}</div></div>`;
+}
+/* going down a level: the chosen month / week stretches open, the rest folds away */
+// changing 연 ⇄ 월 ⇄ 주: the box grows to its new size while each thing glides to where it now belongs
+// things glide from where they were to where they now are (FLIP). Only the outermost marked element moves,
+// so a circle never gets moved twice (once with its row, once on its own)
+const flipEls = root => [...root.querySelectorAll('[data-ref], [data-fk]')].filter(el => !el.parentElement.closest('[data-ref], [data-fk]') || el.dataset.fk);
+const flipKey = el => el.dataset.fk || el.dataset.ref;
+function snapHal(){
+  const tbl = app.querySelector('.htable'), at = {}; if (!tbl) return {at};
+  flipEls(tbl).forEach(el => { const k = flipKey(el); if (!at[k]) at[k] = el.getBoundingClientRect(); });
+  return {at, box: tbl.getBoundingClientRect()};
+}
+function flipFrom(before, ms=480){
+  const tbl = app.querySelector('.htable'); if (!tbl) return;
+  const box0 = before.box, box1 = tbl.getBoundingClientRect(), ease = 'cubic-bezier(.3,.1,.2,1)';
+  if (box0) tbl.animate([{height:box0.height+'px', overflow:'hidden'}, {height:box1.height+'px', overflow:'hidden'}], {duration:ms, easing:ease});
+  const seen = new Set();
+  flipEls(tbl).forEach(el => { const k = flipKey(el), o = before.at[k], n = el.getBoundingClientRect();
+    if (o && !seen.has(k)){ seen.add(k); const dx = o.left-n.left, dy = o.top-n.top; if (Math.abs(dx) + Math.abs(dy) > .5) el.animate([{transform:`translate(${dx}px,${dy}px)`}, {transform:'translate(0,0)'}], {duration:ms, easing:ease}); }
+    else if (!el.dataset.fk) el.animate([{opacity:0}, {opacity:1}], {duration:300, delay:ms*.45, easing:'ease', fill:'backwards'}); });
+  tbl.querySelectorAll('.ln, .ldot, .pst').forEach(el => el.animate([{opacity:0}, {opacity:1}], {duration:280, delay:ms*.5, fill:'backwards'}));   // road lines settle in after the move
+}
+function halGo(keep, apply){
+  if (reduced || st.busy){ apply(); render(); return; }
+  const before = snapHal(); apply(); render(); flipFrom(before);
+}
+// narrowing (전체 → a 할일, → a 세부할일): what is left of the chosen one leaves to the left, what is right of it leaves to the right,
+// then the chosen one slides to the far left and widens
+function halNarrow(keepCol, apply){
+  const cells = [...app.querySelectorAll('.ht [data-col]')];
+  const kept = cells.filter(c => keepCol(c.dataset.col)), going = cells.filter(c => !keepCol(c.dataset.col));
+  if (reduced || st.busy || !going.length || !kept.length){ apply(); render(); return; }
+  st.busy = true;
+  const x0 = Math.min(...kept.map(c => c.getBoundingClientRect().left));
+  going.forEach(c => c.classList.add(c.getBoundingClientRect().left < x0 ? 'slideL' : 'slideR'));
+  setTimeout(() => { st.busy = false; const before = snapHal(); apply(); render(); flipFrom(before, 420); }, 260);
+}
+
+/* ---------- one creation sheet for everything ----------
+   v1: 날짜 / 내용 / 종류 / (분류 · 세부 | 메모 | 요일) rows · v2: 종류 as tabs on top · v3 edits use the v1 sheet.
+   new items: Enter adds and keeps the sheet open for the next one */
+const TYPES = {plan:[['event','일정'],['todo','할일'],['routine','루틴']], hal:[['todo','일반'],['ms','루틴']]};
+function chipRow(list, sel, act, attr){
+  return `<div class="chips">${list.map(x => `<button type="button" class="chip${sel===x.id?' on':''}" style="--c:${x.color||'#9b9b9b'};--t:${x.color?x.color+'2e':'#ececec'}" data-act="${act}" data-${attr}="${x.id}">${x.emoji?esc(x.emoji)+' ':''}${esc(x.name)}</button>`).join('') || '<span class="hint">없음</span>'}</div>`;
+}
+function catEdHTML(e){
+  const c = e.kind==='cat' ? catById(e.id) : subById(e.id); if (!c) return '';
+  const pal = e.kind==='cat' ? `<div class="rw"><div><div class="row"><span class="k w">색</span><div class="chips">${PALETTE.map(p => `<button type="button" class="sw2${e.color===p?' on':''}" style="--c:${p}" data-act="ecolor" data-v="${p}" aria-label="색"></button>`).join('')}<label class="cpick${e.color && !PALETTE.includes(e.color)?' on':''}" title="다른 색" style="${e.color && !PALETTE.includes(e.color)?`--c:${e.color}`:''}"><input type="color" data-cp="cat" value="${e.color||'#4a78c8'}"><span>+</span></label></div></div></div></div>
+    <div class="rw"><div><div class="row"><span class="k w">아이콘</span><input class="txt" id="eemo" placeholder="이모지 하나" value="${esc(e.emoji||'')}" autocomplete="off"></div></div></div>` : '';
+  return `<div class="ov edov${e.noanim?' still':''}" data-act="close"><div class="sheet" id="ed" role="dialog" aria-label="${e.kind==='cat'?'할일':'세부할일'}">
+    <div class="rw"><div><div class="row"><span class="ttl">${e.kind==='cat'?'할일':'세부할일'}</span></div></div></div>
+    <div class="rw"><div><div class="row"><span class="k w">이름</span><input class="txt" id="etext" value="${esc(e.text)}" autocomplete="off" enterkeyhint="done"></div></div></div>${pal}
+    ${delFoot(e, `<span class="note">${e.kind==='cat'?'삭제하면 세부할일과 루틴도 함께 지워집니다':'삭제하면 루틴도 함께 지워집니다'}</span>`)}</div></div>`;
+}
+const PALETTE = ['#4a78c8','#3f9bd6','#4aa3a8','#2f8f7a','#5a9e6f','#8aa83a','#c4a23a','#d0893f','#e06a3b','#c75b4a','#d1497a','#b9568a','#9b59b6','#7a68c4','#5b6ad0','#6d7f8c','#8a6d55','#333333'];
+
+/* ---------- settings: only the demo's version switches ---------- */
+function settingsHTML(){
+  if (!st.setOpen) return '';
+  const opt = (k, v, t, d, lb) => `<button class="vopt${S.set[k]===v?' on':''}" data-act="setv" data-k="${k}" data-v="${v}"><b>${lb||v}</b><span>${t}</span><small>${d}</small></button>`;
+  const rk = (v, t, d) => `<button class="vopt${S.set.rmk===v?' on':''}" data-act="setv" data-k="rmk" data-v="${v}"><b><span class="ck rt rk-${v}" style="font-size:15px"><i></i></span></b><span>${t}</span><small>${d}</small></button>`;
+  const HL = ['#fff1a6','#ffe08a','#ffe2c4','#ffcfb8','#ffd9e2','#f6d2f0','#e7defe','#d2e8ff','#c9f0ef','#d6f2c6','#e9f3c2'];
+  const hl = (k, name, kind) => `<div class="hlrow"><span class="it k-${k==='hal'?'hg':kind}"><span class="ck ${kind}${kind==='rt'?' rk-'+S.set.rmk:''}"><i></i></span><span class="tx">${name}</span></span>
+      <button class="sw3 none${!S.set.hlc[k]?' on':''}" data-act="setc" data-k="${k}" data-v="" aria-label="없음">✕</button>${HL.map(c => `<button class="sw3${S.set.hlc[k]===c?' on':''}" style="--c:${c}" data-act="setc" data-k="${k}" data-v="${c}" aria-label="형광펜 색"></button>`).join('')}<label class="cpick sm${S.set.hlc[k] && !HL.includes(S.set.hlc[k])?' on':''}" title="다른 색" style="${S.set.hlc[k] && !HL.includes(S.set.hlc[k])?`--c:${S.set.hlc[k]}`:''}"><input type="color" data-cp="hl" data-k="${k}" value="${S.set.hlc[k]||'#fff1a6'}"><span>+</span></label></div>`;
+  const HK = [['star','이정표'],['event','일정'],['todo','할일'],['routine','루틴']], HV = [['year','연'],['month','월'],['week','주']];
+  const HM = {full:'전체', dot:'<i></i>점', none:'숨김'};
+  const cur = allFonts().some(f => f[0]===S.set.font) ? S.set.font : 'base';
+  return `<div class="ov${st.setStill?' still':''}" data-act="setClose"><div class="sheet set" id="set" role="dialog" aria-label="설정">
+    <div class="shead"><h4>설정</h4><button class="btn dark" data-act="setClose">완료</button></div>
+    <div class="sec"><div class="sh">글씨체</div><div class="sd">플래너 전체의 글씨체를 바꿉니다.</div>
+      <div class="vopts">${allFonts().map(([k,name,en,stack]) => `<button class="vopt${cur===k?' on':''}" data-act="setv" data-k="font" data-v="${k}"><span style="font-family:${esc(stack)}">${esc(name)} 2026 할일</span><small>${esc(en)}</small>${k.startsWith('u_')?`<span class="fdel" data-act="fontDel" data-v="${k}" title="이 글씨체 지우기" aria-label="지우기">✕</span>`:''}</button>`).join('')}</div>
+      <div class="fontadd"><input id="fontin" placeholder="글씨체 이름 (예: Gaegu, Dongle)" autocomplete="off" enterkeyhint="done" aria-label="추가할 글씨체 이름"><button class="btn" data-act="fontAdd">추가</button></div>
+      <div class="hint">Google Fonts에 있는 글씨체 이름이나, 이 기기에 설치된 글씨체 이름을 적으면 목록에 추가됩니다.</div></div>
+    <div class="sec"><div class="sh">할일 페이지 연 · 월에 이름까지 표시</div><div class="sd">켠 것은 연 · 월에서도 주 페이지처럼 이름까지 보이고, 끈 것은 작은 점으로 보여요.</div>
+      <div class="hfrow">${HK.map(([k,l]) => `<button class="hft${fullIn(k)?' on':''}" data-act="hfull" data-k="${k}" role="switch" aria-checked="${fullIn(k)}">${l}</button>`).join('')}</div></div>
+    <div class="sec"><div class="sh">형광펜</div><div class="sd">고른 색으로 줄 전체에 같은 크기의 형광펜을 칠합니다. 월 페이지(달력 · 주간목표)와 주 페이지(주간 달력 · 주간목표)에 적용돼요.</div>
+      ${hl('event','일정','ev')}${hl('todo','할일','td')}${hl('routine','루틴','rt')}
+      <div class="hlrow"><button class="sw4${S.set.hlcat!==false?' on':''}" data-act="setcat" role="switch" aria-checked="${S.set.hlcat!==false}"><i></i></button><span class="hltx">할일로 분류된 것은 그 할일의 색으로 <small>(할일 페이지에서 정한 색)</small></span></div></div>
+    <div class="sec"><div class="sh">연 페이지에 표시</div><div class="sd">플래너 연 페이지의 날짜 아래에 작은 점으로 보여 줍니다. 색은 위의 형광펜 색을 따라요.</div>
+      ${[['event','일정'],['todo','할일'],['routine','루틴']].map(([k,l]) => `<div class="hlrow"><button class="sw4${S.set.ys[k]?' on':''}" data-act="ysw" data-k="${k}" role="switch" aria-checked="${!!S.set.ys[k]}"><i></i></button><span class="hltx">${l}</span><i class="ydot" style="background:${ydotColor(k)}"></i></div>`).join('')}</div>
+    <div class="sec"><div class="sh">월 페이지 요약</div><div class="sd">달력 칸에 다 안 들어갈 때 접어서 줄일지 고릅니다.</div>
+      <div class="vopts">${opt('sum',1,'요약 켜기','넘치면 루틴 → 할일 → 일정 순서로 접어서 “할일 2/5”처럼','켜기')}${opt('sum',2,'요약 끄기','칸을 세로로 늘려 모두 보여 줌','끄기')}</div></div>
+    <div class="sec"><div class="sh">데이터</div><div class="sd">모든 기록을 백업해 두거나 백업으로 되돌립니다. 다른 기기나 새 앱으로 옮길 때도 이걸 써요.</div>
+      <div class="bakrow">${CAN_DOWNLOAD ? `<button class="btn" data-act="bakFile">백업 파일 저장</button>` : ''}<button class="btn" data-act="bakCopy">백업 복사</button></div>
+      <div class="bakrow"><button class="btn" data-act="impFile">파일에서 가져오기</button><button class="btn" data-act="impPaste">붙여넣기</button><input type="file" id="impfile" accept=".json,application/json,text/plain" hidden></div>
+      ${st.pasteOpen ? `<textarea id="imptext" placeholder="복사해 둔 백업을 여기에 붙여넣으세요" aria-label="백업 붙여넣기"></textarea><div class="bakrow"><button class="btn quiet" data-act="impPasteNo">취소</button><button class="btn dark" data-act="impPasteGo">확인</button></div>` : ''}
+      ${st.bakShow ? `<textarea id="baktext" readonly aria-label="백업 내용">${esc(st.bakShow)}</textarea>` : ''}
+      ${st.imp ? `<div class="impask"><b>이 백업으로 바꿀까요?</b><span>${st.imp.sum}${st.imp.at ? ` · ${st.imp.at}에 저장된 것` : ''}</span><small>지금 데이터는 바꾸기 전에 따로 보관해 둬요.</small><div class="bakrow"><button class="btn quiet" data-act="impNo">취소</button><button class="btn dark" data-act="impYes">바꾸기</button></div></div>` : ''}
+      ${st.bakMsg ? `<div class="bakmsg">${esc(st.bakMsg)}</div>` : ''}
+      <div class="sd" style="margin-top:16px">예시로 들어 있던 일정 · 할일을 모두 지우고 빈 플래너로 시작합니다. 설정은 그대로 남아요.</div>
+      <div class="hlrow">${st.resetAsk ? `<span class="hltx">정말 모두 지울까요?</span><button class="btn quiet" data-act="resetNo">아니요</button><button class="btn dark" data-act="resetYes">모두 지우기</button>` : `<button class="btn" data-act="resetAsk">새로 시작하기</button>`}</div></div>
+  </div></div>`;
+}
+
+// 설정 → 글씨체 (Google Fonts, with the system Korean fonts behind each)
+const FONT_BASE = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif';
+const FONTS = [
+  ['base','기본','시스템 고딕', FONT_BASE],
+  ['batang','고운바탕','Gowun Batang', '"Gowun Batang","AppleMyungjo","Batang",serif'],
+  ['jua','주아','Jua · 동글동글', '"Jua",' + FONT_BASE]
+];
+// fonts the user added by name: loaded from Google Fonts when it has them, otherwise the one installed on the device
+const cleanFont = s => s.replace(/["'<>;{}()\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+const allFonts = () => [...FONTS, ...(S.set.cfonts || []).map(f => [f.k, f.name, '내가 추가', `"${f.name}",` + FONT_BASE])];
+const fontStack = k => (allFonts().find(f => f[0]===k) || FONTS[0])[3];
+function loadFonts(){
+  (S.set.cfonts || []).forEach(f => { if (document.querySelector(`link[data-font="${f.k}"]`)) return;
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.dataset.font = f.k;
+    l.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(f.name).replace(/%20/g, '+')}&display=swap`; document.head.appendChild(l); });
+}
+function addFont(){
+  const inp = app.querySelector('#fontin'), name = cleanFont(inp?.value || ''); if (!name) return;
+  S.set.cfonts ||= [];
+  let f = S.set.cfonts.find(x => x.name.toLowerCase()===name.toLowerCase());
+  if (!f){ f = {k:'u_' + uid(), name}; S.set.cfonts.push(f); }
+  S.set.font = f.k; save(); render();
+}
+const YDEF = {event:'#4a78c8', todo:'#c4a23a', star:'#141414', routine:'#9b9b9b', hal:'#5a9e6f'};
+const ydotColor = k => k==='star' ? '#141414' : (S.set.hlc?.[k] && k!=='hal' ? S.set.hlc[k] : YDEF[k]);
+
+/* ---------- editor state ---------- */
+function newPlan(date){ const rt = st.qtype==='routine'; st.ed = {mode:'plan', type:st.qtype, date: rt ? '' : date, start:date, text:'', memo:'', cat:st.qcat, sub:st.qsub, dows:[0,1,2,3,4,5,6]}; render(); }
+function newHal(type, preset={}){
+  const sub = st.hsub!=='all' ? st.hsub : null, cat = sub ? subById(sub).cat : st.hcat!=='all' ? st.hcat : null;
+  st.ed = {mode:'hal', type, place:'plan', date:isoAdd(TODAY,14), text:'', cat, sub, dows:[0,2,4], ...preset};
+  if (st.ed.sub && !st.ed.cat) st.ed.cat = subById(st.ed.sub)?.cat || null;
+  render();
+}
+function warn(id){ const r = app.querySelector('#'+id); if (!r) return; r.classList.add('warn'); setTimeout(() => r.classList.remove('warn'), 900); }
+function removeRef(ref){ const [c,,id] = ref.split('|'); if (c==='ms'){ const m = msById(id); S.ms = S.ms.filter(x => x!==m); return m; } return takeItem(ref); }
+function quickAdd(input){
+  const text = input.value.trim(); if (!text) return false;
+  input.value = '';
+  const [coll, key, x] = input.closest('.add').dataset.add.split('|');
+  if (coll==='days'){
+    if (st.qtype==='routine') S.routines.push({id:uid(), text, dows:[0,1,2,3,4,5,6], start:key});
+    else { const o = {id:uid(), text, type:st.qtype, done:false}; if (st.qtype!=='event') setCS(o, st.qcat, st.qsub); L('days', key).push(o); }
+  }
+  else if (coll==='weeks') L('weeks', key).push({id:uid(), text, done:false});
+  else if (coll==='stack'){ const o = {id:uid(), text, done:false, kind:st.htype}; setCS(o, key, x); if (st.htype==='ms') o.dows = [0,2,4]; L('stack','all').push(o); }
+  else if (coll==='pc'){ // key = 세부할일 ('' = keep), x = a day or a month
+    const sub = key || (st.hsub!=='all' ? st.hsub : null), due = x.length===7 ? monthDue(x) : x;
+    if (!sub){ input.value = text; return false; }
+    if (st.htype==='ms') S.ms.push({id:uid(), sub, text, due, dows:[0,2,4], done:false, created:TODAY});
+    else { const o = {id:uid(), text, type:'todo', done:false}; setCS(o, subById(sub).cat, sub); L('days', due).push(o); }
+    st.padd = null; }
+  else if (coll==='subs'){ const s = {id:uid(), cat:key, name:text}; S.subs.push(s); st.hsub = s.id; }
+  else if (coll==='cats'){ const c = {id:uid(), name:text, color:PALETTE[userCats().length % PALETTE.length]}; S.cats.push(c); const sb = {id:uid(), cat:c.id, name:text}; S.subs.push(sb); st.hcat = c.id; st.hsub = sb.id; }
+  save();
+  st.refocus = coll==='cats' ? `subs|${st.hcat}` : coll==='pc' ? null : input.closest('.add').dataset.add;
+  return true;
+}
+
+/* ---------- render ---------- */
+const app = document.getElementById('app');
+const body = () => st.hal ? halView() : st.view==='year' ? yearView() : st.view==='month' ? monthView() : weekView();
+function refreshBehind(){
+  const m = app.querySelector('main'), top = m.scrollTop, ht = app.querySelector('.htable'), hs = ht && [ht.scrollTop, ht.scrollLeft];
+  app.querySelector('#pg').innerHTML = body(); layout(); m.scrollTop = top;
+  const nt = app.querySelector('.htable'); if (nt && hs){ nt.scrollTop = hs[0]; nt.scrollLeft = hs[1]; }
+}
+function render(){
+  const same = st.lastView===`${st.hal}${st.view}`, old = app.querySelector('main'), keep = old && same ? old.scrollTop : 0;
+  const hs = null;
+  const hc = S.set.hlc || {};
+  loadFonts(); document.documentElement.style.setProperty('--font', fontStack(S.set.font));
+  // a sheet that stays open keeps its scroll position and doesn't fade in again
+  const oldSet = app.querySelector('#set'), oldEd = app.querySelector('#ed'), setTop = oldSet?.scrollTop || 0, edTop = oldEd?.scrollTop || 0;
+  st.setStill = !!oldSet;
+  app.className = (st.portrait ? 'portrait' : '') + (hc.event ? ' hl-ev' : '') + (hc.todo ? ' hl-td' : '') + (hc.routine ? ' hl-rt' : '') + (S.set.hlcat!==false ? ' hl-hc' : '');
+  app.style.setProperty('--hl-ev', hc.event || 'transparent'); app.style.setProperty('--hl-td', hc.todo || 'transparent'); app.style.setProperty('--hl-rt', hc.routine || 'transparent'); app.style.setProperty('--hl-hg', hc.hal || 'transparent');
+  const full = !st.hal && st.view==='month' && S.set.sum===2;
+  const pager = st.portrait && !st.hal && (st.view==='month' || st.view==='year');
+  const q = st.portrait && !st.hal && st.view==='week' && S.set.ver===3;
+  app.innerHTML = header() + `<main class="${pager && !full?'pager':''}${q?' qpad':''}${st.hal || full?' scroll':''}"><div id="pg"${st.slide?` class="slide-${st.slide}"`:''}>${body()}</div></main>` + edHTML() + settingsHTML() + qpHTML();
+  st.slide = null; st.dslide = null; st.dirty = false;
+  if (oldSet){ const s = app.querySelector('#set'); if (s) s.scrollTop = setTop; }
+  if (oldEd){ const s = app.querySelector('#ed'); if (s) s.scrollTop = edTop; }
+  if (st.ed) st.ed.noanim = false;
+  const knob = app.querySelector('.knob');
+  if (knob && st.knob!=null && st.knob!==VIDX[st.view]){ const to = VIDX[st.view]; requestAnimationFrame(() => requestAnimationFrame(() => { knob.style.transform = `translateX(${to*100}%)`; animTitle(to); })); }
+  st.knob = VIDX[st.view];
+  layout();
+  const mainEl = app.querySelector('main'); mainEl.scrollTop = keep;
+  const nt = app.querySelector('.htable');
+
+  st.lastView = `${st.hal}${st.view}`;
+  const anim = st.anim; st.anim = null;
+  if (anim==='in') mainEl.classList.add('fadein');
+  if (anim==='fold'){ if (st.portrait) mainEl.classList.add('fadein'); else foldBack(); }
+  if (st.ed && !st.setOpen && !coarse && !st.ed.kept){ const el = app.querySelector('#etext'); if (el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } st.ed.kept = true; }
+  else if (st.refocus){ app.querySelector(`.add[data-add="${st.refocus}"] input`)?.focus(); st.refocus = null; }
+}
+
+/* ---------- month ⇄ week: the week row unfolds (calendar and weekly goals together) ---------- */
+const rowsFor = (n, wi) => Array.from({length:n}, (_,i) => i===wi ? '1fr' : '0fr').join(' ');
+function setFold(wi, on){
+  const cal = app.querySelector('.month .cal'), wk = app.querySelector('.month .wkbox');
+  cal.querySelectorAll('.cell').forEach((c,i) => c.classList.toggle('fold', on && Math.floor(i/7)!==wi));
+  wk?.querySelectorAll('.wrow').forEach((r,i) => r.classList.toggle('fold', on && i!==wi));
+  cal.classList.toggle('unfold', on); wk?.classList.toggle('unfold', on);
+}
+function fillWeekRow(wi){ // the opened week shows exactly what the week page will show
+  monthGrid(st.y, st.m)[wi].forEach(d => { const b = app.querySelector(`.month .cb[data-iso="${iso(d)}"]`); if (b) b.innerHTML = dayList(iso(d)); });
+  const wh = app.querySelector('.month .wh'); if (wh) wh.innerHTML = `${foldBtn}<span>WEEK ${wi+1}</span>`;
+}
+function flyNums(wi){ // the week's dates travel between their cells and the Mon/Tue row, keeping their column
+  const row = monthGrid(st.y, st.m)[wi], spans = [...app.querySelectorAll('.month .dow .dw')];
+  return row.map((d,i) => {
+    const k = iso(d), el = document.createElement('i');
+    el.className = 'dn' + (k===TODAY?' td':'') + (d.getMonth()!==st.m?' out':''); el.textContent = d.getDate(); spans[i].appendChild(el);
+    return {el, src: d.getMonth()===st.m ? app.querySelector(`.month .cell[data-iso="${k}"] .d`) : null};
+  });
+}
+function unfoldTo(wk, sel){
+  // tall screens show one day at a time, so the 7-day row unfolding first would flash the wide-screen week — just fade in
+  if (st.view!=='month' || st.hal || reduced || st.busy || S.set.sum===2 || st.portrait) return false;
+  const g = monthGrid(st.y, st.m), wi = g.findIndex(w => iso(w[0])===iso(wk));
+  const cal = app.querySelector('.month .cal'), box = app.querySelector('.month .wkbox');
+  if (wi<0 || !cal) return false;
+  st.busy = true; moveKnob(2, {w:`week ${wi+1}`});
+  const nums = flyNums(wi);
+  nums.forEach(({el, src}) => { if (src){ const a = src.getBoundingClientRect(), b = el.getBoundingClientRect();
+    el.style.transform = `translate(${a.left-b.left}px,${a.top-b.top}px)`; src.style.visibility = 'hidden'; } else el.style.opacity = '0'; });
+  fillWeekRow(wi); setFold(wi, true);
+  void cal.offsetHeight;
+  cal.style.gridTemplateRows = rowsFor(g.length, wi); if (box) box.style.gridTemplateRows = rowsFor(g.length, wi);
+  nums.forEach(({el}) => { el.style.transition = `transform .5s ${EASE}, opacity .3s ease`; el.style.transform = ''; el.style.opacity = ''; });
+  setTimeout(() => { st.busy = false; st.wk = wk; st.sel = sel; st.view = 'week'; st.anim = 'in'; render(); }, 520);
+  return true;
+}
+function foldBack(){
+  if (reduced) return;
+  const g = monthGrid(st.y, st.m), wi = g.findIndex(w => iso(w[0])===iso(st.wk));
+  const cal = app.querySelector('.month .cal'), box = app.querySelector('.month .wkbox');
+  if (wi<0 || !cal) return;
+  st.busy = true;
+  const all = Array(g.length).fill('1fr').join(' '), els = [cal, box, ...app.querySelectorAll('.month .cell,.month .wrow,.month .cb')].filter(Boolean);
+  const nums = flyNums(wi), ends = nums.map(({el, src}) => { if (!src) return null;
+    const a = src.getBoundingClientRect(), b = el.getBoundingClientRect(); src.style.visibility = 'hidden'; return `translate(${a.left-b.left}px,${a.top-b.top}px)`; });
+  els.forEach(el => el.style.transition = 'none');
+  fillWeekRow(wi); setFold(wi, true);
+  cal.style.gridTemplateRows = rowsFor(g.length, wi); if (box) box.style.gridTemplateRows = rowsFor(g.length, wi);
+  void cal.offsetHeight;
+  els.forEach(el => el.style.transition = '');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    setFold(wi, false);
+    cal.style.gridTemplateRows = all; if (box) box.style.gridTemplateRows = all;
+    nums.forEach(({el}, i) => { el.style.transition = `transform .5s ${EASE}, opacity .25s ease`; if (ends[i]) el.style.transform = ends[i]; else el.style.opacity = '0'; });
+    setTimeout(() => { st.busy = false; nums.forEach(({el, src}) => { el.remove(); if (src) src.style.visibility = ''; });
+      if (st.view==='month' && !st.hal){ const wh = app.querySelector('.month .wh'); if (wh) wh.innerHTML = '<span>WEEKLY</span>';
+        app.querySelectorAll('.month .cell.out .cb').forEach(b => b.innerHTML = ''); fitCells(); } }, 540);
+  }));
+}
+function moveKnob(i, txt){ const k = app.querySelector('.knob'); if (k) k.style.transform = `translateX(${i*100}%)`;
+  app.querySelectorAll('.pill button').forEach((b,j) => b.classList.toggle('on', j===i)); st.knob = i; animTitle(i, txt); }
+// slide the title's month / week parts open or shut (txt: new words for them, when they change too)
+function animTitle(i, txt={}){
+  const t = app.querySelector('.ptl'); if (!t) return;
+  const seg = c => t.querySelector('.ts.'+c);
+  if (txt.m) seg('m').querySelector('.tv').textContent = txt.m;
+  if (txt.w) seg('w').querySelector('.tv').textContent = txt.w;
+  ['m','w'].forEach(c => { const s = seg(c); s.style.maxWidth = (s.classList.contains('off') ? 0 : s.scrollWidth) + 'px'; });
+  void t.offsetWidth;
+  ['m','w'].forEach((c,j) => { const s = seg(c), on = j+1 <= i; s.classList.toggle('off', !on); s.style.maxWidth = (on ? s.scrollWidth : 0) + 'px'; });
+}
+
+/* ---------- navigation ---------- */
+function setYM(y,m){ // keep the week number when the month or year changes
+  const wi = weekIndex(), d = new Date(y,m,1);
+  st.y = d.getFullYear(); st.m = d.getMonth();
+  const g = monthGrid(st.y, st.m); st.wk = g[Math.min(wi, g.length-1)][0];
+}
+function shiftWeek(dir){
+  const nm = addDays(st.wk, 7*dir), sun = addDays(nm, 6), inM = x => x.getFullYear()===st.y && x.getMonth()===st.m;
+  if (!inM(nm) && !inM(sun)){ const ref = dir>0 ? nm : sun; st.y = ref.getFullYear(); st.m = ref.getMonth(); }
+  st.wk = nm;
+}
+function step(dir){
+  if (st.view==='year') setYM(st.y+dir, st.m); else if (st.view==='month') setYM(st.y, st.m+dir); else shiftWeek(dir);
+}
+function toggleRef(ref){
+  const [coll, key, id] = ref.split('|');
+  if (coll==='rt' || coll==='ss'){ const o = coll==='rt' ? S.rdone : S.sdone, k = `${key}|${id}`; if (o[k]) delete o[k]; else o[k] = true; }
+  else if (coll==='ms'){ const m = msById(id); if (m) m.done = !m.done; }
+  else { const it = L(coll,key).find(x => x.id===id); if (it) it.done = !it.done; }
+  save(); refreshBehind();
+}
+function goWeek(mon, sel){
+  const w = pIso(mon); sel ??= iso(w)===iso(mondayOf(today)) ? dowOf(today) : 0;
+  if (unfoldTo(w, sel)) return;
+  st.wk = w; st.sel = sel; st.view = 'week'; st.anim = 'in'; render();
+}
+
+/* ---------- "□ +": the one way to make something, everywhere ----------
+   version 1 → the row sheet. version 3 → one small bar (like a search box) that does it all:
+   tap the mark to switch kind, type, pick 할일 · 세부 (or days) in the strip on the right, Enter, next. */
+const PLUS = (t, title='추가') => `<button class="wadd" data-act="plus" data-t="${t}" aria-label="${title}">${mark('td',false,'ghost def')}<span>+</span></button>`;
+const QLABEL = {todo:'할일', event:'일정', routine:'루틴', ms:'이정표', gen:'일반'};
+const QPH = {todo:'+ 할일', event:'+ 일정', routine:'+ 루틴'};
+function openPlus(t, el){
+  const [coll, key, x] = t.split('|');
+  if (S.set.ver!==3){
+    if (coll==='days') newPlan(key);
+    else if (coll==='weeks'){ st.ed = {mode:'wk', type:'todo', key, text:'', cat:null, sub:null, dows:[]}; render(); }
+    else if (coll==='pc') newHal(st.htype, {sub:key || (st.hsub!=='all' ? st.hsub : null), cat:(key && subById(key)?.cat) || (st.hcat!=='all' ? st.hcat : null), date: x.length===7 ? monthDue(x) : x});
+    else newHal(st.htype, {place:'stack'});
+    return;
+  }
+  const r = el.getBoundingClientRect();
+  const sub = coll==='pc' ? (key || (st.hsub!=='all' ? st.hsub : null)) : coll==='stack' ? (x || null) : null;
+  const cat = sub ? subById(sub).cat : coll==='stack' ? (key || null) : coll==='days' ? st.qcat : null;
+  const day = coll==='days' ? key : coll==='pc' ? (x.length===7 ? monthDue(x) : x) : '';
+  st.qp = {t, type: coll==='days' ? st.qtype : coll==='weeks' ? 'todo' : st.htype, cat, sub: coll==='days' ? st.qsub : sub,
+    lock: coll==='pc' && !!sub, dows: coll==='days' ? [0,1,2,3,4,5,6] : [0,2,4], x:r.left, y:r.bottom, top:r.top, n:0,
+    start: coll==='days' ? key : coll==='pc' ? day : '', end: coll==='pc' ? day : '', noEnd: coll==='days', date:''};   // a 루틴 made on a day starts on that day
+  drawQp(true);
+}
+function qpWhere(){
+  const [coll, key, x] = st.qp.t.split('|');
+  if (coll==='days' || (coll==='pc' && x.length===10)){ const d = pIso(coll==='days' ? key : x); return `${d.getMonth()+1}/${d.getDate()} ${DOW_K[dowOf(d)]}`; }
+  if (coll==='pc') return `${+x.slice(5)}월`;
+  if (coll==='weeks') return `week ${monthGrid(st.y, st.m).findIndex(w => iso(w[0])===key)+1 || ''}`.trim();
+  return '보관함';
+}
+function qpHTML(){
+  const q = st.qp; if (!q) return '';
+  const coll = q.t.split('|')[0], kinds = q.edit ? null : kindsOf(coll);
+  const kindMark = q.type==='event' ? 'ev' : q.type==='routine' || q.type==='ms' ? 'rt' : 'td';
+  const lab = q.type==='ms' ? '루틴' : QLABEL[q.type];
+  const head = q.edit ? `<span class="qpm still">${mark('rt',false,'ghost def')}<span>루틴</span></span>` : kinds ? `<button class="qpm" data-q="kind" title="눌러서 종류 바꾸기">${mark(kindMark,false,'ghost def')}<span>${lab}</span></button>`
+    : `<span class="qpm still">${mark('td',false,'ghost def')}<span>목표</span></span>`;
+  const dw = () => DOW_K.map((d,i) => `<button class="qd${q.dows.includes(i)?' on':''}" data-q="dw" data-i="${i}">${d}</button>`).join('');
+  const cs = () => q.cat ? `<button class="qc back" data-q="cat" data-c="${q.cat}">${esc(catById(q.cat)?.emoji||'')} ${esc(catById(q.cat)?.name||'')} ✕</button>` +
+      subsOf(q.cat).map(s => `<button class="qc${q.sub===s.id?' on':''}" data-q="sub" data-s="${s.id}">${esc(s.name)}</button>`).join('')
+    : userCats().map(c => `<button class="qc" data-q="cat" data-c="${c.id}">${c.emoji?esc(c.emoji)+' ':''}${esc(c.name)}</button>`).join('');
+  const span = q.type==='routine' || q.type==='ms', dated = coll!=='weeks' && coll!=='stack';
+  q.calOne = !span;
+  q.needEnd = false;   // a 할일 루틴 can run without an end, like any routine
+  // same pieces, same order, on every page: ★ (할일) · day or 언제부터–언제까지 · days of the week · 할일 (planner only)
+  let strip = '';
+  if (q.type==='todo' && coll!=='weeks') strip += `<button class="qc star${q.star?' on':''}" data-q="star" title="중요한 할일 · 주간목표에도 나와요">★ 이정표</button>`;
+  if (dated && !span) strip += `<button class="qc cal${q.cal?' on':''}" data-q="cal" title="날짜">${CAL_ICON}${md(q.date || q.end || q.t.split('|')[1])}</button>`;
+  if (dated && span) strip += `<button class="qc cal${q.cal?' on':''}" data-q="cal" title="언제부터 – 언제까지">${CAL_ICON}${q.start?md(q.start):'오늘'} – ${q.noEnd ? '계속' : q.end ? md(q.end) : '?'}</button>`;
+  if (span) strip += dw();
+  if (!q.lock && coll!=='weeks') strip += userCats().map(c => `<button class="qc${q.cat===c.id?' on':''}" data-q="cat" data-c="${c.id}">${c.emoji?esc(c.emoji)+' ':''}${esc(c.name)}</button>`).join('');
+  const subs = !q.lock && q.cat ? subsOf(q.cat) : [];
+  const under = `<div class="qunder">${subs.length ? `<div class="qsubs${q.ask?' need':''}">${subs.map(s => `<button class="qc${q.sub===s.id?' on':''}" data-q="sub" data-s="${s.id}">${esc(s.name)}</button>`).join('')}</div>` : '<span></span>'}
+    <div class="qact"><button data-q="cancel">취소</button><button class="ok" data-q="done">완료</button></div></div>`;
+  const ask = q.ask ? `<div class="qask">${coll==='stack' ? '보관함에는 세부할일을 골라야 넣을 수 있어요' : `세부할일 없이 “${esc(catById(q.cat)?.name||'')}”로 저장할까요?`}<button data-q="pick">세부 고르기</button>${coll==='stack' ? '' : '<button class="ok" data-q="anyway">이대로 저장</button>'}</div>` : '';
+  const w = Math.min(480, innerWidth - 16), left = Math.max(8, Math.min(q.x - 12, innerWidth - w - 8));
+  const below = q.y + 60 < innerHeight;
+  const pos = st.portrait ? '' : `left:${left}px;width:${w}px;${below ? `top:${q.y + 4}px` : `top:${q.top - 52}px`}`;
+  const ph = q.apply ? '루틴 · 언제까지 할지 달력에서 고르세요' : q.edit ? '루틴 이름' : `${qpWhere()} · ${lab}${q.n?` (${q.n}개 추가됨)`:''}`;
+  return `<div class="qpop${st.portrait?' bottom':''}" id="qpop" style="${pos}">${ask}${head}<input id="qin" placeholder="${ph}" autocomplete="off" enterkeyhint="done" aria-label="내용">${strip?`<div class="qps">${strip}</div>`:''}${under}${q.cal ? qcalHTML(q) : ''}</div>`;
+}
+function drawQp(focus){
+  const old = app.querySelector('#qpop'), val = old?.querySelector('#qin')?.value || '';
+  const tmp = document.createElement('div'); tmp.innerHTML = qpHTML(); const n = tmp.firstElementChild;
+  if (old && n) old.replaceWith(n); else if (n) app.appendChild(n); else old?.remove();
+  const inp = app.querySelector('#qin'); if (inp){ inp.value = val; if (focus || document.activeElement===document.body) inp.focus(); }
+  placeCal();
+}
+function closeQp(){ st.qp = null; app.querySelector('#qpop')?.remove(); }
+function qpAct(b){
+  const q = st.qp, d = b.dataset;
+  // applying a 루틴 from the 보관함: once the stretch is picked, the calendar's 완료 finishes the job
+  if (d.q==='calok' && q.apply && q.start && q.end && app.querySelector('#qin').value.trim()){ q.cal = false; q.closeAfter = true; qpAdd(); return; }
+  if (calAct(q, d)){ drawQp(true); return; }
+  if (d.q==='star') q.star = !q.star;
+  else if (d.q==='kind'){ const coll = q.t.split('|')[0], order = kindsOf(coll);
+    q.type = order[(order.indexOf(q.type)+1) % order.length]; if (coll==='days') st.qtype = q.type; else st.htype = q.type;
+    q.dows = q.type==='routine' ? [0,1,2,3,4,5,6] : [0,2,4]; q.cal = false; }
+  else if (d.q==='dw'){ const i = +d.i; q.dows = q.dows.includes(i) ? q.dows.filter(x=>x!==i) : [...q.dows, i]; }
+  else if (d.q==='cat'){ q.cat = q.cat===d.c ? null : d.c; q.sub = null; q.ask = false; }
+  else if (d.q==='sub'){ q.sub = q.sub===d.s ? null : d.s; q.ask = false; }
+  else if (d.q==='pick') q.ask = false;
+  else if (d.q==='anyway'){ q.ask = false; q.skipSub = true; const ok = qpAdd(); q.skipSub = false; if (ok && q.closeAfter) closeQp(); q.closeAfter = false; return; }
+  else if (d.q==='cancel'){ closeQp(); return; }
+  else if (d.q==='done'){ if (!app.querySelector('#qin').value.trim()){ closeQp(); return; } q.closeAfter = true; if (qpAdd()){ closeQp(); } return; }
+  if (q.t.startsWith('days|')){ st.qcat = q.cat; st.qsub = q.sub; }
+  drawQp(true);
+}
+// asks for a moment, above the bar, when a 할일 was picked but no 세부할일 — the bar stays as it is underneath
+function askSub(){ const q = st.qp; q.ask = true; drawQp(true); clearTimeout(askSub.t); askSub.t = setTimeout(() => { if (st.qp===q && q.ask){ q.ask = false; drawQp(); } }, 4500); return false; }
+function qpAdd(){
+  const q = st.qp, inp = app.querySelector('#qin'), text = inp.value.trim(); if (!text) return false;
+  const [coll, key, x] = q.t.split('|'), dows = [...q.dows].sort();
+  const noSub = q.cat && !q.sub && subsOf(q.cat).length && !q.lock;
+  if (noSub && (coll==='stack' || !q.skipSub)) return askSub();
+  if (coll==='days'){
+    if (q.type==='routine'){
+      if (!dows.length) return shake();
+      if (!q.noEnd && !q.end){ q.cal = true; q.calYM = (q.start||TODAY).slice(0,7); drawQp(true); return false; }   // the stretch isn't finished yet
+      applyRoutine.skipSub = !!q.skipSub;
+      const bad = applyRoutine({text, dows, start:q.start || key, until:q.noEnd ? '' : (q.end || ''), cat:q.cat, sub:q.sub});
+      applyRoutine.skipSub = false;
+      if (bad) return shake();
+    }
+    else { const o = {id:uid(), text, type:q.type, done:false}; setCS(o, q.cat, q.sub); if (q.type==='todo' && q.star) o.star = true; L('days', q.date || key).push(o); }
+  } else if (coll==='weeks'){ const o = {id:uid(), text, done:false}; setCS(o, q.cat, q.sub); L('weeks', key).push(o); }
+  else if (coll==='pc'){
+    const sub = q.sub, due = q.date || (x.length===7 ? monthDue(x) : x);
+    if (!sub) return shake();
+    if (q.type==='ms'){ if (!q.end && !q.noEnd) return needEnd(q, due); const m = {id:uid(), sub, text, due:q.noEnd ? OPEN : (q.end || due), dows:dows.length ? dows : [0,2,4], done:false, created:TODAY}; const s0 = q.start || due; if (s0 <= m.due) m.start = s0; S.ms.push(m); }   // always its own start, so it never waits for the one before it
+    else { const o = {id:uid(), text, type:q.type==='event' ? 'event' : 'todo', done:false}; setCS(o, subById(sub).cat, sub); if (q.type==='todo' && q.star) o.star = true; L('days', due).push(o); }
+  } else { if (!q.sub) return shake(); const o = {id:uid(), text, done:false, kind:q.type}; setCS(o, q.cat, q.sub); if (q.type==='ms') o.dows = dows.length ? dows : [0,2,4]; else if (q.type==='todo' && q.star) o.star = true; L('stack','all').push(o); }
+  if (q.apply){ takeItem(q.apply); save(); closeQp(); refreshBehind(); return true; }   // it came out of the 보관함
+  save(); inp.value = ''; q.n++;
+  refreshBehind(); drawQp(true);
+  return true;
+}
+
+const CAL_ICON = `<svg class="qci" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="4.5" width="14" height="12.5" rx="2"/><path d="M3 8.5h14M7 3v3M13 3v3"/></svg>`;
+function qcalHTML(q){ // one small calendar. 루틴: any two days make the stretch (tap again to undo); 끝 없음 is a switch
+  const [y, m] = q.calYM.split('-').map(Number), g = monthGrid(y, m-1), one = q.calOne;
+  const days = g.flat().map(d => { const k = iso(d), out = d.getMonth()!==m-1;
+    const s = one ? k===q.date : k===q.start, e = !one && !q.noEnd && k===q.end;
+    const inR = !one && q.start && ((q.end && !q.noEnd && k>q.start && k<q.end) || (q.noEnd && k>q.start));
+    return `<button class="qcd${out?' out':''}${inR?(q.noEnd?' on':' in'):''}${s?' s':''}${e?' e':''}${k===TODAY?' td':''}" data-q="day" data-k="${k}">${d.getDate()}</button>`; }).join('');
+  const hint = one ? '날짜를 누르세요' : q.noEnd ? '시작하는 날을 누르세요' : !q.start ? '시작하는 날을 누르세요' : !q.end ? '끝나는 날을 누르세요' : `${md(q.start)} – ${md(q.end)}`;
+  return `<div class="qcal" id="qcal"><div class="qch"><button data-q="calp" aria-label="이전 달">‹</button><b>${y}.${m}</b><button data-q="caln" aria-label="다음 달">›</button></div>
+    <div class="qcg">${DOW_K.map(d => `<span>${d}</span>`).join('')}${days}</div>
+    <div class="qcf"><span class="hint">${hint}</span><div class="qcb">${one || q.needEnd ? '' : `<button class="sw${q.noEnd?' on':''}" data-q="noend" role="switch" aria-checked="${!!q.noEnd}"><i></i><span>끝 없음</span></button>`}<button class="ok" data-q="calok">완료</button></div></div></div>`;
+}
+// keep the small calendar inside the screen
+function placeCal(){
+  const c = app.querySelector('#qcal'), bar = app.querySelector('#qpop'); if (!c || !bar) return;
+  const b = bar.getBoundingClientRect(), w = c.offsetWidth, h = c.offsetHeight;
+  let top = b.bottom + 46; if (top + h > innerHeight - 8) top = b.top - h - 6; if (top < 8) top = Math.max(8, innerHeight - h - 8);   // below the 세부 · 취소 / 완료 row, never over it
+  let left = b.right - w - 8; left = Math.max(8, Math.min(left, innerWidth - w - 8));
+  // the bar is the calendar's frame of reference, so place it relative to the bar
+  c.style.position = 'absolute'; c.style.top = (top - b.top) + 'px'; c.style.left = (left - b.left) + 'px'; c.style.right = 'auto'; c.style.bottom = 'auto';
+}
+// a 루틴 without its 언제까지: open the small calendar and point at it (not at the weekday strip)
+function needEnd(q, near){
+  q.noEnd = false; q.cal = true; q.calYM = (q.start || near || TODAY).slice(0,7); drawQp(true);
+  const c = app.querySelector('#qcal'); if (c){ c.classList.remove('warn'); void c.offsetWidth; c.classList.add('warn'); }
+  return false;
+}
+function shake(){ const e = app.querySelector('#qpop .qps'); if (!e) return; e.classList.remove('warn'); void e.offsetWidth; e.classList.add('warn'); }
+// routines in the planner are changed in the same one-row bar
+function openRoutineBar(coll, id){
+  if (S.set.ver!==3) return false;
+  const el = st.anchor || app.querySelector(`[data-ref$="|${id}"]`); st.anchor = null; if (!el) return false;
+  let q;
+  if (coll==='rt' || coll==='rdef'){ const r = rById(id); if (!r) return false;
+    q = {text:r.text, dows:[...r.dows], start:r.start, end:r.end ? isoAdd(r.end,-1) : '', noEnd:!r.end, cat:null, sub:null, edit:{src:'rdef', id, ref:`rdef||${id}`}}; }
+  else { const m = msById(id); if (!m) return false;
+    q = {text:m.text, dows:[...m.dows], start:m.start || msStart(m), end:m.due, noEnd:false, sub:m.sub, cat:subById(m.sub)?.cat || null, edit:{src:'ms', id, ref:`ms||${id}`}}; }
+  const r = el.getBoundingClientRect();
+  st.qp = {t:`days|${q.start}`, type:'routine', lock:false, x:r.left, y:r.bottom, top:r.top, n:0, ...q};
+  drawQp(true); const inp = app.querySelector('#qin'); inp.value = q.text; inp.setSelectionRange(q.text.length, q.text.length);
+  return true;
+}
+
+const kindsOf = coll => coll==='days' ? ['todo','event','routine'] : coll==='weeks' ? null : coll==='pc' ? ['todo','event','ms'] : ['todo','event','ms'];   // 할일 · 일정 · 루틴 everywhere
+
+/* ---------- the edit sheet: the same pieces as the one-line bar, laid out to read at a glance ----------
+   opened by tapping the words of anything (the mark only checks). One state shape for every item:
+   {src:'days'|'rdef'|'ms'|'stack'|'weeks', key, id, type:'todo'|'event'|'routine', text, star, date, start, end, noEnd, dows, cat, sub, place} */
+function openEditor(ref){
+  const [coll, key, id] = ref.split('|'), all = [0,1,2,3,4,5,6];
+  let e = null;
+  if (coll==='rt' || coll==='rdef'){ const r = rById(id); if (!r) return;
+    e = {src:'rdef', id, type:'routine', text:r.text, dows:[...r.dows], start:r.start, end:r.end ? isoAdd(r.end,-1) : '', noEnd:!r.end, date:r.start, cat:null, sub:null, day: coll==='rt' ? key : ''}; }
+  else if (coll==='ms' || coll==='ss'){ const m = msById(id); if (!m) return;
+    e = {src:'ms', id, type:'routine', text:m.text, dows:[...m.dows], start:m.start || msStart(m), end:m.due===OPEN ? '' : m.due, noEnd:m.due===OPEN, date:m.due===OPEN ? (m.start || msStart(m)) : m.due, sub:m.sub, cat:subById(m.sub)?.cat || null, day: coll==='ss' ? key : ''}; }   // day: opened from one day → "이 날만 삭제"
+  else if (coll==='stack'){ const it = L('stack','all').find(x => x.id===id); if (!it) return;
+    e = {src:'stack', place:'stack', id, type: it.kind==='ms' ? 'routine' : (it.kind || 'todo'), text:it.text, star:!!it.star, dows: it.dows ? [...it.dows] : [0,2,4], date:TODAY, start:TODAY, end:'', noEnd:true, cat:it.cat || null, sub:it.sub || null}; }
+  else if (coll==='weeks'){ const it = L('weeks',key).find(x => x.id===id); if (!it) return;
+    e = {src:'weeks', key, id, type:'todo', text:it.text, cat:it.cat || null, sub:it.sub || null, dows:all}; }
+  else { const it = L(coll,key).find(x => x.id===id); if (!it) return;
+    e = {src:'days', key, id, type:it.type, text:it.text, star:!!it.star, date:key, start:key, end:'', noEnd:true, dows:all, cat:it.cat || null, sub:it.sub || null}; }
+  st.ed = e; render();
+}
+function readEd(){ const e = st.ed; if (!e) return; const v = id => app.querySelector('#'+id);
+  if (v('etext')) e.text = v('etext').value; if (v('eemo')) e.emoji = clip(v('eemo').value.trim(), 1); }
+function redrawEd(){ readEd(); st.ed.noanim = true; const ov = app.querySelector('.edov'); if (ov) ov.outerHTML = edHTML(); placeEdCal(); }
+function placeEdCal(){ // next to the date button, inside the screen
+  const c = app.querySelector('#edcal #qcal'), btn = app.querySelector('#ed [data-q="cal"]'); if (!c || !btn) return;
+  const b = btn.getBoundingClientRect(), w = c.offsetWidth, h = c.offsetHeight;   // a little window of its own, over the sheet
+  let top = b.bottom + 6; if (top + h > innerHeight - 8) top = Math.max(8, b.top - h - 6);
+  const left = Math.max(8, Math.min(b.left, innerWidth - w - 8));
+  c.style.position = 'fixed'; c.style.top = top + 'px'; c.style.left = left + 'px';
+}
+function warn(id){ const r = app.querySelector('#'+id); if (!r) return; r.classList.add('warn'); setTimeout(() => r.classList.remove('warn'), 900); }
+
+// one place that writes a routine — used by the bar and by the sheet. returns the id of the row to flag, or '' when done
+function applyRoutine({text, dows, start, until, cat, sub, src, id}){
+  dows = [...dows].sort();
+  if (!dows.length) return 'rdows';
+  start = start || TODAY;
+  if (until && until < start) return 'rdate';
+  if (cat && !sub && subsOf(cat).length && !applyRoutine.skipSub) return 'rsub';
+  const stop = () => { const r = rById(id); if (!r) return; if (r.start>=TODAY) S.routines = S.routines.filter(x => x!==r); else r.end = TODAY; };
+  if (sub && subById(sub)){ // 할일 루틴: also on the 할일 page; needs its 언제까지
+    let m = src==='ms' ? msById(id) : null;
+    if (!m){ m = {id:uid(), done:false, created:TODAY}; S.ms.push(m); if (src==='rdef' && id) stop(); }
+    Object.assign(m, {text, sub, due:until || OPEN, dows, start});   // no 언제까지 → it just keeps going
+    if (src==='rdef' && m.start < TODAY) m.start = TODAY;   // the old routine keeps its past
+  } else { // 일반 루틴
+    if (src==='ms'){ S.ms = S.ms.filter(x => x.id!==id); id = null; }
+    const end = until ? isoAdd(until,1) : null, r = src==='rdef' ? rById(id) : null;
+    if (r){ const same = r.dows.join()===dows.join();
+      if (same || r.start>=TODAY){ Object.assign(r, {text, dows, start}); if (end) r.end = end; else delete r.end; }
+      else { r.end = TODAY; const n = {id:uid(), text, dows, start:TODAY, grp: r.grp || r.id}; if (end) n.end = end; S.routines.push(n); } }   // grp: the pieces of one routine, deleted together
+    else { const n = {id:uid(), text, dows, start}; if (end) n.end = end; S.routines.push(n); }
+  }
+  return '';
+}
+function saveEd(){
+  readEd();
+  const e = st.ed, text = (e.text||'').trim();
+  if (!text){ app.querySelector('#etext')?.focus(); return warn('rtext'); }
+  if (e.kind==='cat' || e.kind==='sub'){
+    const c = e.kind==='cat' ? catById(e.id) : subById(e.id);
+    if (c){ c.name = text; if (e.kind==='cat'){ c.emoji = e.emoji || ''; if (e.color) c.color = e.color; } }
+    save(); st.ed = null; render(); return;
+  }
+  const t = e.type;
+  if (e.src==='weeks'){ const o = L('weeks',e.key).find(x => x.id===e.id); if (o){ o.text = text; setCS(o, e.cat, e.sub); } }
+  else if (e.place==='stack'){ // 보관함: always filed under a 세부할일
+    if (!e.sub) return warn(e.cat ? 'rsub' : 'rcat');
+    const o = L('stack','all').find(x => x.id===e.id); if (!o) return;
+    o.text = text; o.kind = t==='routine' ? 'ms' : t; setCS(o, e.cat, e.sub);
+    if (t==='todo' && e.star) o.star = true; else delete o.star;
+    if (t==='routine') o.dows = [...e.dows].sort(); else delete o.dows;
+  }
+  else if (t==='routine'){
+    if (!e.noEnd && !e.end){ e.cal = true; e.calYM = (e.start || TODAY).slice(0,7); redrawEd(); return warn('rdate'); }
+    let src = e.src, id = e.id, done = false;
+    if (src==='days'){ done = !!takeItem(`days|${e.key}|${e.id}`)?.done; src = null; id = null; }   // a 할일 / 일정 becoming a routine
+    const bad = applyRoutine({text, dows:e.dows, start:e.start, until:e.noEnd ? '' : e.end, cat:e.cat, sub:e.sub, src, id});
+    if (bad) return warn(bad);
+  } else {
+    const date = e.date || TODAY;
+    let o;
+    if (e.src==='days'){ o = L('days',e.key).find(x => x.id===e.id); if (o && date!==e.key){ takeItem(`days|${e.key}|${e.id}`); L('days', date).push(o); } }
+    else { o = {id:uid(), done:false}; L('days', date).push(o);   // a routine becoming a 할일 / 일정
+      if (e.src==='ms') S.ms = S.ms.filter(x => x.id!==e.id);
+      if (e.src==='rdef'){ const r = rById(e.id); if (r){ if (r.start>=TODAY) S.routines = S.routines.filter(x => x!==r); else r.end = TODAY; } } }
+    if (!o) return;
+    o.text = text; o.type = t; setCS(o, e.cat, e.sub);
+    if (t==='todo' && e.star) o.star = true; else delete o.star;
+  }
+  save(); st.ed = null; render();
+}
+// the small calendar is shared by the bar and the sheet
+function calAct(q, d){
+  if (d.q==='cal'){ q.cal = !q.cal; q.calYM = (q.date || q.start || q.end || TODAY).slice(0,7); }
+  else if (d.q==='calp' || d.q==='caln'){ const [y,m] = q.calYM.split('-').map(Number), nd = new Date(y, m-1 + (d.q==='caln'?1:-1), 1); q.calYM = mk(nd.getFullYear(), nd.getMonth()); }
+  else if (d.q==='day'){ const k = d.k;
+    if (q.calOne) q.date = q.date===k ? (q.t ? '' : q.date) : k;
+    else if (q.noEnd) q.start = q.start===k ? '' : k;
+    else if (k===q.start){ q.start = q.end || ''; q.end = ''; }
+    else if (k===q.end) q.end = '';
+    else if (!q.start) q.start = k;
+    else if (!q.end){ if (k < q.start){ q.end = q.start; q.start = k; } else q.end = k; }
+    else if (k < q.start) q.start = k;   // both set: a tap moves the nearer edge instead of throwing the end away
+    else q.end = k; }
+  else if (d.q==='noend'){ if (q.needEnd) return true; q.noEnd = !q.noEnd; if (q.noEnd) q.end = ''; }
+  else if (d.q==='calok') q.cal = false;
+  else return false;
+  return true;
+}
+function edHTML(){
+  const e = st.ed; if (!e) return '';
+  if (e.kind==='cat' || e.kind==='sub') return catEdHTML(e);
+  const wk = e.src==='weeks', stack = e.place==='stack', t = e.type, span = t==='routine', sc = catById(e.cat);
+  e.calOne = !span;
+  e.needEnd = false;   // every routine may have 끝 없음
+  const R = (id, k, inner) => `<div class="rw" id="${id}"><div><div class="row"><span class="k w">${k}</span>${inner}</div></div></div>`;
+  const types = wk ? [] : [['todo','할일'],['event','일정'],['routine','루틴']];
+  const title = wk ? '주간 목표' : stack ? '보관함' : '수정';
+  let h = `<div class="rw"><div><div class="row"><span class="ttl">${title}</span></div></div></div>`;
+  if (types.length) h += R('rtype','종류', `<div class="seg">${types.map(([x,l]) => `<button type="button" class="${t===x?'on':''}" data-act="etype" data-t="${x}">${mark(KIND[x],false,'def')}${l}</button>`).join('')}</div>`);
+  h += R('rtext','내용', `<input class="txt" id="etext" value="${esc(e.text||'')}" autocomplete="off" enterkeyhint="done" aria-label="내용">`);
+  if (t==='todo' && !wk) h += R('rstar','이정표', `<button type="button" class="chip star${e.star?' on':''}" data-act="estar">${e.star?'★ 이정표 · 눌러서 해제':'☆ 이정표로'}</button><span class="sp"></span><span class="note">중요한 할일 · 주간목표에도 함께 나와요</span>`);
+  if (!wk && !stack){
+    const lab = span ? `${e.start?md(e.start):'오늘'} – ${e.noEnd ? '계속' : e.end ? md(e.end) : '?'}` : `${md(e.date)} <small>${DOW_K[dowOf(pIso(e.date))]} · ${dday(e.date)}</small>`;
+    h += R('rdate', span ? '기간' : '날짜', `<button type="button" class="qc cal big${e.cal?' on':''}" data-q="cal">${CAL_ICON}${lab}</button>`);
+
+  }
+  if (span) h += R('rdows','요일', `<div class="dws">${DOW_K.map((x,i) => `<button type="button" class="${e.dows.includes(i)?'on':''}" data-act="dw" data-i="${i}">${x}</button>`).join('')}</div>`);
+  h += R('rcat','할일', chipRow(userCats(), e.cat, 'ecat', 'c') + (span && !stack ? `<span class="note">${e.sub ? '할일 루틴 · 할일 페이지에도 나와요' : '고르면 할일 루틴이 돼요'}</span>` : ''));
+  if (sc && subsOf(sc.id).length) h += R('rsub','세부', chipRow(subsOf(sc.id), e.sub, 'esub', 's'));
+  return `<div class="ov edov${e.noanim?' still':''}" data-act="close"><div class="sheet" id="ed" role="dialog" aria-label="${title}">${h}
+    ${delFoot(e)}</div>${e.cal ? `<div id="edcal">${qcalHTML(e)}</div>` : ''}</div>`;
+}
+// 삭제: one button. A 루틴 then offers 그날만 · 그날부터 · 전부; nothing is removed until "삭제" in the question is pressed
+const isRoutineEd = e => e.type==='routine' && (e.src==='rdef' || e.src==='ms');
+// a routine whose weekdays were changed lives on as pieces (old days · new days); older data has no grp, so same name + back-to-back also counts
+function routinePieces(r){
+  const g = r.grp || r.id, set = new Set([r]);
+  S.routines.forEach(x => { if ((x.grp || x.id)===g || x.grp===r.id) set.add(x); });
+  let grew = true;
+  while (grew){ grew = false; S.routines.forEach(x => { if (set.has(x) || x.text!==r.text) return;
+    if ([...set].some(y => (y.end && y.end===x.start) || (x.end && x.end===y.start))){ set.add(x); grew = true; } }); }
+  return [...set];
+}
+function delOpts(e){
+  if (!isRoutineEd(e)) return null;
+  const from = e.day || TODAY;
+  // "…부터" only when the routine still runs on that day — on one that already ended it would only stretch it
+  const r = e.src==='rdef' ? rById(e.id) : null, m = e.src==='ms' ? msById(e.id) : null;
+  const canFrom = r ? routinePieces(r).some(x => !x.end || x.end > from) : m ? m.due >= from : false;
+  return [...(e.day ? [['day', `${md(e.day)}만`, '그날 하나만 빠지고 앞뒤는 그대로']] : []),
+    ...(canFrom ? [['from', `${from===TODAY ? '오늘' : md(from)}부터`, '그 전까지의 기록은 남아요']] : []),
+    ['all', '전부', '지난 체크 기록까지 모두 지워요']];
+}
+function delFoot(e, note=''){
+  if (!e.delAsk) return `<div class="foot"><button class="btn quiet" data-act="delAsk">삭제</button><span class="sp"></span>${note}<button class="btn" data-act="close">취소</button><button class="btn dark" data-act="esave">저장</button></div>`;
+  const opts = delOpts(e), pick = e.delMode || opts?.[0][0], hint = opts?.find(o => o[0]===pick)?.[2] || note.replace(/<[^>]+>/g, '');
+  return `<div class="foot ask"><div class="askq">정말 삭제하시겠습니까?${hint ? `<small>${hint}</small>` : ''}</div>
+    ${opts ? `<div class="seg delseg">${opts.map(([v,l]) => `<button type="button" class="${pick===v?'on':''}" data-act="delPick" data-v="${v}">${l}</button>`).join('')}</div>` : ''}
+    <span class="sp"></span><button class="btn" data-act="delNo">취소</button><button class="btn dark" data-act="delYes">삭제</button></div>`;
+}
+function doDelete(e){
+  if (e.kind==='cat' || e.kind==='sub'){
+    const subs = e.kind==='cat' ? subsOf(e.id).map(s => s.id) : [e.id];
+    S.ms = S.ms.filter(m => !subs.includes(m.sub)); S.subs = S.subs.filter(s => !subs.includes(s.id));
+    if (e.kind==='cat') S.cats = S.cats.filter(c => c.id!==e.id);
+    [...Object.values(S.days).flat(), ...Object.values(S.weeks).flat(), ...L('stack','all')].forEach(o => setCS(o, o.cat, o.sub));
+    return;
+  }
+  const mode = isRoutineEd(e) ? (e.delMode || delOpts(e)[0][0]) : 'all', from = e.day || TODAY;
+  const clear = (o, id, after='') => { for (const k in o) if (k.endsWith('|'+id) && k >= after) delete o[k]; };
+  if (e.src==='rdef'){ const r = rById(e.id); if (!r) return;
+    const pieces = routinePieces(r), drop = x => { S.routines = S.routines.filter(y => y!==x); clear(S.rdone, x.id); clear(S.rskip, x.id); };
+    if (mode==='day'){ (S.rskip ||= {})[`${e.day}|${r.id}`] = true; delete S.rdone[`${e.day}|${r.id}`]; }
+    else if (mode==='from') pieces.forEach(x => {   // every piece stops by that day — only ever earlier, never later
+      if (x.start >= from) drop(x); else { if (!x.end || x.end > from) x.end = from; clear(S.rdone, x.id, from); } });
+    else pieces.forEach(drop); }
+  else if (e.src==='ms'){ const m = msById(e.id); if (!m) return;
+    if (mode==='day'){ (S.sskip ||= {})[`${e.day}|${m.id}`] = true; delete S.sdone[`${e.day}|${m.id}`]; }
+    else if (mode==='from' && msStart(m) < from){ m.start = msStart(m); if (m.due >= from) m.due = isoAdd(from, -1); clear(S.sdone, m.id, from); }   // it now ends the day before — never later than it did
+    else { S.ms = S.ms.filter(x => x!==m); clear(S.sdone, m.id); clear(S.sskip, m.id); } }
+  else if (e.src==='days') S.days[e.key] = L('days', e.key).filter(x => x.id!==e.id);
+  else if (e.src==='weeks') S.weeks[e.key] = L('weeks', e.key).filter(x => x.id!==e.id);
+  else if (e.src==='stack') S.stack.all = L('stack','all').filter(x => x.id!==e.id);
+}
+function edAct(a){
+  const e = st.ed, ds = a.dataset;
+  if (ds.q){ readEd(); if (calAct(e, ds)) redrawEd(); return; }
+  switch (ds.act){
+    case 'close': st.ed = null; render(); break;
+    case 'etype': { if (e.type===ds.t) return; readEd();
+      if (ds.t==='routine'){ e.start = e.date || e.start || TODAY; e.noEnd = !e.end; e.dows = e.dows?.length ? e.dows : [0,1,2,3,4,5,6]; }
+      else if (e.type==='routine') e.date = e.start || e.date || TODAY;
+      e.type = ds.t; e.cal = false; redrawEd(); break; }
+    case 'ecat': readEd(); e.cat = e.cat===ds.c ? null : ds.c; e.sub = null; redrawEd(); break;
+    case 'esub': readEd(); e.sub = e.sub===ds.s ? null : ds.s; redrawEd(); break;
+    case 'dw': { const i = +ds.i; e.dows = e.dows.includes(i) ? e.dows.filter(x=>x!==i) : [...e.dows, i]; a.classList.toggle('on'); break; }
+    case 'estar': readEd(); e.star = !e.star; redrawEd(); break;
+    case 'ecolor': e.color = ds.v; app.querySelectorAll('#ed .sw2').forEach(b => b.classList.toggle('on', b===a)); app.querySelector('#ed .cpick')?.classList.remove('on'); break;
+    case 'esave': saveEd(); break;
+    case 'delAsk': readEd(); e.delAsk = true; e.delMode ||= delOpts(e)?.[0][0]; redrawEd(); break;
+    case 'delPick': e.delMode = ds.v; redrawEd(); break;
+    case 'delNo': e.delAsk = false; redrawEd(); break;
+    case 'delYes': doDelete(e); save(); st.ed = null; render(); break;
+  }
+}
+
+/* ---------- clicks ---------- */
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (st.busy) return;
+  const inSet = t.closest('#set'); if (inSet){ const a = t.closest('[data-act]'); if (a && inSet.contains(a)) setAct(a); return; } // stop at the sheet: the backdrop behind it means "close"
+  const inEd = t.closest('#ed, #edcal'); if (inEd){ const a = t.closest('[data-act], [data-q]'); if (a && inEd.contains(a)) edAct(a); return; }
+  if (t.classList.contains('ov')){ if (t.dataset.act==='setClose') st.setOpen = false; else st.ed = null; render(); return; }
+  if (st.qp){ const b = t.closest('#qpop [data-q]'); if (b){ qpAct(b); return; } if (t.closest('#qpop')) return;
+    closeQp(); if (!t.closest('[data-act="plus"]')) return; }
+  const a = t.closest('[data-act]');
+  if (a && ['qt','qth','qcat','qsub'].includes(a.dataset.act)){ quickAct(a); return; }
+  if (t.closest('.add')) return;
+  const it = t.closest('.it[data-ref]');
+  if (it && !it.classList.contains('sum')){
+    const ref = it.dataset.ref, wrow = it.closest('.month .wrow');
+    if (t.closest('.ck')) toggleRef(ref);          // the mark checks
+    else openEditor(ref);                           // the words open the edit sheet — on every page
+    return;
+  }
+  if (!a) return;
+  const ds = a.dataset;
+  switch (ds.act){
+    case 'prev': case 'next': { const d = ds.act==='next' ? 1 : -1; step(d); if (st.portrait) st.slide = st.view==='week' ? (d>0?'left':'right') : (d>0?'up':'down'); break; }
+    case 'view': {
+      if (ds.v===st.view) return;
+      if (!st.hal){
+        if (ds.v==='week' && st.view==='month'){ goWeek(iso(st.wk)); return; }
+        if (ds.v==='month' && st.view==='week'){ st.view = 'month'; st.anim = 'fold'; break; } }
+      st.view = ds.v; st.anim = 'in'; if (ds.v==='week' && iso(st.wk)===iso(mondayOf(today))) st.sel = dowOf(today); break; }
+    case 'hal': st.hal = !st.hal; st.anim = 'in'; st.padd = null; break;
+    case 'today': st.hal = false; st.view = 'month'; st.y = today.getFullYear(); st.m = today.getMonth(); st.wk = mondayOf(today); st.sel = dowOf(today); st.pm = 'cal'; st.anim = 'in'; break;
+    case 'settings': st.setOpen = true; break;
+    case 'goMonthOf': setYM(st.y, +ds.m); st.view = 'month'; st.anim = 'in'; break;
+    case 'goMonth': st.view = 'month'; st.anim = 'fold'; break;
+    case 'goDay': { const d = pIso(ds.iso); goWeek(iso(mondayOf(d)), dowOf(d)); return; }
+    case 'goWeek': goWeek(ds.w); return;
+    case 'plus':
+      if (a.classList.contains('pc') && !nearLine(a, e.clientX)){   // far from the road: open that month / week — but never leave the 할일 page from a day
+        if (st.view!=='week') goInto(a); return; }
+      openPlus(ds.t, a.classList.contains('pc') ? (a.querySelector('.pin') || a) : a); return;
+    case 'sel': { if (!st.portrait) return; const i = +ds.i; if (i!==st.sel){ st.dslide = i>st.sel ? 'left' : 'right'; st.sel = i; render(); } if (S.set.ver===3) app.querySelector('.qbar input')?.focus(); return; }
+    case 'pm': if (st.pm===ds.v) return; st.pm = ds.v; setPm(); return;
+    case 'tog': toggleRef(ds.ref); return;
+    case 'editMs': openEditor(`ms||${ds.id}`); return;
+    case 'hcat': if (ds.c!=='all' && st.hcat===ds.c){ if (st.hsub!=='all'){ st.hsub = 'all'; break; } openCatEd('cat', ds.c); return; }
+      if (ds.c!=='all' && st.hcat==='all'){ const c = ds.c; halNarrow(col => col==='c:'+c || subById(col)?.cat===c, () => { st.hcat = c; st.hsub = 'all'; }); return; }  // 공부-수학 → 공부-전체 → (again) edit 공부 st.hcat = ds.c; st.hsub = 'all'; break;
+    case 'hsub': if (ds.s!=='all' && st.hsub===ds.s){ openCatEd('sub', ds.s); return; }
+      if (ds.s!=='all' && st.hsub==='all'){ const sid = ds.s, c = ds.c; halNarrow(col => col===sid, () => { if (c) st.hcat = c; st.hsub = sid; }); return; }   // 객프 → 대학수학 is a straight switch
+      if (ds.c) st.hcat = ds.c; st.hsub = ds.s; break;
+    case 'pcnew-old':
+      if (S.set.ver===3){ st.padd = `${ds.s}|${ds.k}`; refreshBehind(); app.querySelector(`.add[data-add="pc|${ds.s}|${ds.k}"] input`)?.focus(); return; }
+      newHal(st.htype, {sub:ds.s, cat:subById(ds.s)?.cat, date: ds.k.length===7 ? monthDue(ds.k) : ds.k}); return;
+    case 'newStack': newHal(st.htype, {place:'stack'}); return;
+    case 'editDay': openEditor(ds.ref); return;
+    case 'hnew': if (S.set.ver===3){ const sid = st.hsub!=='all' ? st.hsub : ''; st.padd = `${sid}|${a.closest('.hb').dataset.rk}`; refreshBehind(); app.querySelector('.hb .add.qa input')?.focus(); return; }
+      newHal(st.htype, {date:ds.d}); return;
+    case 'halMonth': { const m = +ds.m, key = mk(st.y, m); halGo(rk => rk===key, () => { setYM(st.y, m); st.view = 'month'; }); moveKnob(1, {m:m+1}); return; }
+    case 'halWeek': { const w = ds.w, end = isoAdd(w,6); halGo(rk => rk==='w:'+w || (rk>=w && rk<=end && rk.length===10), () => { st.wk = pIso(w); st.view = 'week'; }); moveKnob(2, {w:`week ${monthGrid(st.y, st.m).findIndex(x => iso(x[0])===w)+1}`}); return; }
+    default: return;
+  }
+  render();
+});
+// on the 할일 page a tap close to the road line makes something; a tap out in the empty space opens that stretch of time
+const LINE_ZONE = 64;
+function nearLine(cell, x){ const n = +getComputedStyle(cell).getPropertyValue('--n') || 1; return x - cell.getBoundingClientRect().left <= Math.max(LINE_ZONE, 30 + n*16); }
+function goInto(cell){
+  const rk = cell.dataset.rk;
+  if (st.view==='year'){ const m = +rk.slice(5,7) - 1; halGo(k => k===rk, () => { setYM(st.y, m); st.view = 'month'; }); moveKnob(1, {m:m+1}); }
+  else if (st.view==='month'){ const w = rk.startsWith('w:') ? rk.slice(2) : iso(mondayOf(pIso(rk))); halGo(() => true, () => { st.wk = pIso(w); st.view = 'week'; });
+    moveKnob(2, {w:`week${monthGrid(st.y, st.m).findIndex(x => iso(x[0])===w)+1}`}); }
+  else { const d = pIso(rk); st.hal = false; st.view = 'week'; st.wk = mondayOf(d); st.sel = dowOf(d); st.anim = 'in'; render(); }   // a day: that week in the planner
+}
+document.addEventListener('mousemove', e => { const c = e.target.closest?.('.ht .pc'); if (!c) return; c.classList.toggle('far', st.view!=='week' && !nearLine(c, e.clientX)); });
+function setPm(){
+  app.querySelector('.board.v2')?.classList.toggle('pgoal', st.pm==='goal');
+  app.querySelectorAll('.pmsw button').forEach(b => b.classList.toggle('on', b.dataset.v===st.pm));
+}
+function quickAct(a){ // the quick line's mark and chips never take the keyboard away
+  const ds = a.dataset, line = a.closest('.add');
+  if (ds.act==='qth'){ st.htype = st.htype==='ms' ? 'todo' : 'ms';
+    app.querySelectorAll('.add.qa.h').forEach(q => { q.querySelector('.qt').innerHTML = mark(st.htype==='ms'?'ms':'td',false,'ghost');
+      const inp = q.querySelector('input'); inp.placeholder = (st.htype==='ms' ? '+ 이정표' : '+ 일반') + (inp.dataset.day ? ' · ' + inp.dataset.day : ''); });
+    if (line && !line.contains(document.activeElement)) line.querySelector('input').focus();
+    return; }
+  if (ds.act==='qt'){ const order = ['todo','event','routine']; st.qtype = order[(order.indexOf(st.qtype)+1) % 3];
+    app.querySelectorAll('.add.qa:not(.h)').forEach(q => { q.querySelector('.qt').innerHTML = mark(KIND[st.qtype],false,'ghost');
+      const inp = q.querySelector('input'); inp.placeholder = QPH[st.qtype] + (inp.dataset.day ? ' · ' + inp.dataset.day : ''); });
+    if (line && !line.contains(document.activeElement)) line.querySelector('input').focus();
+    return; }
+  if (ds.act==='qcat'){ st.qcat = st.qcat===ds.c ? null : ds.c; st.qsub = null; }
+  if (ds.act==='qsub') st.qsub = st.qsub===ds.s ? null : ds.s;
+  app.querySelectorAll('.qchips').forEach(q => { q.outerHTML = qchips(); });
+}
+document.addEventListener('pointerdown', e => { if (e.target.closest('.qchips button, .qt, #qpop button[data-q]')) e.preventDefault(); });
+document.addEventListener('change', e => { if (e.target.id==='qend' && st.qp) st.qp.end = e.target.value; });
+document.addEventListener('input', e => { // any colour, from the + swatch
+  const cp = e.target.dataset?.cp; if (!cp) return;
+  if (cp==='cat' && st.ed){ st.ed.color = e.target.value; app.querySelectorAll('#ed .sw2').forEach(b => b.classList.remove('on')); e.target.parentElement.style.setProperty('--c', e.target.value); e.target.parentElement.classList.add('on'); }
+});
+document.addEventListener('change', e => { if (e.target.dataset?.cp==='hl'){ S.set.hlc[e.target.dataset.k] = e.target.value; save(); render(); } });
+
+/* ---------- backup: save / copy everything, bring a backup back ---------- */
+// inside an embedded frame (like a shared preview) downloads are blocked — only offer the file where it can work
+const CAN_DOWNLOAD = (() => { try { return window.top === window; } catch(e) { return false; } })();
+const backupText = () => JSON.stringify({app:'bw-planner', schema:SCHEMA, exported:new Date().toISOString(), data:S});
+function saveBackupFile(){
+  try {
+    const url = URL.createObjectURL(new Blob([backupText()], {type:'application/json'}));
+    const a = document.createElement('a'); a.href = url; a.download = `흑백플래너-백업-${TODAY}.json`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    st.bakMsg = '백업 파일을 저장했어요. 내려받기 폴더에 없다면 “백업 복사”를 써 주세요.';
+  } catch(e) { st.bakMsg = '여기서는 파일 저장이 막혀 있어요. “백업 복사”를 써 주세요.'; }
+  render();
+}
+function copyBackup(){
+  const txt = backupText(); st.bakShow = '';
+  const done = () => { st.bakMsg = '복사했어요. 옮길 곳의 설정 → 데이터 → 붙여넣기에 넣으면 돼요.'; render(); };
+  const fail = () => { st.bakShow = txt; st.bakMsg = '자동 복사가 막혀 있어요. 아래 칸의 내용을 전체 선택해서 복사해 주세요.'; render();
+    const t = app.querySelector('#baktext'); t?.focus(); t?.select(); };
+  try { navigator.clipboard.writeText(txt).then(done, fail); } catch(e) { fail(); }   // must start inside the click
+}
+function stageImport(text){
+  let o = null; try { o = JSON.parse(String(text).trim()); } catch(e) {}
+  const d = isData(o?.data) ? o.data : isData(o) ? o : null;
+  if (!d){ st.imp = null; st.bakMsg = '백업 내용을 읽지 못했어요. 백업 파일이나 복사한 내용 전체가 맞는지 확인해 주세요.'; render(); return; }
+  const items = Object.values(d.days).flat();
+  st.imp = {d, sum:`일정 ${items.filter(i => i.type==='event').length} · 할일 ${items.filter(i => i.type!=='event').length} · 루틴 ${(d.routines||[]).length + (d.ms||[]).length}`,
+    at: d.saved ? new Date(d.saved).toLocaleString('ko-KR', {dateStyle:'medium', timeStyle:'short'}) : ''};
+  st.pasteOpen = false; st.bakMsg = ''; render();
+}
+function applyImport(){
+  if (!st.imp) return;
+  store.set(KEY+'-before-import', JSON.stringify(S));   // what was here before, kept aside
+  S = st.imp.d; for (let v = (S.schema||1) + 1; v <= SCHEMA; v++) MIGRATIONS[v]?.(S); S.schema = SCHEMA; ensure();
+  st.imp = null; st.hcat = 'all'; st.hsub = 'all'; save();
+  st.bakMsg = '가져왔어요. 바꾸기 전 데이터도 따로 보관해 두었어요.'; render();
+}
+document.addEventListener('change', e => {
+  if (e.target.id!=='impfile') return; const f = e.target.files?.[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => stageImport(r.result); r.onerror = () => { st.bakMsg = '파일을 열지 못했어요.'; render(); }; r.readAsText(f);
+});
+
+/* ---------- installed app (PWA): opens offline, takes new versions when online ---------- */
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && document.querySelector('link[rel="manifest"]')){
+  try { navigator.storage?.persist?.().catch(() => {}); } catch(e) {}   // ask the device not to clear the planner's storage
+  let wantReload = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (wantReload) location.reload(); });
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    const ask = w => toast('새 버전이 준비됐어요', ['새로고침', () => { wantReload = true; w.postMessage('skip'); }]);
+    if (reg.waiting && navigator.serviceWorker.controller) ask(reg.waiting);
+    reg.addEventListener('updatefound', () => { const w = reg.installing;
+      w?.addEventListener('statechange', () => { if (w.state==='installed' && navigator.serviceWorker.controller) ask(w); }); });
+    setInterval(() => reg.update().catch(() => {}), 60*60*1000);
+  }).catch(() => {});
+}
+function openCatEd(kind, id){
+  const c = kind==='cat' ? catById(id) : subById(id); if (!c) return;
+  st.ed = {kind, id, text:c.name, emoji:c.emoji||'', color:c.color||null}; render();
+}
+function setAct(a){
+  const ds = a.dataset;
+  if (ds.act==='setClose'){ st.setOpen = false; st.pasteOpen = false; st.imp = null; st.bakMsg = ''; st.bakShow = ''; render(); }
+  else if (ds.act==='setv'){ S.set[ds.k] = isNaN(+ds.v) ? ds.v : +ds.v; save(); render(); }
+  else if (ds.act==='ysw'){ S.set.ys[ds.k] = !S.set.ys[ds.k]; save(); render(); }
+  else if (ds.act==='resetAsk'){ st.resetAsk = true; render(); }
+  else if (ds.act==='resetNo'){ st.resetAsk = false; render(); }
+  else if (ds.act==='bakFile') saveBackupFile();
+  else if (ds.act==='bakCopy') copyBackup();
+  else if (ds.act==='impFile') app.querySelector('#impfile')?.click();
+  else if (ds.act==='impPaste'){ st.pasteOpen = true; st.imp = null; st.bakMsg = ''; render(); app.querySelector('#imptext')?.focus(); }
+  else if (ds.act==='impPasteNo'){ st.pasteOpen = false; render(); }
+  else if (ds.act==='impPasteGo') stageImport(app.querySelector('#imptext')?.value || '');
+  else if (ds.act==='impNo'){ st.imp = null; render(); }
+  else if (ds.act==='impYes') applyImport();
+  else if (ds.act==='resetYes'){ st.resetAsk = false; store.set(KEY+'-before-reset', JSON.stringify(S));   // kept aside, just in case
+    S = {set:S.set, cats:[{id:'base',name:'기본',color:null}], subs:[], ms:[], days:{}, goals:{}, weeks:{}, routines:[], rdone:{}, sdone:{}, rskip:{}, sskip:{}, backlog:{}, stack:{all:[]}, v2:true, wkSeed:true};
+    st.hcat = 'all'; st.hsub = 'all'; save(); render(); }
+  else if (ds.act==='hfull'){ S.set.hfull ||= {}; S.set.hfull[ds.k] = !fullIn(ds.k); save(); render(); }
+  else if (ds.act==='fontAdd') addFont();
+  else if (ds.act==='fontDel'){ S.set.cfonts = (S.set.cfonts || []).filter(f => f.k!==ds.v); if (S.set.font===ds.v) S.set.font = 'base';
+    document.querySelector(`link[data-font="${ds.v}"]`)?.remove(); save(); render(); }
+  else if (ds.act==='setcat'){ S.set.hlcat = S.set.hlcat===false; save(); render(); }
+  else if (ds.act==='setc'){ S.set.hlc[ds.k] = ds.v || null; save(); render(); }
+}
+
+/* ---------- typing: Enter adds (Korean IME safe); leaving a line with text also adds ---------- */
+let pending = null, committing = false, pdown = false;
+function commit(el){
+  if (el.closest('.add')){
+    committing = true;
+    if (quickAdd(el)){ const key = st.refocus; st.refocus = null; refreshBehind(); if (key) app.querySelector(`.add[data-add="${key}"] input`)?.focus(); }
+    committing = false;
+  }
+  else if (el.id==='qin') qpAdd();
+  else if (el.id==='fontin') addFont();
+  else if (el.id==='etext' || el.id==='ememo') saveEd();
+}
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape' && st.qp){ closeQp(); return; }
+  if (e.key==='Escape'){ if (st.setOpen) st.setOpen = false; else if (st.ed) st.ed = null; else { st.padd = null; st.wadd = null; } render(); return; }
+  if (e.key!=='Enter' || e.target.tagName!=='INPUT') return;
+  e.preventDefault();
+  if (e.isComposing || e.keyCode===229){ pending = e.target; return; }
+  commit(e.target);
+});
+document.addEventListener('compositionend', e => { if (pending===e.target){ const el = pending; pending = null; setTimeout(() => commit(el), 0); } });
+document.addEventListener('keyup', e => { if (e.key==='Enter' && pending===e.target && !e.isComposing){ const el = pending; pending = null; commit(el); } });
+document.addEventListener('focusout', e => {
+  const inp = e.target; if (committing || inp.tagName!=='INPUT' || !inp.closest?.('.add') || !inp.isConnected) return;
+  const tag = inp.closest('.add').dataset.add;
+  if (inp.value.trim()){ quickAdd(inp); st.refocus = null; st.dirty = true; }
+  if (tag.startsWith('weeks|') && st.wadd){ st.wadd = null; st.dirty = true; }
+  if (tag.startsWith('pc|') && st.padd){ st.padd = null; st.dirty = true; }
+  if (st.dirty && !pdown) setTimeout(flushDirty, 0);
+});
+function flushDirty(){ if (!st.dirty || st.busy) return; st.dirty = false; if (!st.ed && !st.setOpen) refreshBehind(); }
+
+/* ---------- press, hold and drag (mouse and touch alike) ---------- */
+let pd = null, drag = null, noClick = 0;
+document.addEventListener('pointerdown', e => {
+  pdown = true;
+  if (e.button>0 || st.ed || st.setOpen || st.busy) return;
+  const el = e.target.closest('[data-drag][data-ref]'); if (!el || e.target.closest('input')) return;
+  pd = {el, x:e.clientX, y:e.clientY, mouse:e.pointerType==='mouse'};
+  pd.timer = setTimeout(() => { if (pd) startDrag(pd.x, pd.y); }, 380);
+});
+function startDrag(x, y){
+  clearTimeout(pd.timer);
+  const g = document.createElement('div'); g.className = 'ghostdrag'; g.textContent = pd.el.querySelector('.tx, .pt')?.textContent || '';
+  document.body.appendChild(g); document.body.classList.add('dnd'); pd.el.classList.add('dragging');
+  drag = {ref:pd.el.dataset.ref, src:pd.el, g, over:null}; moveDrag(x, y);
+  try { navigator.vibrate?.(12); } catch(err) {}
+}
+function moveDrag(x, y){
+  drag.g.style.left = x + 'px'; drag.g.style.top = y + 'px';
+  const t = document.elementFromPoint(x, y)?.closest('[data-drop]');
+  if (t!==drag.over){ drag.over?.classList.remove('drop-over'); drag.over = t; t?.classList.add('drop-over'); }
+  drag.x = x; drag.y = y;
+}
+document.addEventListener('pointermove', e => {
+  if (drag){ moveDrag(e.clientX, e.clientY); return; }
+  if (!pd) return;
+  const d = Math.hypot(e.clientX - pd.x, e.clientY - pd.y);
+  if (d > 6){ if (pd.mouse) startDrag(e.clientX, e.clientY); else { clearTimeout(pd.timer); pd = null; } }
+});
+function endDrag(drop){
+  if (pd){ clearTimeout(pd.timer); pd = null; }
+  if (!drag) return;
+  const {over, ref, src, g, x, y} = drag; drag = null;
+  g.remove(); document.body.classList.remove('dnd'); src.classList.remove('dragging'); over?.classList.remove('drop-over');
+  noClick = Date.now();
+  if (drop && over) dropOn(over, ref, x, y);
+}
+document.addEventListener('pointerup', () => { pdown = false; endDrag(true); if (st.dirty) setTimeout(flushDirty, 0); });
+document.addEventListener('pointercancel', () => { pdown = false; endDrag(false); });
+document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, {passive:false});
+document.addEventListener('contextmenu', e => { if (pd || drag) e.preventDefault(); });
+document.addEventListener('click', e => { if (Date.now() - noClick < 250){ e.stopPropagation(); e.preventDefault(); } }, true);
+document.addEventListener('dragstart', e => { if (e.target.closest?.('[data-drag]')) e.preventDefault(); });
+
+function takeItem(ref){ const [c,k,id] = ref.split('|'); const l = L(c,k), it = l.find(x => x.id===id); if (it) S[c][k] = l.filter(x => x!==it); return it; }
+function dropOn(t, ref, x, y){
+  const [dc, dk, dx] = t.dataset.drop.split('|'), [sc, sk, sid] = ref.split('|');
+  const when = d => d.length===7 ? null : d;   // a month cell keeps the day of the month where it can
+  if (sc==='ms'){ // a milestone stays a milestone; only its day (or 세부할일) moves
+    const m = msById(sid); if (!m) return;
+    const open = m.due===OPEN;   // one without an end moves its start instead
+    if (dc==='days'){ if (open) m.start = dk; else m.due = dk; }
+    else if (dc==='weeks'){ if (open) m.start = dk; else m.due = isoAdd(dk, m.due ? dowOf(pIso(m.due)) : 6); }
+    else if (dc==='pc'){ if (dk) m.sub = dk; const k = dx.length===7 ? sameDayIn(dx, open ? m.start : m.due) : dx;
+      if (open) m.start = k; else { m.due = k; if (m.start && m.start>m.due) delete m.start; } }
+    else if (dc==='stack'){ const o = {id:uid(), text:m.text, done:m.done, kind:'ms', dows:m.dows}; setCS(o, subById(m.sub)?.cat, m.sub); L('stack','all').push(o); S.ms = S.ms.filter(z => z!==m); }
+    else return;
+    save(); refreshBehind(); return;
+  }
+  const src = L(sc, sk).find(z => z.id===sid); if (!src) return;
+  if (sc==='stack'){ // applying something kept in 보관함
+    if (dc!=='pc') return;
+    const sub = dk || src.sub; if (!sub){ newHal(src.kind==='ms'?'ms':'todo', {text:src.text, date:dx.length===7?monthDue(dx):dx, src:'stack', id:src.id, cat:src.cat||null}); return; }
+    const due = dx.length===7 ? monthDue(dx) : dx;
+    if (src.kind==='ms'){ // a 루틴 needs 언제까지: the bar opens with its calendar, 취소 / 완료
+      const r = t.getBoundingClientRect();
+      st.qp = {t:`pc|${sub}|${dx}`, type:'ms', cat:subById(sub).cat, sub, lock:true, dows:src.dows ? [...src.dows] : [0,2,4], x:r.left, y:r.top + 24, top:r.top, n:0,
+        start:due, end:'', noEnd:false, cal:true, calYM:due.slice(0,7), apply:ref, text:src.text};
+      drawQp(true); app.querySelector('#qin').value = src.text; return; }
+    else { const o = {id:uid(), text:src.text, type:src.kind==='event' ? 'event' : 'todo', done:!!src.done}; setCS(o, subById(sub).cat, sub); if (src.star) o.star = true; L('days', due).push(o); }
+    takeItem(ref); save(); refreshBehind(); return;
+  }
+  if (sc==='days' && (dc==='pc' || dc==='stack')){ // a plain 할일 to-do: another day, or back into 보관함
+    takeItem(ref);
+    if (dc==='stack'){ if (!src.sub) return; const o = {id:src.id, text:src.text, done:!!src.done, kind:src.type==='event' ? 'event' : 'todo'}; setCS(o, src.cat, src.sub); if (src.star) o.star = true; L('stack','all').push(o); }
+    else { const o = {...src}; if (dk) setCS(o, subById(dk).cat, dk); L('days', dx.length===7 ? sameDayIn(dx, sk) : dx).push(o); }
+    save(); refreshBehind(); return;
+  }
+  if (dc!=='days' && dc!=='weeks') return;
+  if (sc==='days' && dc==='weeks' && src.star){ takeItem(ref); L('days', isoAdd(dk, dowOf(pIso(sk)))).push(src); save(); refreshBehind(); return; } // an 이정표 dropped on another week keeps its weekday
+  const hit = document.elementFromPoint(x, y)?.closest('.it[data-ref]')?.dataset.ref; let before = null;
+  if (hit){ const [bc, bk, bi] = hit.split('|'); if (bc===dc && bk===dk) before = bi; }
+  if (before===sid || (sc===dc && sk===dk && !before)) return;
+  takeItem(ref);
+  const o = {...src}; if (dc==='weeks'){ delete o.type; delete o.memo; } else if (sc==='weeks') o.type = 'todo';
+  const dst = L(dc, dk), i = before ? dst.findIndex(z => z.id===before) : -1;
+  if (i<0) dst.push(o); else dst.splice(i, 0, o);
+  save(); refreshBehind();
+}
+
+/* ---------- tall screens: swipe months / years up-down, weeks sideways ---------- */
+function stepPage(dir, axis){
+  if (st.view==='week' && st.portrait){ // tall week = one day at a time
+    let i = st.sel + dir; if (i>6){ shiftWeek(1); i = 0; } else if (i<0){ shiftWeek(-1); i = 6; }
+    st.sel = i; st.dslide = dir>0 ? 'left' : 'right'; render(); return; }
+  step(dir); st.slide = axis==='x' ? (dir>0 ? 'left' : 'right') : (dir>0 ? 'up' : 'down'); render();
+}
+let tStart = null;
+document.addEventListener('touchstart', e => { if (!st.portrait || st.ed || st.setOpen || st.hal) return; const t = e.touches[0]; tStart = {x:t.clientX, y:t.clientY, el:e.target}; }, {passive:true});
+document.addEventListener('touchend', e => {
+  if (!tStart) return; const t = e.changedTouches[0], dx = t.clientX - tStart.x, dy = t.clientY - tStart.y, el = tStart.el; tStart = null;
+  if (drag || Date.now() - noClick < 400 || el.closest?.('input, .qbar')) return;
+  const vert = Math.abs(dy) > 50 && Math.abs(dy) > Math.abs(dx)*1.3, horiz = Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)*1.3;
+  if ((st.view==='month' || st.view==='year') && el.closest?.('main') && vert) stepPage(dy<0 ? 1 : -1, 'y');
+  else if (st.view==='month' && horiz && el.closest?.('main')){ const v = dx<0 ? 'goal' : 'cal'; if (v!==st.pm){ st.pm = v; setPm(); } }
+  else if (st.view==='week' && el.closest?.('.board') && horiz) stepPage(dx<0 ? 1 : -1, 'x');
+});
+let wheelAcc = 0, wheelLock = 0;
+addEventListener('wheel', e => {
+  if (!st.portrait || st.ed || st.setOpen || st.hal || !(st.view==='month' || st.view==='year') || !e.target.closest?.('main.pager')) return;
+  e.preventDefault(); if (Date.now() < wheelLock) return;
+  wheelAcc += e.deltaY; if (Math.abs(wheelAcc) > 80){ stepPage(wheelAcc>0 ? 1 : -1, 'y'); wheelAcc = 0; wheelLock = Date.now() + 450; }
+}, {passive:false});
+
+/* ---------- wide vs tall ---------- */
+const isPortrait = () => innerWidth < 760 || innerWidth/innerHeight < 0.9;
+addEventListener('resize', () => { const typing = document.activeElement?.tagName==='INPUT';
+  if (typing && (st.ed || st.qp)) return;   // the phone keyboard shrinks the screen while typing — don't squash the page behind the sheet
+  const p = isPortrait(); if (p!==st.portrait && !typing){ st.portrait = p; render(); } else layout(); });
+st.portrait = isPortrait();
+const h = location.hash.slice(1), hv = h.match(/(year|month|week)/);
+if (hv) st.view = hv[1];
+if (/hal/.test(h)) st.hal = true;
+if (/goal/.test(h)) st.pm = 'goal';
+const hv2 = h.match(/ver([123])/); if (hv2) S.set.ver = +hv2[1];
+const hh = h.match(/hv([123])/); if (hh) S.set.hv = +hh[1]; for (const k of ['hl','hy','hm']){ const mm = h.match(new RegExp(k+'([123])')); if (mm) S.set[k] = +mm[1]; }
+render();
+if (/opt$/.test(h)){ st.setOpen = true; render(); }
+if (/edit$/.test(h)) newPlan(TODAY);
+if (/msed$/.test(h)) newHal('ms');
+})();
+
+</script>
+
+</body></html>
