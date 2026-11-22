@@ -308,6 +308,11 @@ main{flex:1;min-height:0;position:relative}
 .fontadd{display:flex;gap:6px;margin-top:10px}
 .fontadd input{flex:1;min-width:0;border:var(--lw) solid var(--soft);border-radius:6px;padding:6px 10px;font-size:13px;outline:none;background:transparent}
 .fontadd input:focus{border-color:var(--ink)}
+/* 설정 → 동기화 */
+.syform{display:flex;flex-direction:column;gap:6px;margin:4px 0 2px;max-width:340px}
+.syform input{border:var(--lw) solid var(--soft);border-radius:6px;padding:8px 10px;font-size:14px;outline:none;background:transparent}
+.syform input:focus{border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
 /* 설정 → 데이터: backup */
 .bakrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 #imptext,#baktext{display:block;width:100%;height:96px;margin-top:8px;border:var(--lw) solid var(--soft);border-radius:6px;padding:8px;font:11.5px/1.4 ui-monospace,Consolas,monospace;resize:vertical;background:transparent;color:inherit;outline:none}
@@ -1086,6 +1091,7 @@ function ensure(){
 let saveWarned = false;
 function save(){
   S.saved = Date.now();
+  try { schedulePush(); } catch(e) {}   // signed in: send it to the cloud a moment later
   if (store.set(KEY, JSON.stringify(S))) { saveWarned = false; return; }
   if (!saveWarned){ saveWarned = true; toast('저장하지 못했어요. 설정 → 데이터에서 백업을 저장해 두세요.'); }   // full storage or blocked: say so once
 }
@@ -1098,6 +1104,7 @@ function toast(msg, btn){   // a small note at the bottom; btn = [label, onClick
 }
 // another tab or window of the planner saved: take its data instead of overwriting it later
 addEventListener('storage', e => {
+  if (e.key===KEY+'-sync'){ try { sy = JSON.parse(e.newValue) || {}; } catch(err) {} return; }   // the other tab signed in / out or synced
   if (e.key!==KEY || !e.newValue) return;
   try { const s = JSON.parse(e.newValue); if (isData(s)){ S = s; ensure(); if (!st.ed && !st.qp) render(); } } catch(err) {}
 });
@@ -1628,6 +1635,7 @@ function settingsHTML(){
   const cur = allFonts().some(f => f[0]===S.set.font) ? S.set.font : 'base';
   return `<div class="ov${st.setStill?' still':''}" data-act="setClose"><div class="sheet set" id="set" role="dialog" aria-label="설정">
     <div class="shead"><h4>설정</h4><button class="btn dark" data-act="setClose">완료</button></div>
+    ${syncHTML()}
     <div class="sec"><div class="sh">글씨체</div><div class="sd">플래너 전체의 글씨체를 바꿉니다.</div>
       <div class="vopts">${allFonts().map(([k,name,en,stack]) => `<button class="vopt${cur===k?' on':''}" data-act="setv" data-k="font" data-v="${k}"><span style="font-family:${esc(stack)}">${esc(name)} 2026 할일</span><small>${esc(en)}</small>${k.startsWith('u_')?`<span class="fdel" data-act="fontDel" data-v="${k}" title="이 글씨체 지우기" aria-label="지우기">✕</span>`:''}</button>`).join('')}</div>
       <div class="fontadd"><input id="fontin" placeholder="글씨체 이름 (예: Gaegu, Dongle)" autocomplete="off" enterkeyhint="done" aria-label="추가할 글씨체 이름"><button class="btn" data-act="fontAdd">추가</button></div>
@@ -2365,6 +2373,152 @@ document.addEventListener('change', e => {
   const r = new FileReader(); r.onload = () => stageImport(r.result); r.onerror = () => { st.bakMsg = '파일을 열지 못했어요.'; render(); }; r.readAsText(f);
 });
 
+/* ---------- sync (Supabase): one row per person holds the whole planner ----------
+   Each device keeps working on its own copy; when online the two are matched:
+   only the cloud changed → take it · only this device changed → send it · both → the newer one wins, the other is kept aside.
+   The key below is the public one (safe in the page); the table only lets each person read and write their own row. */
+const SB_URL = 'https://kpcbaqsxkbemugsxdiwg.supabase.co', SB_KEY = 'sb_publishable_o1MNNUO5SQKobQONoSED0w_UH0pcbSm';
+const SYNC_KEY = KEY + '-sync';
+let sy = (() => { try { return JSON.parse(store.get(SYNC_KEY)) || {}; } catch(e) { return {}; } })();   // {email, uid, access, refresh, exp, remoteAt, pushed, last, err}
+const sySave = () => store.set(SYNC_KEY, JSON.stringify(sy));
+const signedIn = () => CAN_DOWNLOAD && !!sy.refresh;   // (inside a preview frame the cloud can't be reached)
+async function sbFetch(path, opt={}, auth=true){
+  const h = {apikey: SB_KEY, 'Content-Type': 'application/json', ...(opt.headers || {})};
+  if (auth){ const t = await sbToken(); if (!t){ const e = new Error('로그인이 필요해요'); e.status = 401; throw e; } h.Authorization = 'Bearer ' + t; }
+  const r = await fetch(SB_URL + path, {...opt, headers: h});
+  const txt = await r.text(); let j = null; try { j = txt ? JSON.parse(txt) : null; } catch(e) {}
+  if (!r.ok){ const e = new Error(j?.msg || j?.message || j?.error_description || j?.error || ('HTTP ' + r.status)); e.status = r.status; e.code = j?.error_code || j?.code || ''; throw e; }
+  return j;
+}
+function takeSession(j){
+  sy.access = j.access_token; sy.refresh = j.refresh_token; sy.exp = Date.now() + (j.expires_in || 3600) * 1000;
+  if (j.user){ sy.uid = j.user.id; sy.email = j.user.email; } sySave();
+}
+async function sbToken(){
+  if (!sy.refresh) return null;
+  if (sy.access && sy.exp - Date.now() > 60000) return sy.access;
+  try { takeSession(await sbFetch('/auth/v1/token?grant_type=refresh_token', {method:'POST', body:JSON.stringify({refresh_token: sy.refresh})}, false)); return sy.access; }
+  catch(e){ if (e.status===400 || e.status===401) syncSignedOut('로그인이 만료됐어요. 설정 → 동기화에서 다시 로그인해 주세요.'); return null; }   // offline: just try later
+}
+const authText = e => { const s = (e.message || '') + ' ' + (e.code || '');
+  return e instanceof TypeError ? '인터넷 연결을 확인해 주세요.'
+    : /invalid.?(login|credentials)/i.test(s) ? '이메일이나 비밀번호가 맞지 않아요.'
+    : /not.?confirmed/i.test(s) ? '아직 메일 확인 전이에요. 메일함의 확인 링크를 먼저 눌러 주세요.'
+    : /already.?(registered|exists)/i.test(s) ? '이미 가입된 이메일이에요. 로그인을 눌러 주세요.'
+    : /rate.?limit/i.test(s) ? '메일을 너무 자주 보냈어요. 잠시 뒤에 다시 해 주세요.'
+    : /password/i.test(s) ? '비밀번호는 6자 이상으로 해 주세요.'
+    : '문제가 생겼어요: ' + e.message; };
+const syncErrText = e => e instanceof TypeError ? '인터넷 연결이 없어서 잠시 멈췄어요. 연결되면 이어서 맞춰요.'
+  : e.status===404 || /planner_data|schema cache/i.test(e.message) ? '클라우드 준비가 아직 안 됐어요 (Supabase에서 표 만들기 SQL을 실행해 주세요).'
+  : '동기화하지 못했어요: ' + e.message;
+async function syncLogin(signup){
+  if (st.syncBusy) return;
+  const email = (app.querySelector('#syemail')?.value || '').trim(), pw = app.querySelector('#sypw')?.value || '';
+  st.syEmail = email;
+  if (!/^\S+@\S+\.\S+$/.test(email) || pw.length < 6){ st.syncMsg = '이메일과 6자 이상의 비밀번호를 적어 주세요.'; render(); return; }
+  st.syncBusy = true; st.syncMsg = signup ? '가입하는 중…' : '로그인하는 중…'; render();
+  try {
+    if (signup){
+      const j = await sbFetch('/auth/v1/signup', {method:'POST', body:JSON.stringify({email, password: pw})}, false);
+      if (!j?.access_token){ st.syncMsg = `${email}로 확인 메일을 보냈어요. 메일의 링크를 누르면 이 앱이 열리면서 바로 로그인돼요. (링크 대신 여기서 로그인해도 돼요.)`; return; }
+      takeSession(j);
+    } else takeSession(await sbFetch('/auth/v1/token?grant_type=password', {method:'POST', body:JSON.stringify({email, password: pw})}, false));
+    sy.remoteAt = null; sy.pushed = null; sy.err = ''; sySave();   // a fresh start for this device
+    st.syncMsg = ''; await syncNow();
+  } catch(e){ st.syncMsg = authText(e); }
+  finally { st.syncBusy = false; render(); }
+}
+function syncSignedOut(msg){
+  delete sy.access; delete sy.refresh; delete sy.exp; sy.remoteAt = null; sy.pushed = null; sySave();
+  st.syncMsg = msg; toast(msg); if (st.setOpen) render();
+}
+async function syncLogout(){
+  const t = sy.access; try { if (t) await fetch(SB_URL + '/auth/v1/logout', {method:'POST', headers:{apikey: SB_KEY, Authorization: 'Bearer ' + t}}); } catch(e) {}
+  syncSignedOut('로그아웃했어요. 이 기기의 기록은 그대로 있어요.');
+}
+// confirmation-mail link: the app opens with the session in the address — sign in with it, then clean the address
+function syncFromLink(){
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (p.get('access_token') && p.get('refresh_token')){
+    try { const u = JSON.parse(atob(p.get('access_token').split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+      takeSession({access_token: p.get('access_token'), refresh_token: p.get('refresh_token'), expires_in: +p.get('expires_in') || 3600, user: {id: u.sub, email: u.email}});
+      sy.remoteAt = null; sy.pushed = null; sySave(); toast('메일 확인이 끝났어요. 동기화를 시작해요.'); } catch(e) {}
+  } else if (p.get('error_description')) toast('메일 링크가 만료됐거나 이미 쓰였어요. 설정 → 동기화에서 로그인해 주세요.');
+  else return;
+  history.replaceState(null, '', location.pathname + location.search);
+}
+let syncing = null, syncAgain = false, pushTimer = null;
+function schedulePush(){ if (!signedIn()) return; clearTimeout(pushTimer); pushTimer = setTimeout(syncNow, 1500); }
+function syncNow(){
+  if (!signedIn()) return Promise.resolve();
+  if (syncing){ syncAgain = true; return syncing; }
+  syncing = doSync().finally(() => { syncing = null; if (syncAgain){ syncAgain = false; syncNow(); } });
+  return syncing;
+}
+async function push(){
+  const saved = S.saved || (S.saved = Date.now());
+  const rows = await sbFetch('/rest/v1/planner_data?on_conflict=user_id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=representation'}, body:JSON.stringify({user_id: sy.uid, data: S})});
+  sy.remoteAt = rows?.[0]?.updated_at || sy.remoteAt; sy.pushed = saved; sySave();
+}
+function takeRemote(remote){
+  if (!isData(remote?.data)) return;
+  store.set(KEY+'-backup', JSON.stringify(S));   // what this device had, kept aside
+  S = remote.data; for (let v = (S.schema||1) + 1; v <= SCHEMA; v++) MIGRATIONS[v]?.(S); S.schema = SCHEMA; ensure();
+  store.set(KEY, JSON.stringify(S));
+  sy.remoteAt = remote.updated_at; sy.pushed = S.saved; sySave();
+  if (!st.ed && !st.qp) render();
+}
+async function doSync(){
+  if (st.ed || st.qp){ setTimeout(syncNow, 4000); return; }   // never swap the data under an open sheet; try again shortly
+  try {
+    const remote = (await sbFetch(`/rest/v1/planner_data?select=data,updated_at&user_id=eq.${sy.uid}`))?.[0];
+    const localDirty = (S.saved || 0) !== sy.pushed, remoteChanged = !!remote && remote.updated_at !== sy.remoteAt;
+    if (!remote) await push();
+    else if (sy.remoteAt == null && sy.pushed == null){   // first time on this device, and the cloud already has a planner
+      if (FRESH && !S.saved) takeRemote(remote);              // nothing of this device's own yet: just take it
+      else { st.syncAsk = remote; st.setOpen = true; sy.err = ''; sySave(); render(); return; }
+    }
+    else if (remoteChanged && !localDirty) takeRemote(remote);
+    else if (!remoteChanged && localDirty) await push();
+    else if (remoteChanged && localDirty){
+      if ((remote.data?.saved || 0) > (S.saved || 0)){ store.set(`${KEY}-conflict-${Date.now()}`, JSON.stringify(S)); takeRemote(remote);
+        toast('다른 기기에서 바꾼 내용이 더 최근이라 그걸로 맞췄어요. 이 기기의 것은 따로 보관했어요.'); }
+      else { store.set(`${KEY}-conflict-${Date.now()}`, JSON.stringify(remote.data)); await push(); }
+    }
+    sy.last = Date.now(); sy.err = ''; sySave();
+  } catch(e){ sy.err = syncErrText(e); sySave(); }
+  if (st.setOpen) render();
+}
+function syncHTML(){
+  if (!CAN_DOWNLOAD) return '';
+  let h = `<div class="sec"><div class="sh">동기화</div>`;
+  if (!sy.refresh){
+    h += `<div class="sd">같은 계정으로 로그인한 폰과 컴퓨터의 기록이 서로 맞춰집니다. 처음이면 이메일과 비밀번호를 정하고 <b>가입하기</b>를 눌러 주세요.</div>
+      <div class="syform"><input id="syemail" type="email" placeholder="이메일" autocomplete="email" value="${esc(st.syEmail ?? sy.email ?? '')}" aria-label="이메일">
+      <input id="sypw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" aria-label="비밀번호" enterkeyhint="go"></div>
+      <div class="bakrow"><button class="btn dark" data-act="syLogin"${st.syncBusy?' disabled':''}>로그인</button><button class="btn" data-act="sySignup"${st.syncBusy?' disabled':''}>가입하기</button></div>`;
+  } else {
+    const when = sy.last ? new Date(sy.last).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '';
+    const state = sy.err || (syncing ? '맞추는 중…' : when ? `마지막으로 맞춘 시각 ${when}` : '맞추는 중…');
+    h += `<div class="sd"><b>${esc(sy.email || '')}</b> 계정으로 동기화하고 있어요.<br>${esc(state)}</div>
+      <div class="bakrow"><button class="btn" data-act="syNow">지금 동기화</button><button class="btn quiet" data-act="syLogout">로그아웃</button></div>`;
+    if (st.syncAsk){ const d = st.syncAsk.data, items = Object.values(d.days || {}).flat();
+      h += `<div class="impask"><b>클라우드에 이미 기록이 있어요. 어느 쪽을 쓸까요?</b>
+        <span>클라우드: 일정 ${items.filter(i => i.type==='event').length} · 할일 ${items.filter(i => i.type!=='event').length}${d.saved ? ` · ${new Date(d.saved).toLocaleString('ko-KR', {dateStyle:'medium', timeStyle:'short'})}` : ''}</span>
+        <small>고르지 않은 쪽도 이 기기에 따로 보관해 둬요.</small>
+        <div class="bakrow"><button class="btn" data-act="syUseLocal">이 기기 것 올리기</button><button class="btn dark" data-act="syUseRemote">클라우드 것 쓰기</button></div></div>`; }
+  }
+  if (st.syncMsg) h += `<div class="bakmsg">${esc(st.syncMsg)}</div>`;
+  return h + `</div>`;
+}
+if (CAN_DOWNLOAD){
+  syncFromLink();
+  addEventListener('online', () => syncNow());
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) syncNow(); });
+  setInterval(() => { if (!document.hidden) syncNow(); }, 60000);
+  setTimeout(() => syncNow(), 800);
+}
+
 /* ---------- installed app (PWA): opens offline, takes new versions when online ---------- */
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && document.querySelector('link[rel="manifest"]')){
   try { navigator.storage?.persist?.().catch(() => {}); } catch(e) {}   // ask the device not to clear the planner's storage
@@ -2389,6 +2543,11 @@ function setAct(a){
   else if (ds.act==='ysw'){ S.set.ys[ds.k] = !S.set.ys[ds.k]; save(); render(); }
   else if (ds.act==='resetAsk'){ st.resetAsk = true; render(); }
   else if (ds.act==='resetNo'){ st.resetAsk = false; render(); }
+  else if (ds.act==='syLogin' || ds.act==='sySignup') syncLogin(ds.act==='sySignup');
+  else if (ds.act==='syNow'){ st.syncMsg = ''; syncNow(); render(); }
+  else if (ds.act==='syLogout') syncLogout();
+  else if (ds.act==='syUseRemote'){ const r = st.syncAsk; st.syncAsk = null; if (r){ takeRemote(r); st.syncMsg = '클라우드의 기록으로 맞췄어요. 이 기기에 있던 것은 따로 보관했어요.'; } render(); }
+  else if (ds.act==='syUseLocal'){ const r = st.syncAsk; st.syncAsk = null; if (r) store.set(`${KEY}-conflict-${Date.now()}`, JSON.stringify(r.data)); push().then(() => { st.syncMsg = '이 기기의 기록을 클라우드에 올렸어요.'; sy.last = Date.now(); sySave(); render(); }, e => { st.syncMsg = syncErrText(e); render(); }); }
   else if (ds.act==='bakFile') saveBackupFile();
   else if (ds.act==='bakCopy') copyBackup();
   else if (ds.act==='impFile') app.querySelector('#impfile')?.click();
@@ -2418,6 +2577,7 @@ function commit(el){
   }
   else if (el.id==='qin') qpAdd();
   else if (el.id==='fontin') addFont();
+  else if (el.id==='sypw' || el.id==='syemail') syncLogin(false);
   else if (el.id==='etext' || el.id==='ememo') saveEd();
 }
 document.addEventListener('keydown', e => {
