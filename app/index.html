@@ -971,27 +971,30 @@ main{flex:1;min-height:0;position:relative}
 .dws.off button{opacity:.28;cursor:default}
 .ehint{font-size:12px;color:#bbb;white-space:nowrap}
 .enote{height:24px;font-size:11px;color:var(--mute);padding:5px 0 0 46px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.etabs{display:flex;border-bottom:var(--hl) solid var(--soft);padding:0 12px}
-.etabs button{flex:1;height:48px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px;color:#999;border-bottom:2px solid transparent;margin-bottom:-.5px}
-.etabs button .ck{margin:0}
-.etabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
-.etext3{display:flex;margin:12px 16px 4px;border-bottom:var(--lw) solid var(--ink);padding-bottom:6px}
-.etext3 .txt{font-size:17px}
 #ed .foot{min-height:60px}
-.eseg{height:30px}
 
-/* ===== 월 · 주 페이지: how something filed under a 할일 is marked (설정 → 분류 표시) ===== */
-#app.cc1 .board .it.k-hg,#app.cc1 .pwk .it.k-hg,.ccx.cc1 .it.k-hg{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hc)}
-#app.cc2 .board .it.k-hg,#app.cc2 .pwk .it.k-hg,.ccx.cc2 .it.k-hg{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hc2)}
-#app.cc3 .board .it.k-hg,#app.cc3 .pwk .it.k-hg,.ccx.cc3 .it.k-hg{box-shadow:inset 3px 0 0 var(--hcs);margin:1px -3px;padding:0 3px 0 7px;border-radius:1px}
-#app.cc4 .board .it.k-hg .tx::before,#app.cc4 .pwk .it.k-hg .tx::before,.ccx.cc4 .it.k-hg .tx::before{content:"";display:inline-block;width:.55em;height:.55em;border-radius:50%;background:var(--hcs);margin-right:.35em;vertical-align:.05em}
-#app.cc5 .board .it.k-hg .tx::before,#app.cc5 .pwk .it.k-hg .tx::before,.ccx.cc5 .it.k-hg .tx::before{content:attr(data-e);margin-right:.3em;font-size:.95em}
-#app.cc6 .board .it.k-hg:not(.done) .tx,#app.cc6 .pwk .it.k-hg:not(.done) .tx,.ccx.cc6 .it.k-hg .tx{color:var(--hcs);font-weight:400}
-#app.cc7 .board .it.k-hg,#app.cc7 .pwk .it.k-hg,.ccx.cc7 .it.k-hg{box-shadow:inset 0 0 0 1px var(--hcs);border-radius:3px;margin:1px -3px;padding:0 3px}
-.ccx{display:flex;flex-direction:column;gap:2px;margin-top:6px;width:100%}
-.ccx .it{font-size:12px}
-.vopt .ccx span{font-size:12px}
-.vopt .ccx .tx{color:var(--ink)}
+/* ===== 월 · 주 페이지: telling 세부할일 of the same 할일 apart (설정 → 세부 구분) =====
+   every row filed under a 세부 carries its name (.stag), its first letter (.sbg) and its own shades; the chosen version shows one of them */
+.stag,.sbg{display:none}
+.sbx.hl-hc .it.k-hg{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hc)}
+#app.sb1 .board .it.k-sb .stag,#app.sb1 .pwk .it.k-sb .stag,.sbx.sb1 .it.k-sb .stag{display:inline;flex:none;font-size:.78em;line-height:1.3;color:#777;background:var(--tag);border-radius:3px;padding:0 .35em;margin-top:.12em;white-space:nowrap}
+#app.sb2 .board .it.k-sb .sbg,#app.sb2 .pwk .it.k-sb .sbg,.sbx.sb2 .it.k-sb .sbg{display:inline-flex;flex:none;align-items:center;justify-content:center;min-width:1.45em;height:1.4em;padding:0 .2em;margin-top:-.05em;border-radius:3px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--hcs,var(--line));color:var(--hcs,var(--sub));font-size:.9em;font-weight:500;font-style:normal;line-height:1}
+#app.sb3 .board .it.k-sb,#app.sb3 .pwk .it.k-sb,.sbx.sb3 .it.k-sb{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hs)}
+#app.sb4 .board .it.k-sb,#app.sb4 .pwk .it.k-sb,.sbx.sb4 .it.k-sb{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hd)}
+#app.sb5 .board .it.k-sb,#app.sb5 .pwk .it.k-sb,.sbx.sb5 .it.k-sb{border-left:var(--bw) var(--bs) var(--hcs,var(--ink));margin:1px -3px;padding:0 3px 0 4px}
+.sbx{display:flex;flex-direction:column;gap:2px;margin-top:6px;width:100%}
+.sbx .it{font-size:12px}
+.vopt .sbx span,.vopt .sbx i{font-size:12px}
+.vopt .sbx .tx{color:var(--ink)}
+.vopt .sbx .stag{font-size:10px}
+.vopt .sbx .sbg{font-size:11px}
+
+/* 설정 → 테마색 */
+.throw{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:4px 0}
+.throw .k{width:44px;flex:none}
+.thsw{width:26px;height:26px;border-radius:50%;background:var(--c);border:2px solid var(--paper);box-shadow:0 0 0 1px var(--soft)}
+.thsw.on{box-shadow:0 0 0 2px var(--ink)}
+.thprev{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border-radius:8px;border:var(--lw) solid var(--line);font-size:12.5px}
 
 /* ===== 할일 page: dates as small words only (설정 → 할일 페이지 날짜 칸) ===== */
 .ht.nolab .hlab{border:0!important;border-radius:0!important;background:none;justify-content:flex-end;padding:0 9px 0 0;min-height:22px;gap:4px}
@@ -1092,6 +1095,7 @@ function ensure(){
   Object.assign(S.set, {ver:3, hv:2, hm:2, hy:3, pmv:2});
   S.set.hlc ||= {}; S.set.sum ||= 1; S.set.ys ||= {}; delete S.set.ys.star; delete S.set.ys.hal;   // (those two year-page options are gone)
   S.rskip ||= {}; S.sskip ||= {};   // routine days removed one by one: 'iso|id'
+  delete S.set.edv; delete S.set.hdl; delete S.set.ccv;   // choices that were only tried out in a preview (now fixed in the app)
   Object.assign(S.set, {rmk:'sq', hl:4, rm:1});   // chosen: square routine mark · 1-2 wide layout · table roadmap
   S.rdone ||= {}; S.sdone ||= {}; S.goals ||= {}; S.weeks ||= {}; S.routines ||= []; S.days ||= {}; S.cats ||= [];
   if (!S.cats.some(c => c.id==='base')) S.cats.unshift({id:'base',name:'기본',color:null});
@@ -1238,36 +1242,51 @@ function ring(p, size, color, inner, stroke=3){
   const r = (size - stroke)/2, c = 2*Math.PI*r;
   return `<span class="ring" style="width:${size}px;height:${size}px;font-size:${size}px"><svg viewBox="0 0 ${size} ${size}" aria-hidden="true">
     <circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="#e8e8e8" stroke-width="${stroke}"/>
-    ${p>0?`<circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color||'#141414'}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${(c*p/100).toFixed(2)} ${c.toFixed(2)}"/>`:''}</svg><span class="rin">${inner}</span></span>`;
+    ${p>0?`<circle cx="${size/2}" cy="${size/2}" r="${r}" stroke="${color||'currentColor'}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${(c*p/100).toFixed(2)} ${c.toFixed(2)}"/>`:''}</svg><span class="rin">${inner}</span></span>`;
 }
 const arrow = dir => `<svg viewBox="0 0 6 8" aria-hidden="true"><path d="${dir<0?'M6 0V8L0 4Z':'M0 0V8L6 4Z'}"/></svg>`;
-const roadSvg = `<svg viewBox="0 0 20 20" fill="none" stroke="#141414" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 18.2V2.6"/><path d="M5.5 3.4h9.8l-2.3 3.2 2.3 3.2H5.5"/></svg>`;   // 할일 page: one flag
-const calSvg = () => `<svg viewBox="0 0 20 20" fill="none" stroke="#141414" stroke-width="1.1" stroke-linecap="round"><rect x="2.5" y="3.8" width="15" height="13.7" rx="2"/><path d="M2.5 7.4h15M6.5 2.3v3M13.5 2.3v3"/></svg>`;   // planner: a plain, empty calendar
+const roadSvg = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 18.2V2.6"/><path d="M5.5 3.4h9.8l-2.3 3.2 2.3 3.2H5.5"/></svg>`;   // 할일 page: one flag
+const calSvg = () => `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><rect x="2.5" y="3.8" width="15" height="13.7" rx="2"/><path d="M2.5 7.4h15M6.5 2.3v3M13.5 2.3v3"/></svg>`;   // planner: a plain, empty calendar
 const foldBtn = `<button class="fbtn" data-act="goMonth" aria-label="월간으로 접기"><svg viewBox="0 0 9 7"><path d="M0 0h9L4.5 7z"/></svg></button>`;
 function gearSvg(){
   let t = '';
   for (let i=0;i<8;i++){ const a = i*Math.PI/4, c = Math.cos(a), s = Math.sin(a);
     t += `<line x1="${(10+5.6*c).toFixed(2)}" y1="${(10+5.6*s).toFixed(2)}" x2="${(10+8*c).toFixed(2)}" y2="${(10+8*s).toFixed(2)}"/>`; }
-  return `<svg viewBox="0 0 20 20" fill="none" stroke="#141414"><g stroke-width="2.6">${t}</g><circle cx="10" cy="10" r="5.6" stroke-width="1.1"/><circle cx="10" cy="10" r="2.2" stroke-width="1.1"/></svg>`;
+  return `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor"><g stroke-width="2.6">${t}</g><circle cx="10" cy="10" r="5.6" stroke-width="1.1"/><circle cx="10" cy="10" r="2.2" stroke-width="1.1"/></svg>`;
 }
 
 /* ---------- one row ---------- */
 // hc: the 할일 (category) this row is filed under — its colour light / strong / solid and its icon, for 설정 → 분류 표시
 const hcStyle = c => `--hc:${c.color}30;--hc2:${c.color}70;--hcs:${c.color}`;
-function itemRow(ref, kind, done, text, {tag='', drag=false, cls='', hc=null} = {}){
-  return `<div class="it${cls?' '+cls:''}${hc?' k-hg':''}${done?' done':''}" data-ref="${ref}"${drag?' data-drag':''}${hc?` style="${hcStyle(hc)}"`:''}>${mark(kind,done)}<span class="tx"${hc?` data-e="${esc(catLabel(hc))}"`:''}>${esc(text)}</span>${tag}</div>`;
+function itemRow(ref, kind, done, text, {tag='', drag=false, cls='', hc=null, src=null} = {}){
+  const sb = sbOf(src), style = (hc ? hcStyle(hc) + ';' : '') + (sb ? sbStyle(src) : '');
+  const sbg = sb ? `<i class="sbg">${esc(graphemes(sb.name)[0] || '')}</i>` : '', stag = sb ? `<span class="stag">${esc(sb.name)}</span>` : '';
+  return `<div class="it${cls?' '+cls:''}${hc?' k-hg':''}${sb?' k-sb':''}${done?' done':''}" data-ref="${ref}"${drag?' data-drag':''}${style?` style="${style}"`:''}>${mark(kind,done)}${sbg}<span class="tx">${esc(text)}</span>${stag}${tag}</div>`;
 }
 const tagOf = (cat, sub) => sub && subById(sub) ? `<span class="tag">${esc(subById(sub).name)}</span>`
   : cat && cat!=='base' && catById(cat) ? `<span class="tag">${esc(catById(cat).name)}</span>` : '';
 const hcOf = i => { const c = catById(i?.cat) || catById(subById(i?.sub)?.cat); return c && c.id!=='base' && c.color ? c : null; };   // the 할일 it's filed under (with a colour)
 const kOf = (i, base) => base;   // (old: filed under a 할일 → the 할일 colour
-// 설정 → 분류 표시: 0 끄기 · 1 연한 형광펜 · 2 진한 형광펜 · 3 왼쪽 막대 · 4 색 점 · 5 아이콘 · 6 글자색 · 7 테두리 (older data: the on/off switch)
-const ccv = () => S.set.ccv ?? (S.set.hlcat===false ? 0 : 1);
-const tdRow = (k, i) => itemRow(`days|${k}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i)});
-const evRow = (k, i) => itemRow(`days|${k}|${i.id}`, 'ev', i.done, i.text, {drag:true, cls:'k-ev', hc:hcOf(i)});
+// 설정 → 세부 구분: how 세부할일 of the same 할일 are told apart on the 월 · 주 pages
+// 0 구분 안 함 · 1 세부 이름표 · 2 세부 머리글자 · 3 세부마다 다른 색 · 4 세부마다 다른 진하기 · 5 세부마다 다른 왼쪽 선
+const sbv = () => S.set.sbv ?? 1;
+const sbOf = i => subById(i?.sub) || null;
+// colour helpers: a 세부's own shade, made from its 할일's colour (hue turned a little per 세부)
+function hexHsl(h){ const n = parseInt(h.slice(1,7),16), r = (n>>16&255)/255, g = (n>>8&255)/255, b = (n&255)/255, mx = Math.max(r,g,b), mn = Math.min(r,g,b), l = (mx+mn)/2;
+  if (mx===mn) return [0,0,l*100]; const d = mx-mn, s = l>.5 ? d/(2-mx-mn) : d/(mx+mn);
+  const hh = mx===r ? (g-b)/d + (g<b?6:0) : mx===g ? (b-r)/d + 2 : (r-g)/d + 4; return [hh*60, s*100, l*100]; }
+const SB_TURN = [0, 38, -38, 76, -76, 114, -114], SB_ALPHA = ['22','48','78','a8'], SB_LINE = [['3px','solid'],['3px','dashed'],['3px','dotted'],['4px','double']];
+function sbStyle(i){ // the variables one row needs for every version
+  const s = sbOf(i); if (!s) return '';
+  const c = catById(s.cat), k = Math.max(0, subsOf(s.cat).indexOf(s)), base = c?.color || '#8a8a8a', [hh, ss, ll] = hexHsl(base);
+  const ln = SB_LINE[k % SB_LINE.length];
+  return `--hs:hsl(${(hh + SB_TURN[k % SB_TURN.length] + 360) % 360} ${Math.max(35, ss)}% ${Math.min(80, Math.max(62, ll + 22))}% / .55);--hd:${base}${SB_ALPHA[k % SB_ALPHA.length]};--bs:${ln[1]};--bw:${ln[0]};--hcs:${base}`;
+}
+const tdRow = (k, i) => itemRow(`days|${k}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i), src:i});
+const evRow = (k, i) => itemRow(`days|${k}|${i.id}`, 'ev', i.done, i.text, {drag:true, cls:'k-ev', hc:hcOf(i), src:i});
 const rtRow = (k, x) => itemRow(`rt|${k}|${x.r.id}`, 'rt', x.done, x.r.text, {cls:'rtn k-rt'});
-const msRow = (m, tag) => itemRow(`ms||${m.id}`, 'td', m.done, m.text, {drag:true, cls:'msi k-td', hc:hcOf(m), tag: tag ? tagOf(null, m.sub) : ''});
-const stRow = (k, x) => itemRow(`ss|${k}|${x.m.id}`, 'td', x.done, x.m.text, {cls:'step k-td', hc:hcOf(x.m)});
+const msRow = (m, tag) => itemRow(`ms||${m.id}`, 'td', m.done, m.text, {drag:true, cls:'msi k-td', hc:hcOf(m), src:m, tag: tag ? tagOf(null, m.sub) : ''});
+const stRow = (k, x) => itemRow(`ss|${k}|${x.m.id}`, 'td', x.done, x.m.text, {cls:'step k-td', hc:hcOf(x.m), src:x.m});
 
 /* ---------- one day ---------- */
 function dayData(k){
@@ -1383,9 +1402,9 @@ function weekContent(mon, lvl=0, inMonth=false){
   const sun = isoAdd(mon,6), rms = S.ms.filter(m => m.star && m.due && m.due>=mon && m.due<=sun && subById(m.sub));
   const items = L('weeks', mon), sum = (label, l) => `<div class="it sum">${mark('td',false,'def')}<span class="tx">${label} ${l.filter(x=>x.done).length}/${l.length}</span></div>`;
   let h = lvl>=1 && ms.length + rms.length>1 ? sum('이정표', [...ms, ...rms])
-    : ms.map(({k, it}) => itemRow(`days|${k}|${it.id}`, it.type==='event' ? 'ev' : 'td', it.done, it.text, {drag:true, cls:it.type==='event' ? 'k-ev' : 'k-td', hc:hcOf(it)})).join('')
-      + rms.map(m => itemRow(`ms||${m.id}`, 'rt', m.done, m.text, {drag:true, cls:'k-rt', hc:hcOf(m)})).join('');
-  h += lvl>=2 && items.length>1 ? sum('목표', items) : items.map(i => itemRow(`weeks|${mon}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i)})).join('');
+    : ms.map(({k, it}) => itemRow(`days|${k}|${it.id}`, it.type==='event' ? 'ev' : 'td', it.done, it.text, {drag:true, cls:it.type==='event' ? 'k-ev' : 'k-td', hc:hcOf(it), src:it})).join('')
+      + rms.map(m => itemRow(`ms||${m.id}`, 'rt', m.done, m.text, {drag:true, cls:'k-rt', hc:hcOf(m), src:m})).join('');
+  h += lvl>=2 && items.length>1 ? sum('목표', items) : items.map(i => itemRow(`weeks|${mon}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i), src:i})).join('');
   return h + PLUS(`weeks|${mon}`, '주간 목표 추가');
 }
 
@@ -1541,7 +1560,7 @@ function halTable(){
   // the dates (week / day / month) in one box; each 할일 gets its own roadmap box, with gaps between them
   const rows = halRows(), groups = userCats().map(c => ({c, subs:subs.filter(s => s.cat===c.id)})).filter(g => g.subs.length);
   const two = false, top = 1, last = rows.length-1;   // no small 할일 name row above the 세부할일 names (the chips on top already say it)
-  const nolab = S.set.hdl===2;   // 설정 → 날짜 칸: 2 = small words only, no box
+  const nolab = true;   // the dates beside the roadmap: small words only, no box (chosen)
   const cols = [nolab ? '52px' : '64px'], place = {};
   groups.forEach(g => { cols.push('14px'); g.start = cols.length+1; g.subs.forEach(s => { place[s.id] = cols.length+1; cols.push('minmax(max-content,1fr)'); }); });
   const what = st.view==='year' ? `${st.y}` : st.view==='month' ? `${st.y}.${st.m+1}` : `${st.y}.${st.m+1}.w${weekIndex()+1}`;
@@ -1708,13 +1727,11 @@ function settingsHTML(){
     <div class="sec"><div class="sh">할일 페이지 연 · 월에 이름까지 표시</div><div class="sd">켠 것은 연 · 월에서도 주 페이지처럼 이름까지 보이고, 끈 것은 작은 점으로 보여요.</div>
       <div class="hfrow">${HK.map(([k,l]) => `<button class="hft${fullIn(k)?' on':''}" data-act="hfull" data-k="${k}" role="switch" aria-checked="${fullIn(k)}">${l}</button>`).join('')}</div></div>
     <div class="sec"><div class="sh">형광펜</div><div class="sd">고른 색으로 줄 전체에 같은 크기의 형광펜을 칠합니다. 월 페이지(달력 · 주간목표)와 주 페이지(주간 달력 · 주간목표)에 적용돼요.</div>
-      ${hl('event','일정','ev')}${hl('todo','할일','td')}${hl('routine','루틴','rt')}</div>
-    <div class="sec"><div class="sh">할일로 분류된 것 표시</div><div class="sd">월 · 주 페이지에서 할일(공부, 집안일…)로 분류된 것을 어떻게 구분할지 고릅니다. 색은 할일 페이지에서 정한 그 할일의 색이에요.</div>
-      <div class="vopts">${CCV.map(([n,t,d]) => `<button class="vopt${ccv()===n?' on':''}" data-act="setv" data-k="ccv" data-v="${n}"><span>${t}</span><small>${d}</small>${n ? ccSample(n) : ''}</button>`).join('')}</div></div>
-    <div class="sec"><div class="sh">수정창 모양</div><div class="sd">할일 · 일정 · 루틴을 눌렀을 때 뜨는 수정창입니다. 어느 모양이든 종류를 바꿔도 창 크기는 그대로예요.</div>
-      <div class="vopts">${opt('edv',1,'카드','생성창처럼 위에 “종류 + 내용” 한 줄, 아래에 날짜 · 요일 · 할일','1')}${opt('edv',2,'줄','이름표가 붙은 줄을 위에서 아래로','2')}${opt('edv',3,'탭','종류를 맨 위 탭으로 고르고, 내용은 크게','3')}</div></div>
-    <div class="sec"><div class="sh">할일 페이지 날짜 칸</div><div class="sd">로드맵 왼쪽의 연 · 월 · 주 칸 모양입니다. 어느 쪽이든 week 1, 11월 같은 글자를 누르면 그리로 가요.</div>
-      <div class="vopts">${opt('hdl',1,'블록','날짜를 테두리 있는 칸에','1')}${opt('hdl',2,'글씨만','칸 없이 작은 글씨로만','2')}</div></div>
+      ${hl('event','일정','ev')}${hl('todo','할일','td')}${hl('routine','루틴','rt')}
+      <div class="hlrow"><button class="sw4${S.set.hlcat!==false?' on':''}" data-act="setcat" role="switch" aria-checked="${S.set.hlcat!==false}"><i></i></button><span class="hltx">할일로 분류된 것은 그 할일의 색으로 <small>(할일 페이지에서 정한 색)</small></span></div></div>
+    <div class="sec"><div class="sh">세부 구분</div><div class="sd">월 · 주 페이지에서 같은 할일 안의 세부(예: 공부 → 수학 · 영어)끼리 어떻게 구분할지 고릅니다. 아래 견본은 지금 내 할일 · 세부로 보여 줘요.</div>
+      <div class="vopts">${SBV.map(([n,t,d]) => `<button class="vopt${sbv()===n?' on':''}" data-act="setv" data-k="sbv" data-v="${n}"><span>${t}</span><small>${d}</small>${n ? sbSample(n) : ''}</button>`).join('')}</div></div>
+    ${themeHTML()}
     <div class="sec"><div class="sh">연 페이지에 표시</div><div class="sd">플래너 연 페이지의 날짜 아래에 작은 점으로 보여 줍니다. 색은 위의 형광펜 색을 따라요.</div>
       ${[['event','일정'],['todo','할일'],['routine','루틴']].map(([k,l]) => `<div class="hlrow"><button class="sw4${S.set.ys[k]?' on':''}" data-act="ysw" data-k="${k}" role="switch" aria-checked="${!!S.set.ys[k]}"><i></i></button><span class="hltx">${l}</span><i class="ydot" style="background:${ydotColor(k)}"></i></div>`).join('')}</div>
     <div class="sec"><div class="sh">월 페이지 요약</div><div class="sd">달력 칸에 다 안 들어갈 때 접어서 줄일지 고릅니다.</div>
@@ -1754,12 +1771,32 @@ function addFont(){
   if (!f){ f = {k:'u_' + uid(), name}; S.set.cfonts.push(f); }
   S.set.font = f.k; save(); render();
 }
-// 설정 → 할일로 분류된 것 표시: the versions, each with a small live sample
-const CCV = [[1,'연한 형광펜','줄 전체에 그 할일의 색을 옅게'],[2,'진한 형광펜','같은 방식, 색을 더 진하게'],[3,'왼쪽 색 막대','줄 왼쪽에 굵은 색 선'],[4,'색 점','글자 앞에 작은 색 점'],
-  [5,'아이콘','글자 앞에 그 할일의 아이콘(없으면 첫 글자)'],[6,'글자색','글자를 그 할일의 색으로'],[7,'색 테두리','줄을 그 할일의 색 테두리로'],[0,'끄기','구분하지 않음']];
-function ccSample(n){
-  const cs = userCats().filter(c => c.color).slice(0, 2); if (!cs.length) return '';
-  return `<span class="ccx cc${n}">${cs.map((c,i) => `<span class="it k-hg" style="${hcStyle(c)}">${mark('td',false,'def')}<span class="tx" data-e="${esc(catLabel(c))}">${esc(c.name)} ${i ? '복습' : '과제'}</span></span>`).join('')}</span>`;
+// 설정 → 세부 구분: the versions, each with a live sample made from the person's own 할일 and its 세부
+const SBV = [[1,'세부 이름표','글자 뒤에 작은 세부 이름 (수학 · 영어)'],[2,'세부 머리글자','글자 앞에 세부의 첫 글자를 네모 안에'],[3,'세부마다 다른 색','할일 색에서 조금씩 다른 색으로 칠하기'],
+  [4,'세부마다 다른 진하기','같은 할일 색을 세부마다 옅게 · 진하게'],[5,'세부마다 다른 선','왼쪽 선을 실선 · 점선 · 이중선으로'],[0,'구분 안 함','할일 색만 (세부는 구분하지 않음)']];
+function sbSample(n){
+  const c = userCats().find(x => subsOf(x.id).length >= 2) || userCats().find(x => subsOf(x.id).length);
+  const subs = c ? subsOf(c.id).slice(0, 3) : []; if (!subs.length) return '';
+  const hc = c.color ? c : null;
+  return `<span class="sbx sb${n}${S.set.hlcat!==false ? ' hl-hc' : ''}">${subs.map((s,i) => { const src = {sub:s.id, cat:c.id};
+    return `<span class="it${hc?' k-hg':''} k-sb" style="${hc ? hcStyle(hc) + ';' : ''}${sbStyle(src)}">${mark('td',false,'def')}<i class="sbg">${esc(graphemes(s.name)[0]||'')}</i><span class="tx">${['과제','복습','단어'][i]}</span><span class="stag">${esc(s.name)}</span></span>`; }).join('')}</span>`;
+}
+// 설정 → 테마색: the ink (letters · lines · buttons) and the paper (background)
+const INKS = [['#141414','먹'],['#1f3a5f','남색'],['#1f4d3a','숲'],['#5a3a28','밤색'],['#3d2d6b','보라'],['#6b1f2e','버건디']];
+const PAPERS = [['#ffffff','흰색'],['#fbf8f1','미색'],['#f6f6f4','연회색'],['#f3f6fa','하늘빛']];
+function applyTheme(){
+  const t = S.set.theme || {}, r = document.documentElement.style;
+  r.setProperty('--ink', t.ink || '#141414'); r.setProperty('--paper', t.paper || '#ffffff');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t.paper || '#ffffff');
+}
+function themeHTML(){
+  const t = S.set.theme || {}, ink = t.ink || '#141414', paper = t.paper || '#ffffff';
+  const sw = (k, list, cur) => list.map(([c,l]) => `<button class="thsw${cur===c?' on':''}" style="--c:${c}" data-act="theme" data-k="${k}" data-v="${c}" title="${l}" aria-label="${l}"></button>`).join('')
+    + `<label class="cpick${list.some(x => x[0]===cur) ? '' : ' on'}" title="다른 색" style="${list.some(x => x[0]===cur) ? '' : `--c:${cur}`}"><input type="color" data-cp="theme" data-k="${k}" value="${cur}"><span>+</span></label>`;
+  return `<div class="sec"><div class="sh">테마색</div><div class="sd">플래너 전체의 글자 · 선 · 버튼 색(잉크)과 바탕색을 고릅니다.</div>
+    <div class="throw"><span class="k">잉크</span>${sw('ink', INKS, ink)}</div>
+    <div class="throw"><span class="k">바탕</span>${sw('paper', PAPERS, paper)}</div>
+    <div class="thprev">${mark('td',false,'def')} 미리보기 · 오늘 할 일<span class="sp"></span><button class="btn dark" tabindex="-1">저장</button>${t.ink || t.paper ? `<button class="btn quiet" data-act="themeReset">기본으로</button>` : ''}</div></div>`;
 }
 const YDEF = {event:'#4a78c8', todo:'#c4a23a', star:'#141414', routine:'#9b9b9b', hal:'#5a9e6f'};
 const ydotColor = k => k==='star' ? '#141414' : (S.set.hlc?.[k] && k!=='hal' ? S.set.hlc[k] : YDEF[k]);
@@ -1813,7 +1850,8 @@ function render(){
   // a sheet that stays open keeps its scroll position and doesn't fade in again
   const oldSet = app.querySelector('#set'), oldEd = app.querySelector('#ed'), setTop = oldSet?.scrollTop || 0, edTop = oldEd?.scrollTop || 0;
   st.setStill = !!oldSet;
-  app.className = (st.portrait ? 'portrait' : '') + (hc.event ? ' hl-ev' : '') + (hc.todo ? ' hl-td' : '') + (hc.routine ? ' hl-rt' : '') + (ccv() ? ' cc' + ccv() : '');
+  app.className = (st.portrait ? 'portrait' : '') + (hc.event ? ' hl-ev' : '') + (hc.todo ? ' hl-td' : '') + (hc.routine ? ' hl-rt' : '') + (S.set.hlcat!==false ? ' hl-hc' : '') + (sbv() ? ' sb' + sbv() : '');
+  applyTheme();
   app.style.setProperty('--hl-ev', hc.event || 'transparent'); app.style.setProperty('--hl-td', hc.todo || 'transparent'); app.style.setProperty('--hl-rt', hc.routine || 'transparent'); app.style.setProperty('--hl-hg', hc.hal || 'transparent');
   const full = !st.hal && st.view==='month' && S.set.sum===2;
   const pager = st.portrait && !st.hal && (st.view==='month' || st.view==='year');
@@ -2224,7 +2262,6 @@ function edHTML(){
   const title = wk ? '주간 목표' : stack ? '보관함' : '수정';
   const dated = !wk && !stack, canStar = !wk && !!e.cat;
   const when = span ? `${e.start?md(e.start):'오늘'} – ${e.noEnd ? '계속' : e.end ? md(e.end) : '?'}` : `${md(e.date)} <small>${DOW_K[dowOf(pIso(e.date))]} · ${dday(e.date)}</small>`;
-  const kindBtns = types.map(([x,l]) => `<button type="button" class="${t===x?'on':''}" data-act="etype" data-t="${x}">${mark(KIND[x],false,'def')}${l}</button>`).join('');
   const P = {
     km: types.length ? `<button type="button" class="ekm" data-act="ecycle" title="눌러서 종류 바꾸기">${mark(KIND[t],false,'def')}<span>${QLABEL[t]}</span></button>` : `<span class="ekm still">${mark('td',false,'def')}<span>목표</span></span>`,
     text: `<input class="txt" id="etext" value="${esc(e.text||'')}" placeholder="내용" autocomplete="off" enterkeyhint="done" aria-label="내용">`,
@@ -2238,11 +2275,8 @@ function edHTML(){
   const row = (k, v) => `<div class="erow"><span class="ek">${k}</span><div class="evl">${v}</div></div>`;
   const rest = (dated || !wk ? row(dated ? (span ? '기간' : '날짜') : '이정표', P.date + P.star) : '') + (wk ? '' : row('요일', P.dows))
     + row('할일', P.cats) + row('세부', P.subs) + `<div class="enote">${P.note || '&nbsp;'}</div>`;
-  const v = S.set.edv || 1;   // 설정 → 수정창 모양: 1 카드 · 2 줄 · 3 탭
-  let h;
-  if (v===2) h = `<div class="ehead"><span class="ttl">${title}</span></div><div class="egrid">${types.length ? row('종류', `<div class="seg eseg">${kindBtns}</div>`) : ''}${row('내용', P.text)}${rest}</div>`;
-  else if (v===3) h = (types.length ? `<div class="etabs">${kindBtns}</div>` : `<div class="ehead"><span class="ttl">${title}</span></div>`) + `<div class="etext3">${P.text}</div><div class="egrid">${rest}</div>`;
-  else h = `<div class="ehead"><span class="ttl">${title}</span></div><div class="ebar">${P.km}${P.text}</div><div class="egrid">${rest}</div>`;
+  // the 카드 sheet (chosen): "kind + words" in one bar like the creation bar, then one row each for 날짜 · 요일 · 할일 · 세부
+  const h = `<div class="ehead"><span class="ttl">${title}</span></div><div class="ebar">${P.km}${P.text}</div><div class="egrid">${rest}</div>`;
   return `<div class="ov edov${e.noanim?' still':''}" data-act="close"><div class="sheet" id="ed" role="dialog" aria-label="${title}">${h}
     ${delFoot(e)}</div>${e.cal ? `<div id="edcal">${qcalHTML(e)}</div>` : ''}</div>`;
 }
@@ -2421,6 +2455,7 @@ document.addEventListener('input', e => { // any colour, from the + swatch
   if (cp==='cat' && st.ed){ st.ed.color = e.target.value; app.querySelectorAll('#ed .sw2').forEach(b => b.classList.remove('on')); e.target.parentElement.style.setProperty('--c', e.target.value); e.target.parentElement.classList.add('on'); }
 });
 document.addEventListener('change', e => { if (e.target.dataset?.cp==='hl'){ S.set.hlc[e.target.dataset.k] = e.target.value; save(); render(); } });
+document.addEventListener('change', e => { if (e.target.dataset?.cp==='theme'){ S.set.theme = {...(S.set.theme || {}), [e.target.dataset.k]: e.target.value}; save(); render(); } });   // any colour for the theme
 
 /* ---------- backup: save / copy everything, bring a backup back ---------- */
 // inside an embedded frame (like a shared preview) downloads are blocked — only offer the file where it can work
@@ -2654,6 +2689,8 @@ function setAct(a){
   else if (ds.act==='fontDel'){ S.set.cfonts = (S.set.cfonts || []).filter(f => f.k!==ds.v); if (S.set.font===ds.v) S.set.font = 'base';
     document.querySelector(`link[data-font="${ds.v}"]`)?.remove(); save(); render(); }
   else if (ds.act==='setcat'){ S.set.hlcat = S.set.hlcat===false; save(); render(); }
+  else if (ds.act==='theme'){ S.set.theme = {...(S.set.theme || {}), [ds.k]: ds.v}; save(); render(); }
+  else if (ds.act==='themeReset'){ delete S.set.theme; save(); render(); }
   else if (ds.act==='setc'){ S.set.hlc[ds.k] = ds.v || null; save(); render(); }
 }
 
