@@ -974,20 +974,47 @@ main{flex:1;min-height:0;position:relative}
 #ed .foot{min-height:60px}
 
 /* ===== 월 · 주 페이지: telling 세부할일 of the same 할일 apart (설정 → 세부 구분) =====
-   every row filed under a 세부 carries its name (.stag), its first letter (.sbg) and its own shades; the chosen version shows one of them */
-.stag,.sbg{display:none}
+   every row filed under a 세부 carries its name (.stag) and its own shade (--hs); the chosen version shows one of them */
+.stag{display:none}
 .sbx.hl-hc .it.k-hg{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hc)}
 #app.sb1 .board .it.k-sb .stag,#app.sb1 .pwk .it.k-sb .stag,.sbx.sb1 .it.k-sb .stag{display:inline;flex:none;font-size:.78em;line-height:1.3;color:#777;background:var(--tag);border-radius:3px;padding:0 .35em;margin-top:.12em;white-space:nowrap}
-#app.sb2 .board .it.k-sb .sbg,#app.sb2 .pwk .it.k-sb .sbg,.sbx.sb2 .it.k-sb .sbg{display:inline-flex;flex:none;align-items:center;justify-content:center;min-width:1.45em;height:1.4em;padding:0 .2em;margin-top:-.05em;border-radius:3px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--hcs,var(--line));color:var(--hcs,var(--sub));font-size:.9em;font-weight:500;font-style:normal;line-height:1}
 #app.sb3 .board .it.k-sb,#app.sb3 .pwk .it.k-sb,.sbx.sb3 .it.k-sb{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hs)}
-#app.sb4 .board .it.k-sb,#app.sb4 .pwk .it.k-sb,.sbx.sb4 .it.k-sb{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hd)}
-#app.sb5 .board .it.k-sb,#app.sb5 .pwk .it.k-sb,.sbx.sb5 .it.k-sb{border-left:var(--bw) var(--bs) var(--hcs,var(--ink));margin:1px -3px;padding:0 3px 0 4px}
 .sbx{display:flex;flex-direction:column;gap:2px;margin-top:6px;width:100%}
 .sbx .it{font-size:12px}
 .vopt .sbx span,.vopt .sbx i{font-size:12px}
 .vopt .sbx .tx{color:var(--ink)}
 .vopt .sbx .stag{font-size:10px}
-.vopt .sbx .sbg{font-size:11px}
+
+/* ===== 할일 page · 로드맵 단계형: one vertical path of steps per 세부할일 ===== */
+.stmap{display:grid;grid-template-columns:repeat(var(--cols),minmax(210px,1fr));gap:0 30px;align-items:start}
+.portrait .stmap{grid-template-columns:minmax(0,1fr);gap:20px}
+.stcol{min-width:0;display:flex;flex-direction:column;padding-bottom:10px}
+.stpath{display:flex;flex-direction:column;padding-top:6px}
+.sts{position:relative;display:grid;grid-template-columns:30px minmax(0,1fr);column-gap:11px;padding-bottom:18px}
+.sts::before{content:"";position:absolute;left:15px;top:30px;bottom:0;width:3px;margin-left:-1.5px;background:var(--sc);border-radius:2px}
+.sts.cur::before,.sts.next::before,.sts.tail::before{background:none;width:0;border-left:3px dashed #d9d9d9;border-radius:0}
+.sts.last::before{display:none}
+.stk{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;background:var(--paper);border:2px solid #d4d4d4;color:#a3a3a3;position:relative;z-index:1;flex:none}
+.sts.done .stk{background:var(--sc);border-color:var(--sc);color:#fff;font-size:14px}
+.sts.cur .stk{border:3px solid var(--sc);color:var(--ink)}
+.sts.tail .stk{border-style:dashed;cursor:default}
+.stb{min-width:0;padding-top:5px}
+.sth{display:flex;align-items:baseline;gap:8px;min-width:0}
+.stt{font-size:13.5px;cursor:pointer;min-width:0;overflow-wrap:anywhere}
+.sts.cur .stt{font-weight:500}
+.sts.next .stt,.sts.done .stt{color:var(--sub)}
+.stt.sm{font-size:11.5px;color:var(--mute);cursor:default}
+.sth small,.sti small{flex:none;margin-left:auto;font-size:10px;color:var(--mute);font-variant-numeric:tabular-nums}
+.stl{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.sti{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--sub);min-width:0}
+.stc{flex:none;width:11px;height:11px;border:var(--lw) solid #b5b5b5;border-radius:2px;background:var(--paper)}
+.stc.done{background:var(--ink);border-color:var(--ink)}
+.sti.done .stx{text-decoration:line-through;color:var(--mute)}
+.stx{cursor:pointer;min-width:0;overflow-wrap:anywhere}
+.stx:hover,.stt:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.stper{position:relative;font-size:10.5px;color:var(--mute);letter-spacing:.04em;padding:0 0 10px 41px}
+.stper::before{content:"";position:absolute;left:15px;top:-2px;bottom:0;margin-left:-1.5px;border-left:3px dotted #e0e0e0}
+.stcol>.wadd{margin:0 0 0 41px}
 
 /* 설정 → 테마색 */
 .throw{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:4px 0}
@@ -1260,27 +1287,26 @@ function gearSvg(){
 const hcStyle = c => `--hc:${c.color}30;--hc2:${c.color}70;--hcs:${c.color}`;
 function itemRow(ref, kind, done, text, {tag='', drag=false, cls='', hc=null, src=null} = {}){
   const sb = sbOf(src), style = (hc ? hcStyle(hc) + ';' : '') + (sb ? sbStyle(src) : '');
-  const sbg = sb ? `<i class="sbg">${esc(graphemes(sb.name)[0] || '')}</i>` : '', stag = sb ? `<span class="stag">${esc(sb.name)}</span>` : '';
-  return `<div class="it${cls?' '+cls:''}${hc?' k-hg':''}${sb?' k-sb':''}${done?' done':''}" data-ref="${ref}"${drag?' data-drag':''}${style?` style="${style}"`:''}>${mark(kind,done)}${sbg}<span class="tx">${esc(text)}</span>${stag}${tag}</div>`;
+  const stag = sb ? `<span class="stag">${esc(sb.name)}</span>` : '';
+  return `<div class="it${cls?' '+cls:''}${hc?' k-hg':''}${sb?' k-sb':''}${done?' done':''}" data-ref="${ref}"${drag?' data-drag':''}${style?` style="${style}"`:''}>${mark(kind,done)}<span class="tx">${esc(text)}</span>${stag}${tag}</div>`;
 }
 const tagOf = (cat, sub) => sub && subById(sub) ? `<span class="tag">${esc(subById(sub).name)}</span>`
   : cat && cat!=='base' && catById(cat) ? `<span class="tag">${esc(catById(cat).name)}</span>` : '';
 const hcOf = i => { const c = catById(i?.cat) || catById(subById(i?.sub)?.cat); return c && c.id!=='base' && c.color ? c : null; };   // the 할일 it's filed under (with a colour)
 const kOf = (i, base) => base;   // (old: filed under a 할일 → the 할일 colour
 // 설정 → 세부 구분: how 세부할일 of the same 할일 are told apart on the 월 · 주 pages
-// 0 구분 안 함 · 1 세부 이름표 · 2 세부 머리글자 · 3 세부마다 다른 색 · 4 세부마다 다른 진하기 · 5 세부마다 다른 왼쪽 선
-const sbv = () => S.set.sbv ?? 1;
+// 0 구분 안 함 · 1 세부 이름표 · 3 세부마다 다른 색 (2 · 4 · 5 were tried in a preview and dropped → 이름표)
+const sbv = () => { const v = S.set.sbv ?? 1; return [0, 1, 3].includes(v) ? v : 1; };
 const sbOf = i => subById(i?.sub) || null;
 // colour helpers: a 세부's own shade, made from its 할일's colour (hue turned a little per 세부)
 function hexHsl(h){ const n = parseInt(h.slice(1,7),16), r = (n>>16&255)/255, g = (n>>8&255)/255, b = (n&255)/255, mx = Math.max(r,g,b), mn = Math.min(r,g,b), l = (mx+mn)/2;
   if (mx===mn) return [0,0,l*100]; const d = mx-mn, s = l>.5 ? d/(2-mx-mn) : d/(mx+mn);
   const hh = mx===r ? (g-b)/d + (g<b?6:0) : mx===g ? (b-r)/d + 2 : (r-g)/d + 4; return [hh*60, s*100, l*100]; }
-const SB_TURN = [0, 38, -38, 76, -76, 114, -114], SB_ALPHA = ['22','48','78','a8'], SB_LINE = [['3px','solid'],['3px','dashed'],['3px','dotted'],['4px','double']];
+const SB_TURN = [0, 38, -38, 76, -76, 114, -114];
 function sbStyle(i){ // the variables one row needs for every version
   const s = sbOf(i); if (!s) return '';
   const c = catById(s.cat), k = Math.max(0, subsOf(s.cat).indexOf(s)), base = c?.color || '#8a8a8a', [hh, ss, ll] = hexHsl(base);
-  const ln = SB_LINE[k % SB_LINE.length];
-  return `--hs:hsl(${(hh + SB_TURN[k % SB_TURN.length] + 360) % 360} ${Math.max(35, ss)}% ${Math.min(80, Math.max(62, ll + 22))}% / .55);--hd:${base}${SB_ALPHA[k % SB_ALPHA.length]};--bs:${ln[1]};--bw:${ln[0]};--hcs:${base}`;
+  return `--hs:hsl(${(hh + SB_TURN[k % SB_TURN.length] + 360) % 360} ${Math.max(35, ss)}% ${Math.min(80, Math.max(62, ll + 22))}% / .55)`;
 }
 const tdRow = (k, i) => itemRow(`days|${k}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i), src:i});
 const evRow = (k, i) => itemRow(`days|${k}|${i.id}`, 'ev', i.done, i.text, {drag:true, cls:'k-ev', hc:hcOf(i), src:i});
@@ -1549,6 +1575,42 @@ function halRoad(){
   }).join('');
   return `<div class="rmap${tp?' tp':''}" style="--cols:${subs.length}">${cols}</div>`;
 }
+/* ---------- 로드맵 · 단계형 (설정 → 로드맵 모양 2–5): one vertical path of steps per 세부할일 ----------
+   ✓ = done · ringed number = the step now · grey number + dashed line = still ahead.
+   A step is an 이정표; the plain 할일 · 일정 · 루틴 leading up to it are listed under it (no 이정표 yet → every item is a step).
+   2 단계 · 3 단계 + 기간 이름 · 4 모든 할일이 단계 · 5 단계 · 전체 기간 (not tied to the 연 / 월 / 주 being looked at) */
+const rmv = () => S.set.rmv || 1;
+function halSteps(){
+  const subs = visSubs();
+  if (!subs.length) return `<div class="empty"><b>세부할일이 없습니다</b>위에서 할일을 고르고 “+ 세부”로 세부할일(예: 공부 → 수학)을 만들어 주세요.</div>`;
+  const v = rmv(), all = v===5, [A, B] = all ? ['0000-00-00', OPEN] : halRange();
+  const def = TODAY>=A && TODAY<=B ? TODAY : B===OPEN ? TODAY : B;
+  const g = monthGrid(st.y, st.m), two = new Set(subs.map(s => s.cat)).size > 1;
+  const per = k => k===OPEN ? '끝 없이 계속'
+    : all || st.view==='year' ? `${k.slice(0,4)!==String(st.y) ? k.slice(0,4)+'년 ' : ''}${+k.slice(5,7)}월`
+    : st.view==='month' ? `week ${g.findIndex(w => iso(w[0])<=k && k<=iso(w[6])) + 1}` : `${+k.slice(8)} ${DOW[dowOf(pIso(k))]}`;
+  const when = k => k===OPEN ? '계속' : md(k);
+  const cols = subs.map(s => {
+    const c = catById(s.cat), items = [];
+    dayTodos(s.id, A, B).forEach(({k, i}) => items.push({k, ref:`days|${k}|${i.id}`, text:i.text, done:!!i.done, star:!!i.star, open:`data-act="editDay" data-ref="days|${k}|${i.id}"`}));
+    msOf(s.id).filter(m => m.due && (m.due===OPEN ? msStart(m) <= B : m.due >= A && m.due <= B))
+      .forEach(m => items.push({k:m.due, ref:`ms||${m.id}`, text:m.text, done:!!m.done, star:!!m.star, open:`data-act="editMs" data-id="${m.id}"`}));
+    items.sort((a,b) => a.k.localeCompare(b.k));
+    const each = v===4 || !items.some(x => x.star), groups = []; let pend = [];
+    items.forEach(x => { if (each || x.star){ groups.push({x, lead:pend}); pend = []; } else pend.push(x); });
+    const cur = groups.findIndex(gr => !gr.x.done), done = groups.filter(gr => gr.x.done).length;
+    const sub = x => `<div class="sti${x.done?' done':''}" data-ref="${x.ref}" data-drag><button class="stc${x.done?' done':''}" data-act="tog" data-ref="${x.ref}" aria-label="체크"></button><span class="stx" ${x.open}>${esc(x.text)}</span><small>${when(x.k)}</small></div>`;
+    let h = '', lastP = '';
+    groups.forEach((gr, i) => { const x = gr.x, last = i===groups.length-1 && !pend.length;
+      if (v===3 || v===5){ const p = per(x.k); if (p!==lastP){ h += `<div class="stper">${esc(p)}</div>`; lastP = p; } }
+      h += `<div class="sts ${x.done ? 'done' : i===cur ? 'cur' : 'next'}${last?' last':''}"><button class="stk" data-act="tog" data-ref="${x.ref}" aria-label="${esc(x.text)} 완료 표시">${x.done ? '✓' : i+1}</button>
+        <div class="stb" data-ref="${x.ref}" data-drag><div class="sth"><span class="stt" ${x.open}>${esc(x.text)}</span><small>${when(x.k)}</small></div>${gr.lead.length ? `<div class="stl">${gr.lead.map(sub).join('')}</div>` : ''}</div></div>`; });
+    if (pend.length) h += `<div class="sts tail last"><span class="stk">…</span><div class="stb"><div class="sth"><span class="stt sm">다음 이정표 전</span></div><div class="stl">${pend.map(sub).join('')}</div></div></div>`;
+    return `<section class="stcol" style="--sc:${c?.color || 'var(--ink)'}" data-drop="pc|${s.id}|${def}"><button class="rhd" data-act="hsub" data-s="${s.id}" data-c="${s.cat}">${two?`<span>${esc(c.name)}</span>`:''}${esc(s.name)}<small>${groups.length ? `${done}/${groups.length} 단계` : ''}</small></button>
+      <div class="stpath">${h || '<div class="rnil">아직 없음</div>'}</div>${PLUS(`pc|${s.id}|${def}`)}</section>`;
+  }).join('');
+  return `<div class="stmap" style="--cols:${subs.length}">${cols}</div>`;
+}
 function lanesHTML(s, r, L2){ // a stretch is drawn while a milestone is running
   const cur = msOf(s.id).find(m => !m.done);
   let h = S.set.hv===2 ? Array.from({length:st.view==='week' ? L2.n : 1}, (_,j) => `<i class="ln base" style="--j:${j}"></i>`).join('') : ''; // every lane is a full track, so no circle ever floats off its line
@@ -1649,7 +1711,7 @@ function halView(){
   const sk = st.hcat==='all' ? null : stackHTML();   // 보관함 whenever a 할일 is chosen
   const tp3 = S.set.hl===3 && !st.portrait;
   return `<div class="hal${tp3?' tp3':''}">${tp3?`<div class="hside">${r1}${r2}</div>`:r1+r2}<div class="hbody b2${sk?'':' wide'}">
-    <div class="htable${S.set.rm===2?' road':''}">${S.set.rm===2 ? halRoad() : halTable()}</div>${sk ? `<div class="hstackw"><div class="whs">보관함<small>${sk.n||''}</small></div><div class="hstack" data-drop="stack|all">${sk.html}</div></div>` : ''}</div></div>`;
+    <div class="htable${rmv()>1?' road':''}">${rmv()>1 ? halSteps() : halTable()}</div>${sk ? `<div class="hstackw"><div class="whs">보관함<small>${sk.n||''}</small></div><div class="hstack" data-drop="stack|all">${sk.html}</div></div>` : ''}</div></div>`;
 }
 /* going down a level: the chosen month / week stretches open, the rest folds away */
 // changing 연 ⇄ 월 ⇄ 주: the box grows to its new size while each thing glides to where it now belongs
@@ -1731,6 +1793,8 @@ function settingsHTML(){
       <div class="hlrow"><button class="sw4${S.set.hlcat!==false?' on':''}" data-act="setcat" role="switch" aria-checked="${S.set.hlcat!==false}"><i></i></button><span class="hltx">할일로 분류된 것은 그 할일의 색으로 <small>(할일 페이지에서 정한 색)</small></span></div></div>
     <div class="sec"><div class="sh">세부 구분</div><div class="sd">월 · 주 페이지에서 같은 할일 안의 세부(예: 공부 → 수학 · 영어)끼리 어떻게 구분할지 고릅니다. 아래 견본은 지금 내 할일 · 세부로 보여 줘요.</div>
       <div class="vopts">${SBV.map(([n,t,d]) => `<button class="vopt${sbv()===n?' on':''}" data-act="setv" data-k="sbv" data-v="${n}"><span>${t}</span><small>${d}</small>${n ? sbSample(n) : ''}</button>`).join('')}</div></div>
+    <div class="sec"><div class="sh">로드맵 모양</div><div class="sd">할일 페이지의 로드맵입니다. 2 ~ 5번은 단계형이에요: ✓ 끝낸 단계 · 테두리 번호 지금 단계 · 회색 번호 앞으로 할 단계. 단계는 이정표이고, 그 사이의 할일 · 일정 · 루틴은 단계 아래에 모여요.</div>
+      <div class="vopts">${RMV.map(([n,t,d]) => `<button class="vopt${rmv()===n?' on':''}" data-act="setv" data-k="rmv" data-v="${n}"><b>${n}</b><span>${t}</span><small>${d}</small></button>`).join('')}</div></div>
     ${themeHTML()}
     <div class="sec"><div class="sh">연 페이지에 표시</div><div class="sd">플래너 연 페이지의 날짜 아래에 작은 점으로 보여 줍니다. 색은 위의 형광펜 색을 따라요.</div>
       ${[['event','일정'],['todo','할일'],['routine','루틴']].map(([k,l]) => `<div class="hlrow"><button class="sw4${S.set.ys[k]?' on':''}" data-act="ysw" data-k="${k}" role="switch" aria-checked="${!!S.set.ys[k]}"><i></i></button><span class="hltx">${l}</span><i class="ydot" style="background:${ydotColor(k)}"></i></div>`).join('')}</div>
@@ -1772,15 +1836,21 @@ function addFont(){
   S.set.font = f.k; save(); render();
 }
 // 설정 → 세부 구분: the versions, each with a live sample made from the person's own 할일 and its 세부
-const SBV = [[1,'세부 이름표','글자 뒤에 작은 세부 이름 (수학 · 영어)'],[2,'세부 머리글자','글자 앞에 세부의 첫 글자를 네모 안에'],[3,'세부마다 다른 색','할일 색에서 조금씩 다른 색으로 칠하기'],
-  [4,'세부마다 다른 진하기','같은 할일 색을 세부마다 옅게 · 진하게'],[5,'세부마다 다른 선','왼쪽 선을 실선 · 점선 · 이중선으로'],[0,'구분 안 함','할일 색만 (세부는 구분하지 않음)']];
+const SBV = [[1,'세부 이름표','글자 뒤에 작은 세부 이름 (수학 · 영어)'],[3,'세부마다 다른 색','할일 색에서 조금씩 다른 색으로 칠하기'],
+  [0,'구분 안 함','할일 색만 (세부는 구분하지 않음)']];
 function sbSample(n){
   const c = userCats().find(x => subsOf(x.id).length >= 2) || userCats().find(x => subsOf(x.id).length);
   const subs = c ? subsOf(c.id).slice(0, 3) : []; if (!subs.length) return '';
   const hc = c.color ? c : null;
   return `<span class="sbx sb${n}${S.set.hlcat!==false ? ' hl-hc' : ''}">${subs.map((s,i) => { const src = {sub:s.id, cat:c.id};
-    return `<span class="it${hc?' k-hg':''} k-sb" style="${hc ? hcStyle(hc) + ';' : ''}${sbStyle(src)}">${mark('td',false,'def')}<i class="sbg">${esc(graphemes(s.name)[0]||'')}</i><span class="tx">${['과제','복습','단어'][i]}</span><span class="stag">${esc(s.name)}</span></span>`; }).join('')}</span>`;
+    return `<span class="it${hc?' k-hg':''} k-sb" style="${hc ? hcStyle(hc) + ';' : ''}${sbStyle(src)}">${mark('td',false,'def')}<span class="tx">${['과제','복습','단어'][i]}</span><span class="stag">${esc(s.name)}</span></span>`; }).join('')}</span>`;
 }
+// 설정 → 로드맵 모양
+const RMV = [[1,'날짜표 (지금)','날짜 줄마다 칸을 나눈 지금의 로드맵'],
+  [2,'단계','지금 보는 연 · 월 · 주 안의 이정표를 단계로. 날짜는 옆에 작게'],
+  [3,'단계 + 기간 이름','2번에 “11월 · week 2 · 23 Mon” 같은 기간 이름을 선 위에'],
+  [4,'모든 할일이 단계','이정표가 아니어도 하나하나가 단계 (날짜 순서)'],
+  [5,'단계 · 전체 기간','연 · 월 · 주와 상관없이 처음부터 끝까지 한 줄로 (달 이름 표시)']];
 // 설정 → 테마색: the ink (letters · lines · buttons) and the paper (background)
 const INKS = [['#141414','먹'],['#1f3a5f','남색'],['#1f4d3a','숲'],['#5a3a28','밤색'],['#3d2d6b','보라'],['#6b1f2e','버건디']];
 const PAPERS = [['#ffffff','흰색'],['#fbf8f1','미색'],['#f6f6f4','연회색'],['#f3f6fa','하늘빛']];
@@ -2386,7 +2456,7 @@ document.addEventListener('click', e => {
       st.view = ds.v; st.anim = 'in'; if (ds.v==='week' && iso(st.wk)===iso(mondayOf(today))) st.sel = dowOf(today); break; }
     case 'hal': st.hal = !st.hal; st.anim = 'in'; st.padd = null; break;
     case 'today': st.hal = false; st.view = 'month'; st.y = today.getFullYear(); st.m = today.getMonth(); st.wk = mondayOf(today); st.sel = dowOf(today); st.pm = 'cal'; st.anim = 'in'; break;
-    case 'settings': st.setOpen = true; break;
+    case 'settings': try { document.activeElement?.blur?.(); } catch(err) {} st.setOpen = true; break;   // nothing keeps the keyboard while the sheet is open
     case 'goMonthOf': setYM(st.y, +ds.m); st.view = 'month'; st.anim = 'in'; break;
     case 'goMonth': st.view = 'month'; st.anim = 'fold'; break;
     case 'goDay': { const d = pIso(ds.iso); goWeek(iso(mondayOf(d)), dowOf(d)); return; }
@@ -2577,7 +2647,7 @@ function schedulePush(){ if (!signedIn()) return; clearTimeout(pushTimer); pushT
 function syncNow(){
   if (!signedIn()) return Promise.resolve();
   if (syncing){ syncAgain = true; return syncing; }
-  syncing = doSync().finally(() => { syncing = null; if (syncAgain){ syncAgain = false; syncNow(); } });
+  syncing = doSync().finally(() => { syncing = null; syncLine(); if (syncAgain){ syncAgain = false; syncNow(); } });
   return syncing;
 }
 async function push(){
@@ -2612,20 +2682,25 @@ async function doSync(){
     }
     sy.last = Date.now(); sy.err = ''; sySave();
   } catch(e){ sy.err = syncErrText(e); sySave(); }
-  if (st.setOpen) render();
+  syncLine();   // only the one status line changes — the settings sheet itself is never rebuilt in the background
 }
+const syncState = () => { const when = sy.last ? new Date(sy.last).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '';
+  return sy.err || (syncing ? '맞추는 중…' : when ? `마지막으로 맞춘 시각 ${when}` : '맞추는 중…'); };
+function syncLine(){ const el = app.querySelector('#systate'); if (el) el.textContent = syncState(); }
 function syncHTML(){
   if (!CAN_DOWNLOAD) return '';
   let h = `<div class="sec"><div class="sh">동기화</div>`;
   if (!sy.refresh){
-    h += `<div class="sd">같은 계정으로 로그인한 폰과 컴퓨터의 기록이 서로 맞춰집니다. 처음이면 이메일과 비밀번호를 정하고 <b>가입하기</b>를 눌러 주세요.</div>
-      <div class="syform"><input id="syemail" type="email" placeholder="이메일" autocomplete="email" value="${esc(st.syEmail ?? sy.email ?? '')}" aria-label="이메일">
+    // the e-mail · password boxes only appear after "로그인 · 가입" is pressed: a password box sitting on the page
+    // (and being re-made over and over) can make the device's keyboard / 한영 switch misbehave
+    h += `<div class="sd">같은 계정으로 로그인한 폰과 컴퓨터의 기록이 서로 맞춰집니다.</div>`;
+    h += !st.syForm ? `<div class="bakrow"><button class="btn" data-act="syForm">로그인 · 가입</button></div>`
+      : `<div class="syform"><input id="syemail" type="text" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="이메일" autocomplete="email" value="${esc(st.syEmail ?? sy.email ?? '')}" aria-label="이메일">
       <input id="sypw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" aria-label="비밀번호" enterkeyhint="go"></div>
-      <div class="bakrow"><button class="btn dark" data-act="syLogin"${st.syncBusy?' disabled':''}>로그인</button><button class="btn" data-act="sySignup"${st.syncBusy?' disabled':''}>가입하기</button></div>`;
+      <div class="bakrow"><button class="btn dark" data-act="syLogin"${st.syncBusy?' disabled':''}>로그인</button><button class="btn" data-act="sySignup"${st.syncBusy?' disabled':''}>가입하기</button><button class="btn quiet" data-act="syFormNo">닫기</button></div>
+      <div class="hint">처음이면 이메일과 비밀번호를 정하고 <b>가입하기</b>를 눌러 주세요.</div>`;
   } else {
-    const when = sy.last ? new Date(sy.last).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '';
-    const state = sy.err || (syncing ? '맞추는 중…' : when ? `마지막으로 맞춘 시각 ${when}` : '맞추는 중…');
-    h += `<div class="sd"><b>${esc(sy.email || '')}</b> 계정으로 동기화하고 있어요.<br>${esc(state)}</div>
+    h += `<div class="sd"><b>${esc(sy.email || '')}</b> 계정으로 동기화하고 있어요.<br><span id="systate">${esc(syncState())}</span></div>
       <div class="bakrow"><button class="btn" data-act="syNow">지금 동기화</button><button class="btn quiet" data-act="syLogout">로그아웃</button></div>`;
     if (st.syncAsk){ const d = st.syncAsk.data, items = Object.values(d.days || {}).flat();
       h += `<div class="impask"><b>클라우드에 이미 기록이 있어요. 어느 쪽을 쓸까요?</b>
@@ -2663,11 +2738,13 @@ function openCatEd(kind, id){
 }
 function setAct(a){
   const ds = a.dataset;
-  if (ds.act==='setClose'){ st.setOpen = false; st.pasteOpen = false; st.imp = null; st.bakMsg = ''; st.bakShow = ''; render(); }
+  if (ds.act==='setClose'){ st.setOpen = false; st.pasteOpen = false; st.imp = null; st.bakMsg = ''; st.bakShow = ''; st.syForm = false; render(); }
   else if (ds.act==='setv'){ S.set[ds.k] = isNaN(+ds.v) ? ds.v : +ds.v; save(); render(); }
   else if (ds.act==='ysw'){ S.set.ys[ds.k] = !S.set.ys[ds.k]; save(); render(); }
   else if (ds.act==='resetAsk'){ st.resetAsk = true; render(); }
   else if (ds.act==='resetNo'){ st.resetAsk = false; render(); }
+  else if (ds.act==='syForm'){ st.syForm = true; render(); app.querySelector('#syemail')?.focus(); }
+  else if (ds.act==='syFormNo'){ st.syForm = false; st.syncMsg = ''; render(); }
   else if (ds.act==='syLogin' || ds.act==='sySignup') syncLogin(ds.act==='sySignup');
   else if (ds.act==='syNow'){ st.syncMsg = ''; syncNow(); render(); }
   else if (ds.act==='syLogout') syncLogout();
