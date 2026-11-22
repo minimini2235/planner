@@ -985,36 +985,123 @@ main{flex:1;min-height:0;position:relative}
 .vopt .sbx .tx{color:var(--ink)}
 .vopt .sbx .stag{font-size:10px}
 
-/* ===== 할일 page · 로드맵 단계형: one vertical path of steps per 세부할일 ===== */
-.stmap{display:grid;grid-template-columns:repeat(var(--cols),minmax(210px,1fr));gap:0 30px;align-items:start}
-.portrait .stmap{grid-template-columns:minmax(0,1fr);gap:20px}
-.stcol{min-width:0;display:flex;flex-direction:column;padding-bottom:10px}
-.stpath{display:flex;flex-direction:column;padding-top:6px}
-.sts{position:relative;display:grid;grid-template-columns:30px minmax(0,1fr);column-gap:11px;padding-bottom:18px}
-.sts::before{content:"";position:absolute;left:15px;top:30px;bottom:0;width:3px;margin-left:-1.5px;background:var(--sc);border-radius:2px}
-.sts.cur::before,.sts.next::before,.sts.tail::before{background:none;width:0;border-left:3px dashed #d9d9d9;border-radius:0}
-.sts.last::before{display:none}
-.stk{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;background:var(--paper);border:2px solid #d4d4d4;color:#a3a3a3;position:relative;z-index:1;flex:none}
-.sts.done .stk{background:var(--sc);border-color:var(--sc);color:#fff;font-size:14px}
-.sts.cur .stk{border:3px solid var(--sc);color:var(--ink)}
-.sts.tail .stk{border-style:dashed;cursor:default}
-.stb{min-width:0;padding-top:5px}
-.sth{display:flex;align-items:baseline;gap:8px;min-width:0}
-.stt{font-size:13.5px;cursor:pointer;min-width:0;overflow-wrap:anywhere}
-.sts.cur .stt{font-weight:500}
-.sts.next .stt,.sts.done .stt{color:var(--sub)}
-.stt.sm{font-size:11.5px;color:var(--mute);cursor:default}
-.sth small,.sti small{flex:none;margin-left:auto;font-size:10px;color:var(--mute);font-variant-numeric:tabular-nums}
-.stl{display:flex;flex-direction:column;gap:3px;margin-top:6px}
-.sti{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--sub);min-width:0}
-.stc{flex:none;width:11px;height:11px;border:var(--lw) solid #b5b5b5;border-radius:2px;background:var(--paper)}
-.stc.done{background:var(--ink);border-color:var(--ink)}
-.sti.done .stx{text-decoration:line-through;color:var(--mute)}
-.stx{cursor:pointer;min-width:0;overflow-wrap:anywhere}
-.stx:hover,.stt:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
-.stper{position:relative;font-size:10.5px;color:var(--mute);letter-spacing:.04em;padding:0 0 10px 41px}
-.stper::before{content:"";position:absolute;left:15px;top:-2px;bottom:0;margin-left:-1.5px;border-left:3px dotted #e0e0e0}
-.stcol>.wadd{margin:0 0 0 41px}
+/* ===== 할일 page · 로드맵 모양 6–9 (설정 → 로드맵 모양) — shared: ★ big ring = 이정표 · filled = done · dark halo = next to do ===== */
+.htable.road{overflow-x:auto}
+/* 6 지하철 노선도 · 9 고속도로: one track per 세부, running down; each 연 · 월 · 주 stretch is a band across all tracks */
+.mt{display:grid;align-items:stretch;min-width:min-content}
+.mt-head{display:flex;align-items:center;gap:7px;padding:0 10px 10px 14px;font-size:13px;font-weight:500;text-align:left;min-width:0}
+.mt-head i{flex:none;width:24px;height:8px;border-radius:4px;background:var(--lc)}
+.mt-head small{font-size:10.5px;color:var(--mute);font-weight:300}
+.mt-per{display:flex;align-items:flex-start;justify-content:flex-end;gap:4px;padding:12px 12px 0 4px;font-size:11px;color:var(--sub);border-top:1px dashed var(--line2);white-space:nowrap}
+.mt-per b{font-weight:400;font-size:12px;color:var(--ink)}
+.mt-per span{font-size:9.5px;color:var(--mute)}
+.mt-per.td b{background:var(--ink);color:var(--paper);border-radius:2px;padding:0 3px}
+.mt-per.go{cursor:pointer}
+.mt-per.go:hover b{text-decoration:underline;text-underline-offset:3px}
+.mt-cell{position:relative;min-height:58px;padding:12px 8px 12px 0;border-top:1px dashed var(--line2);display:flex;flex-direction:column;gap:9px;cursor:copy;min-width:0}
+.mt-cell::before{content:"";position:absolute;left:24px;top:0;bottom:0;width:6px;margin-left:-3px;background:var(--lc)}
+.mt-cell.first::before{top:12px;border-radius:3px 3px 0 0}
+.mt-cell.last::before{bottom:12px;border-radius:0 0 3px 3px}
+.mt-cell.td{background:#fafafa}
+.mt-st{position:relative;z-index:1;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;font-size:12.5px;min-height:22px}
+.mt-dot{justify-self:center;width:16px;height:16px;border-radius:50%;background:var(--paper);border:3px solid var(--lc);font-size:9px;line-height:1;color:var(--lc);display:flex;align-items:center;justify-content:center}
+.mt-st.star .mt-dot{width:26px;height:26px;border-width:4px;font-size:12px}
+.mt-st.done .mt-dot{background:var(--lc);color:#fff}
+.mt-st.now .mt-dot{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--ink)}
+.mt-tx{cursor:pointer;min-width:0;overflow-wrap:anywhere;padding-right:6px}
+.mt-tx:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
+.mt-st.star .mt-tx{font-weight:500}
+.mt-st.done .mt-tx{color:var(--mute);text-decoration:line-through}
+.mt-st small{font-size:10px;color:var(--mute);padding-right:4px;font-variant-numeric:tabular-nums}
+/* 9 고속도로: the same tracks drawn as lanes of one dark road, with green signs for the stretches */
+.mt.hw{column-gap:0}
+.mt.hw .mt-cell{background:#3a3c41;border-top:2px solid #4a4d53}
+.mt.hw .mt-cell.td{background:#44474d}
+.mt.hw .mt-cell.l0{border-left:4px solid #f1f1f1}
+.mt.hw .mt-cell.ln{border-right:4px solid #f1f1f1}
+.mt.hw .mt-cell:not(.l0){box-shadow:inset 2px 0 0 rgba(255,255,255,.28)}
+.mt.hw .mt-cell::before{width:0;margin-left:-1.5px;background:none;border-left:3px dashed var(--lc);opacity:.9}
+.mt.hw .mt-dot{background:#3a3c41}
+.mt.hw .mt-st.done .mt-dot{background:var(--lc)}
+.mt.hw .mt-st.now .mt-dot{box-shadow:0 0 0 3px #3a3c41,0 0 0 5px #fff}
+.mt.hw .mt-tx{color:#f4f4f4}
+.mt.hw .mt-st.done .mt-tx{color:#9a9ca1}
+.mt.hw .mt-st small{color:#b3b5ba}
+.mt.hw .mt-per{border-top:0;padding:10px 10px 0 0}
+.mt.hw .mt-per>*{background:#1d6a44;color:#fff;border-radius:4px;padding:3px 7px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.mt.hw .mt-per b,.mt.hw .mt-per span{color:#fff}
+.mt.hw .mt-per.td>*{background:#f2c94c;color:#1f1f1f;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}
+.mt.hw .mt-per.td b,.mt.hw .mt-per.td span{color:#1f1f1f;background:none}
+/* 7 가운데 타임라인: one line down the middle, the stretches as pills on it, cards hanging left and right */
+.ct{position:relative;display:flex;flex-direction:column;padding:4px 0 20px}
+.ct::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;background:var(--ink);border-radius:2px}
+.ct-per{position:relative;z-index:1;align-self:center;margin:14px 0 6px;padding:4px 13px;border-radius:999px;background:var(--ink);color:var(--paper);font-size:12px;display:flex;gap:5px;align-items:baseline;white-space:nowrap}
+.ct-per b{font-weight:500;color:var(--paper)}
+.ct-per span{font-size:10px;opacity:.75}
+.ct-per.td{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--ink)}
+.ct-per.go{cursor:pointer}
+.ct-it{position:relative;width:50%;display:flex;align-items:center;padding:5px 0}
+.ct-it.l{align-self:flex-start;justify-content:flex-end;padding-right:30px}
+.ct-it.r{align-self:flex-end;padding-left:30px}
+.ct-it::after{content:"";position:absolute;top:50%;height:2px;width:22px;margin-top:-1px;background:var(--lc)}
+.ct-it.l::after{right:8px}
+.ct-it.r::after{left:8px}
+.ct-dot{position:absolute;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--paper);border:3px solid var(--lc);z-index:2;font-size:9px;color:var(--lc);display:flex;align-items:center;justify-content:center;line-height:1}
+.ct-it.l .ct-dot{right:-8px}
+.ct-it.r .ct-dot{left:-8px}
+.ct-it.star .ct-dot{width:26px;height:26px;margin-top:-13px;border-width:4px;font-size:12px}
+.ct-it.star.l .ct-dot{right:-13px}
+.ct-it.star.r .ct-dot{left:-13px}
+.ct-it.done .ct-dot{background:var(--lc);color:#fff}
+.ct-it.now .ct-dot{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--ink)}
+.ct-card{max-width:300px;border:var(--lw) solid var(--line2);border-left:4px solid var(--lc);border-radius:6px;padding:6px 11px;background:var(--paper);display:flex;flex-direction:column;gap:1px;min-width:0}
+.ct-it.l .ct-card{border-left:var(--lw) solid var(--line2);border-right:4px solid var(--lc);text-align:right}
+.ct-card small{font-size:10px;color:var(--mute)}
+.ct-tx{font-size:13px;cursor:pointer;overflow-wrap:anywhere}
+.ct-it.star .ct-tx{font-weight:500}
+.ct-it.done .ct-tx{text-decoration:line-through;color:var(--mute)}
+.ct-empty{position:relative;z-index:1;align-self:center;font-size:11px;color:#c4c4c4;padding:0 8px;background:var(--paper);cursor:copy}
+.portrait .ct::before{left:20px}
+.portrait .ct-per{align-self:flex-start}
+.portrait .ct-it,.portrait .ct-it.l,.portrait .ct-it.r{width:100%;align-self:stretch;justify-content:flex-start;padding:5px 0 5px 44px}
+.portrait .ct-it .ct-dot,.portrait .ct-it.l .ct-dot{left:12px;right:auto}
+.portrait .ct-it.star .ct-dot{left:7px}
+.portrait .ct-it::after,.portrait .ct-it.l::after{left:24px;right:auto;width:16px}
+.portrait .ct-it.l .ct-card{border-right:var(--lw) solid var(--line2);border-left:4px solid var(--lc);text-align:left}
+.portrait .ct-empty{align-self:flex-start;margin-left:34px}
+/* 8 구불구불 길: one road per 세부 that snakes down — each 연 · 월 · 주 stretch is one leg of it, the 할일 are pins on the road */
+.sn{display:flex;flex-direction:column;gap:18px}
+.sn-one{min-width:0}
+.sn-one .rhd{border-bottom-color:var(--lc)}
+.sn-wrap{position:relative;padding-top:6px}
+.sn-row{position:relative;height:88px;cursor:copy}
+.sn-road{position:absolute;left:46px;right:46px;top:34px;height:16px;background:#cfcfcf repeating-linear-gradient(90deg,transparent 0 14px,rgba(255,255,255,.95) 14px 26px) 0 7px / 100% 2px no-repeat}
+.sn-row.td .sn-road{background-color:#b9b9b9}
+.sn-turn{position:absolute;top:34px;height:104px;width:46px;border:16px solid #cfcfcf;right:0;border-left:0;border-radius:0 52px 52px 0}
+.sn-row.rev .sn-turn{right:auto;left:0;border-left:16px solid #cfcfcf;border-right:0;border-radius:52px 0 0 52px}
+.sn-row.first .sn-road{left:30px}
+.sn-row.first .sn-road::before,.sn-row.last .sn-road::after{position:absolute;top:-22px;font-size:10px;color:var(--mute);white-space:nowrap}
+.sn-row.first .sn-road::before{content:"출발";left:0}
+.sn-row.last:not(.rev) .sn-road::after{content:"도착 ▸";right:0}
+.sn-row.last.rev .sn-road::after{content:"◂ 도착";left:0}
+.sn-sign{position:absolute;top:6px;left:46px;font-size:11px;color:var(--sub);display:flex;gap:4px;align-items:baseline;white-space:nowrap;z-index:2}
+.sn-row.rev .sn-sign{left:auto;right:46px}
+.sn-row.first .sn-sign{left:66px}
+.sn-sign b{font-weight:500;font-size:11.5px;color:var(--ink)}
+.sn-sign span{font-size:9.5px;color:var(--mute)}
+.sn-sign.td b{background:var(--ink);color:var(--paper);border-radius:2px;padding:0 3px}
+.sn-sign.go{cursor:pointer}
+.sn-pins{position:absolute;left:46px;right:46px;top:0;bottom:0}
+.sn-pin{position:absolute;top:0;bottom:0;width:0;display:flex;flex-direction:column;align-items:center}
+.sn-dot{position:absolute;top:33px;left:-9px;width:18px;height:18px;border-radius:50%;background:var(--paper);border:3px solid var(--lc);z-index:2;font-size:9px;line-height:1;color:var(--lc);display:flex;align-items:center;justify-content:center}
+.sn-pin.star .sn-dot{top:29px;left:-13px;width:26px;height:26px;border-width:4px;font-size:12px}
+.sn-pin.done .sn-dot{background:var(--lc);color:#fff}
+.sn-pin.now .sn-dot{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--ink)}
+.sn-tx{position:absolute;top:57px;transform:translateX(-50%);max-width:110px;font-size:11.5px;line-height:1.25;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;padding:0 2px}
+.sn-pin.up .sn-tx{top:12px}
+.sn-pin.star .sn-tx{font-weight:500}
+.sn-pin.done .sn-tx{color:var(--mute);text-decoration:line-through}
+
 
 /* 설정 → 테마색 */
 .throw{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:4px 0}
@@ -1575,41 +1662,59 @@ function halRoad(){
   }).join('');
   return `<div class="rmap${tp?' tp':''}" style="--cols:${subs.length}">${cols}</div>`;
 }
-/* ---------- 로드맵 · 단계형 (설정 → 로드맵 모양 2–5): one vertical path of steps per 세부할일 ----------
-   ✓ = done · ringed number = the step now · grey number + dashed line = still ahead.
-   A step is an 이정표; the plain 할일 · 일정 · 루틴 leading up to it are listed under it (no 이정표 yet → every item is a step).
-   2 단계 · 3 단계 + 기간 이름 · 4 모든 할일이 단계 · 5 단계 · 전체 기간 (not tied to the 연 / 월 / 주 being looked at) */
-const rmv = () => S.set.rmv || 1;
-function halSteps(){
-  const subs = visSubs();
-  if (!subs.length) return `<div class="empty"><b>세부할일이 없습니다</b>위에서 할일을 고르고 “+ 세부”로 세부할일(예: 공부 → 수학)을 만들어 주세요.</div>`;
-  const v = rmv(), all = v===5, [A, B] = all ? ['0000-00-00', OPEN] : halRange();
-  const def = TODAY>=A && TODAY<=B ? TODAY : B===OPEN ? TODAY : B;
-  const g = monthGrid(st.y, st.m), two = new Set(subs.map(s => s.cat)).size > 1;
-  const per = k => k===OPEN ? '끝 없이 계속'
-    : all || st.view==='year' ? `${k.slice(0,4)!==String(st.y) ? k.slice(0,4)+'년 ' : ''}${+k.slice(5,7)}월`
-    : st.view==='month' ? `week ${g.findIndex(w => iso(w[0])<=k && k<=iso(w[6])) + 1}` : `${+k.slice(8)} ${DOW[dowOf(pIso(k))]}`;
-  const when = k => k===OPEN ? '계속' : md(k);
-  const cols = subs.map(s => {
-    const c = catById(s.cat), items = [];
-    dayTodos(s.id, A, B).forEach(({k, i}) => items.push({k, ref:`days|${k}|${i.id}`, text:i.text, done:!!i.done, star:!!i.star, open:`data-act="editDay" data-ref="days|${k}|${i.id}"`}));
-    msOf(s.id).filter(m => m.due && (m.due===OPEN ? msStart(m) <= B : m.due >= A && m.due <= B))
-      .forEach(m => items.push({k:m.due, ref:`ms||${m.id}`, text:m.text, done:!!m.done, star:!!m.star, open:`data-act="editMs" data-id="${m.id}"`}));
-    items.sort((a,b) => a.k.localeCompare(b.k));
-    const each = v===4 || !items.some(x => x.star), groups = []; let pend = [];
-    items.forEach(x => { if (each || x.star){ groups.push({x, lead:pend}); pend = []; } else pend.push(x); });
-    const cur = groups.findIndex(gr => !gr.x.done), done = groups.filter(gr => gr.x.done).length;
-    const sub = x => `<div class="sti${x.done?' done':''}" data-ref="${x.ref}" data-drag><button class="stc${x.done?' done':''}" data-act="tog" data-ref="${x.ref}" aria-label="체크"></button><span class="stx" ${x.open}>${esc(x.text)}</span><small>${when(x.k)}</small></div>`;
-    let h = '', lastP = '';
-    groups.forEach((gr, i) => { const x = gr.x, last = i===groups.length-1 && !pend.length;
-      if (v===3 || v===5){ const p = per(x.k); if (p!==lastP){ h += `<div class="stper">${esc(p)}</div>`; lastP = p; } }
-      h += `<div class="sts ${x.done ? 'done' : i===cur ? 'cur' : 'next'}${last?' last':''}"><button class="stk" data-act="tog" data-ref="${x.ref}" aria-label="${esc(x.text)} 완료 표시">${x.done ? '✓' : i+1}</button>
-        <div class="stb" data-ref="${x.ref}" data-drag><div class="sth"><span class="stt" ${x.open}>${esc(x.text)}</span><small>${when(x.k)}</small></div>${gr.lead.length ? `<div class="stl">${gr.lead.map(sub).join('')}</div>` : ''}</div></div>`; });
-    if (pend.length) h += `<div class="sts tail last"><span class="stk">…</span><div class="stb"><div class="sth"><span class="stt sm">다음 이정표 전</span></div><div class="stl">${pend.map(sub).join('')}</div></div></div>`;
-    return `<section class="stcol" style="--sc:${c?.color || 'var(--ink)'}" data-drop="pc|${s.id}|${def}"><button class="rhd" data-act="hsub" data-s="${s.id}" data-c="${s.cat}">${two?`<span>${esc(c.name)}</span>`:''}${esc(s.name)}<small>${groups.length ? `${done}/${groups.length} 단계` : ''}</small></button>
-      <div class="stpath">${h || '<div class="rnil">아직 없음</div>'}</div>${PLUS(`pc|${s.id}|${def}`)}</section>`;
-  }).join('');
-  return `<div class="stmap" style="--cols:${subs.length}">${cols}</div>`;
+/* ---------- 로드맵 모양 6–9 (설정): roadmap pictures that still split by the 연 · 월 · 주 being looked at ----------
+   6 지하철 노선도 · 7 가운데 타임라인 · 8 구불구불 길 · 9 고속도로. Everywhere: ★ big ring = 이정표 · filled = done · dark halo = the next one to do */
+const rmv = () => [6, 7, 8, 9].includes(S.set.rmv) ? S.set.rmv : 1;
+// each 세부 its own line colour: its 할일's colour, the hue turned a little per 세부 (same turn as 설정 → 세부 구분)
+function subColor(s){
+  const c = catById(s.cat), base = c?.color || '#8a8a8a', k = Math.max(0, subsOf(s.cat).indexOf(s)), [h, sa, l] = hexHsl(base);
+  return `hsl(${(h + SB_TURN[k % SB_TURN.length] + 360) % 360} ${Math.max(40, sa)}% ${Math.min(52, Math.max(34, l))}%)`;
+}
+// everything of one 세부 between two days (일정 · 할일 on their day, a 할일 루틴 on its last day), in date order
+function roadItems(s, a, b){
+  const out = [];
+  dayTodos(s.id, a, b).forEach(({k, i}) => out.push({k, ref:`days|${k}|${i.id}`, text:i.text, done:!!i.done, star:!!i.star, open:`data-act="editDay" data-ref="days|${k}|${i.id}"`}));
+  msOf(s.id).filter(m => m.due && m.due!==OPEN && m.due>=a && m.due<=b)
+    .forEach(m => out.push({k:m.due, ref:`ms||${m.id}`, text:m.text, done:!!m.done, star:!!m.star, open:`data-act="editMs" data-id="${m.id}"`}));
+  return out.sort((x, y) => x.k.localeCompare(y.k));
+}
+const nextOf = s => roadItems(s, TODAY, '9999-12-30').find(x => !x.done)?.ref;   // the next thing to do in this 세부
+const roadEmpty = `<div class="empty"><b>세부할일이 없습니다</b>위에서 할일을 고르고 “+ 세부”로 세부할일(예: 공부 → 수학)을 만들어 주세요.</div>`;
+function halRoadmap(){
+  const subs = visSubs(); if (!subs.length) return roadEmpty;
+  const v = rmv(), rows = halRows(), two = new Set(subs.map(s => s.cat)).size > 1;
+  const nx = Object.fromEntries(subs.map(s => [s.id, nextOf(s)]));
+  const head = s => `<button class="mt-head" style="--lc:${subColor(s)}" data-act="hsub" data-s="${s.id}" data-c="${s.cat}"><i></i>${two ? `<small>${esc(catById(s.cat).name)}</small>` : ''}${esc(s.name)}</button>`;
+  if (v===6 || v===9){
+    const stn = (x, s) => `<div class="mt-st${x.done?' done':''}${x.star?' star':''}${x.ref===nx[s.id]?' now':''}" data-ref="${x.ref}" data-drag><button class="mt-dot" data-act="tog" data-ref="${x.ref}" aria-label="${esc(x.text)} 체크">${x.star?'★':''}</button><span class="mt-tx" ${x.open}>${esc(x.text)}</span><small>${md(x.k)}</small></div>`;
+    let h = `<div></div>` + subs.map(head).join('');
+    rows.forEach((r, ri) => {
+      h += `<div class="mt-per${r.td?' td':''}${r.go?' go':''}" ${r.go||''}>${r.lab}</div>`;
+      subs.forEach((s, si) => { h += `<div class="mt-cell${ri===0?' first':''}${ri===rows.length-1?' last':''}${r.td?' td':''}${si===0?' l0':''}${si===subs.length-1?' ln':''}" style="--lc:${subColor(s)}" data-act="plus" data-t="pc|${s.id}|${r.key}" data-drop="pc|${s.id}|${r.key}">${roadItems(s, r.a, r.b).map(x => stn(x, s)).join('')}</div>`; });
+    });
+    return `<div class="mt${v===9?' hw':''}" style="grid-template-columns:auto repeat(${subs.length},minmax(170px,1fr))">${h}</div>`;
+  }
+  if (v===7){
+    let h = '', side = 0;
+    rows.forEach(r => {
+      const its = subs.flatMap(s => roadItems(s, r.a, r.b).map(x => ({...x, s}))).sort((a, b) => a.k.localeCompare(b.k));
+      h += `<div class="ct-per${r.td?' td':''}${r.go?' go':''}" ${r.go||''}>${r.lab}</div>`;
+      if (!its.length) h += `<div class="ct-empty" data-act="plus" data-t="pc|${subs.length===1 ? subs[0].id : ''}|${r.key}">—</div>`;
+      its.forEach(x => { const L = side++ % 2 === 0;
+        h += `<div class="ct-it ${L?'l':'r'}${x.done?' done':''}${x.star?' star':''}${x.ref===nx[x.s.id]?' now':''}" style="--lc:${subColor(x.s)}" data-ref="${x.ref}" data-drag><button class="ct-dot" data-act="tog" data-ref="${x.ref}" aria-label="${esc(x.text)} 체크">${x.star?'★':''}</button><div class="ct-card"><small>${esc(x.s.name)} · ${md(x.k)}</small><span class="ct-tx" ${x.open}>${esc(x.text)}</span></div></div>`; });
+    });
+    return `<div class="ct">${h}</div>`;
+  }
+  // 8 구불구불 길: one road per 세부; each stretch is one leg, legs run left → right, then right → left, joined by U-turns
+  return `<div class="sn">` + subs.map(s => {
+    let body = '';
+    rows.forEach((r, ri) => { const its = roadItems(s, r.a, r.b), rev = ri % 2 === 1;
+      const pins = its.map((x, i) => { const p = 14 + (i + 1) / (its.length + 1) * 82;   // spread along the leg (the start keeps room for its sign)
+        return `<div class="sn-pin${x.done?' done':''}${x.star?' star':''}${x.ref===nx[s.id]?' now':''}${i % 2 ? ' up' : ''}" style="left:${rev ? 100 - p : p}%" data-ref="${x.ref}" data-drag><button class="sn-dot" data-act="tog" data-ref="${x.ref}" aria-label="${esc(x.text)} 체크">${x.star?'★':''}</button><span class="sn-tx" ${x.open} title="${esc(x.text)} · ${md(x.k)}">${esc(x.text)}</span></div>`; }).join('');
+      body += `<div class="sn-row${rev?' rev':''}${ri===0?' first':''}${ri===rows.length-1?' last':''}${r.td?' td':''}" data-act="plus" data-t="pc|${s.id}|${r.key}" data-drop="pc|${s.id}|${r.key}">
+        <div class="sn-road"></div>${ri < rows.length-1 ? '<div class="sn-turn"></div>' : ''}<span class="sn-sign${r.td?' td':''}${r.go?' go':''}" ${r.go||''}>${r.lab}</span><div class="sn-pins">${pins}</div></div>`; });
+    return `<section class="sn-one" style="--lc:${subColor(s)}"><button class="rhd" data-act="hsub" data-s="${s.id}" data-c="${s.cat}">${two ? `<span>${esc(catById(s.cat).name)}</span>` : ''}${esc(s.name)}<small>${pct(progSub(s.id))}%</small></button><div class="sn-wrap">${body}</div></section>`;
+  }).join('') + `</div>`;
 }
 function lanesHTML(s, r, L2){ // a stretch is drawn while a milestone is running
   const cur = msOf(s.id).find(m => !m.done);
@@ -1711,7 +1816,7 @@ function halView(){
   const sk = st.hcat==='all' ? null : stackHTML();   // 보관함 whenever a 할일 is chosen
   const tp3 = S.set.hl===3 && !st.portrait;
   return `<div class="hal${tp3?' tp3':''}">${tp3?`<div class="hside">${r1}${r2}</div>`:r1+r2}<div class="hbody b2${sk?'':' wide'}">
-    <div class="htable${rmv()>1?' road':''}">${rmv()>1 ? halSteps() : halTable()}</div>${sk ? `<div class="hstackw"><div class="whs">보관함<small>${sk.n||''}</small></div><div class="hstack" data-drop="stack|all">${sk.html}</div></div>` : ''}</div></div>`;
+    <div class="htable${rmv()>1?' road':''}">${rmv()>1 ? halRoadmap() : halTable()}</div>${sk ? `<div class="hstackw"><div class="whs">보관함<small>${sk.n||''}</small></div><div class="hstack" data-drop="stack|all">${sk.html}</div></div>` : ''}</div></div>`;
 }
 /* going down a level: the chosen month / week stretches open, the rest folds away */
 // changing 연 ⇄ 월 ⇄ 주: the box grows to its new size while each thing glides to where it now belongs
@@ -1793,7 +1898,7 @@ function settingsHTML(){
       <div class="hlrow"><button class="sw4${S.set.hlcat!==false?' on':''}" data-act="setcat" role="switch" aria-checked="${S.set.hlcat!==false}"><i></i></button><span class="hltx">할일로 분류된 것은 그 할일의 색으로 <small>(할일 페이지에서 정한 색)</small></span></div></div>
     <div class="sec"><div class="sh">세부 구분</div><div class="sd">월 · 주 페이지에서 같은 할일 안의 세부(예: 공부 → 수학 · 영어)끼리 어떻게 구분할지 고릅니다. 아래 견본은 지금 내 할일 · 세부로 보여 줘요.</div>
       <div class="vopts">${SBV.map(([n,t,d]) => `<button class="vopt${sbv()===n?' on':''}" data-act="setv" data-k="sbv" data-v="${n}"><span>${t}</span><small>${d}</small>${n ? sbSample(n) : ''}</button>`).join('')}</div></div>
-    <div class="sec"><div class="sh">로드맵 모양</div><div class="sd">할일 페이지의 로드맵입니다. 2 ~ 5번은 단계형이에요: ✓ 끝낸 단계 · 테두리 번호 지금 단계 · 회색 번호 앞으로 할 단계. 단계는 이정표이고, 그 사이의 할일 · 일정 · 루틴은 단계 아래에 모여요.</div>
+    <div class="sec"><div class="sh">로드맵 모양</div><div class="sd">할일 페이지의 로드맵입니다. 어느 모양이든 위의 연 · 월 · 주에 맞춰 나뉘고, ★ 큰 원 = 이정표 · 채운 원 = 끝낸 것 · 진한 테두리 = 다음에 할 것이에요.</div>
       <div class="vopts">${RMV.map(([n,t,d]) => `<button class="vopt${rmv()===n?' on':''}" data-act="setv" data-k="rmv" data-v="${n}"><b>${n}</b><span>${t}</span><small>${d}</small></button>`).join('')}</div></div>
     ${themeHTML()}
     <div class="sec"><div class="sh">연 페이지에 표시</div><div class="sd">플래너 연 페이지의 날짜 아래에 작은 점으로 보여 줍니다. 색은 위의 형광펜 색을 따라요.</div>
@@ -1847,10 +1952,10 @@ function sbSample(n){
 }
 // 설정 → 로드맵 모양
 const RMV = [[1,'날짜표 (지금)','날짜 줄마다 칸을 나눈 지금의 로드맵'],
-  [2,'단계','지금 보는 연 · 월 · 주 안의 이정표를 단계로. 날짜는 옆에 작게'],
-  [3,'단계 + 기간 이름','2번에 “11월 · week 2 · 23 Mon” 같은 기간 이름을 선 위에'],
-  [4,'모든 할일이 단계','이정표가 아니어도 하나하나가 단계 (날짜 순서)'],
-  [5,'단계 · 전체 기간','연 · 월 · 주와 상관없이 처음부터 끝까지 한 줄로 (달 이름 표시)']];
+  [6,'지하철 노선도','세부마다 색이 다른 노선이 세로로 나란히 · 할일은 역 · 기간은 노선을 가로지르는 구간'],
+  [7,'가운데 타임라인','가운데 선 하나에 기간 이름표 · 할일 카드가 좌우로 번갈아 (세부는 색으로)'],
+  [8,'구불구불 길','세부마다 길 하나 · 기간마다 한 구간씩 지그재그로 꺾여 내려가는 도로 · 할일은 핀'],
+  [9,'고속도로','어두운 도로에 세부마다 차선 · 기간은 초록 도로 표지판']];
 // 설정 → 테마색: the ink (letters · lines · buttons) and the paper (background)
 const INKS = [['#141414','먹'],['#1f3a5f','남색'],['#1f4d3a','숲'],['#5a3a28','밤색'],['#3d2d6b','보라'],['#6b1f2e','버건디']];
 const PAPERS = [['#ffffff','흰색'],['#fbf8f1','미색'],['#f6f6f4','연회색'],['#f3f6fa','하늘빛']];
