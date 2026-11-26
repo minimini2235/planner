@@ -584,9 +584,22 @@ main{flex:1;min-height:0;position:relative}
 .qdw7 button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 #app .qcard .qcal{position:static;width:auto;max-width:none;border:0;box-shadow:none;padding:0;margin:0;animation:none}
 .qa2 .qask{position:static;left:auto;right:auto;bottom:auto}
+.qemo{flex:none;width:38px;height:38px;border-radius:50%;border:var(--lw) solid var(--soft);text-align:center;font-size:18px;outline:none;background:var(--paper);padding:0}
+.qemo:focus{border-color:var(--ink)}
+.qpill input.qemo{flex:none;width:38px;min-width:0;padding:0;font-size:18px;text-align:center;border:var(--lw) solid var(--soft)}
+#app .qpill input#etext{text-align:left;border:0;height:auto;padding:0 4px;background:transparent;flex:1;min-width:60px}
+.qnote{align-self:center;font-size:11.5px;color:var(--mute);white-space:nowrap;padding-left:4px}
+.qcard .sw2{flex:none}
 .qfoot{display:flex;justify-content:space-between;align-items:center;padding:0 2px}
 .qfb{height:36px;padding:0 16px;border-radius:999px;border:var(--lw) solid var(--soft);background:var(--paper);font-size:13px;color:var(--sub)}
-.qa2 .foot.ask{background:var(--paper);border:var(--lw) solid var(--soft);border-radius:16px;box-shadow:0 8px 26px rgba(0,0,0,.12)}
+.qa2 .foot.ask{background:var(--paper);border:var(--lw) solid var(--soft);border-radius:26px;box-shadow:0 8px 26px rgba(0,0,0,.12);padding:12px 14px;flex-wrap:wrap;gap:8px}
+.qa2 .seg.delseg{border:0;border-radius:999px;overflow:visible;height:auto;gap:5px;flex-wrap:wrap}
+.qa2 .seg.delseg button{height:32px;padding:0 13px;border:var(--lw) solid var(--soft);border-radius:999px;font-size:12.5px}
+.qa2 .seg.delseg button+button{border-left:var(--lw) solid var(--soft)}
+.qa2 .seg.delseg button.on{border-color:var(--ink)}
+.qa2 .foot.ask .btn{border-radius:999px;height:34px;padding:0 16px}
+.qa2 .foot.ask .askq{flex-basis:100%}
+.qa2 .foot.ask .sp{flex:1}
 /* 기간: one bar across its days — joined pieces reach the cell edges and lose their corners there */
 .board .it.spbar{background:color-mix(in srgb,var(--ink) 9%,var(--paper))}
 .board .it.spbar.cont .ck{visibility:hidden}
@@ -790,6 +803,9 @@ main{flex:1;min-height:0;position:relative}
 .ldot{position:relative;height:7px}
 .ldot i{position:absolute;top:1.5px;left:calc(20px - (26px + var(--n)*16px) - 2px);width:4px;height:4px;border-radius:50%;background:color-mix(in srgb,var(--ink) 55.3%,var(--paper))}
 .ldot.done i{background:color-mix(in srgb,var(--ink) 23.0%,var(--paper))}
+button.ldot{display:block;width:100%;height:11px;cursor:pointer}
+button.ldot i{top:3.5px}
+button.ldot:hover i{transform:scale(1.6)}
 .ht.v1 .ldot i{left:-4px}
 /* the small calendar: 끝 없음 switch, ✕ to close */
 .qch .x{margin-left:4px;font-size:12px}
@@ -856,7 +872,19 @@ main{flex:1;min-height:0;position:relative}
 .ht.split .hh.cat{display:flex;gap:6px;align-items:flex-end}
 .ht.split .hh.cat .ring{flex:none}
 .ht.split .hh:hover .nm{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint)}
-.hchip{min-width:0;white-space:nowrap}
+.hchip.hid{opacity:.45;border-style:dashed}
+.hchip.hidt{font-size:12px;color:var(--mute);border-style:dashed}
+.hchip.hidt.on{color:var(--ink);border-style:solid}
+.hidlist{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:var(--lw) solid var(--soft);border-radius:18px;background:var(--paper);box-shadow:0 8px 24px rgba(0,0,0,.08);max-width:420px;animation:fadein .2s ease}
+.hidh{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:500;padding:0 2px 6px}
+.hidh small{font-size:11px;font-weight:400;color:var(--mute)}
+.hidr{display:flex;align-items:center;gap:8px;min-height:38px;padding:0 2px;border-top:var(--hl) solid var(--hair);font-size:13px}
+.hidr span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hidr small{font-size:11px;color:var(--mute)}
+.hidr button{height:30px;padding:0 14px;border:var(--lw) solid var(--soft);border-radius:999px;font-size:12.5px}
+.hidr button:hover{border-color:var(--ink)}
+.hchip{min-width:0;white-space:nowrap;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.hchip.chipdrag{transform:scale(1.06);box-shadow:0 6px 18px rgba(0,0,0,.18);background:var(--paper);z-index:3;position:relative;transition:transform .15s}
 .pm .pt{min-width:0}
 /* columns that leave slide away sideways */
 .ht [data-col]{transition:transform .3s var(--ease),opacity .25s ease}
@@ -945,8 +973,15 @@ main{flex:1;min-height:0;position:relative}
 .shead h4{margin:0;font-size:16px;font-weight:400}
 .shead .btn{margin-left:auto;font-size:13px;padding:5px 14px}
 .sec{padding:16px 20px 14px}
-.sgrp{padding:22px 20px 2px;font-size:12px;font-weight:500;letter-spacing:.04em;color:var(--mute);border-top:var(--lw) solid var(--soft)}
-.shead+.sgrp{border-top:0;padding-top:16px}
+.stabs{display:flex;gap:2px;margin:0 auto;padding:3px;border-radius:999px;background:color-mix(in srgb,var(--ink) 6%,var(--paper))}
+.stabs button{height:30px;padding:0 14px;border-radius:999px;font-size:13px;color:color-mix(in srgb,var(--ink) 55%,var(--paper));transition:background .2s,color .2s}
+.stabs button.on{background:var(--paper);color:var(--ink);font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.shead .stabs+.btn{margin-left:0}
+@media (max-width:420px){.stabs button{padding:0 10px}.shead h4{display:none}.shead .stabs{margin-left:0}}
+.sgrp{display:flex;align-items:center;gap:8px;margin-top:10px;padding:12px 20px;font-size:15px;font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--ink) 5%,var(--paper));border-top:var(--lw) solid var(--soft);border-bottom:var(--lw) solid var(--soft)}
+.sgrp small{font-size:11.5px;font-weight:400;color:var(--mute)}
+.shead+.sgrp{margin-top:0;border-top:0}
+.sgrp+.sec{padding-top:18px}
 .sec+.sec{border-top:var(--hl) solid var(--soft)}
 .sh{font-size:14px;font-weight:500;margin-bottom:2px}
 .sd{font-size:12px;color:var(--mute);margin-bottom:10px;line-height:1.5}
@@ -1053,6 +1088,17 @@ main{flex:1;min-height:0;position:relative}
 .sbx.hl-hc .it.k-hg{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hc)}
 #app.sb1 .board .it.k-sb .stag,#app.sb1 .pwk .it.k-sb .stag,.sbx.sb1 .it.k-sb .stag{display:inline;flex:none;font-size:.78em;line-height:1.3;color:color-mix(in srgb,var(--ink) 57.9%,var(--paper));background:var(--tag);border-radius:3px;padding:0 .35em;margin-top:.12em;white-space:nowrap}
 #app.sb3 .board .it.k-sb,#app.sb3 .pwk .it.k-sb,.sbx.sb3 .it.k-sb{border-radius:2px;margin:1px -3px;padding:0 3px;background:var(--hs)}
+/* 세부분야 표시 versions 4–7 (1 = grey tag, above) */
+#app.sb4 .board .it.k-sb .stag,#app.sb4 .pwk .it.k-sb .stag,.sbx.sb4 .it.k-sb .stag,#app.sb5 .board .it.k-sb .stag,#app.sb5 .pwk .it.k-sb .stag,.sbx.sb5 .it.k-sb .stag,#app.sb6 .board .it.k-sb .stag,#app.sb6 .pwk .it.k-sb .stag,.sbx.sb6 .it.k-sb .stag,#app.sb7 .board .it.k-sb .stag,#app.sb7 .pwk .it.k-sb .stag,.sbx.sb7 .it.k-sb .stag{display:inline-flex;align-items:center;flex:none;font-size:.78em;line-height:1.3;white-space:nowrap;margin-top:.12em}
+#app.sb4 .board .it.k-sb .stag,#app.sb4 .pwk .it.k-sb .stag,.sbx.sb4 .it.k-sb .stag{border:1px solid var(--hsd,var(--mute));color:var(--hsd,var(--sub));background:color-mix(in srgb,var(--paper) 70%,transparent);border-radius:999px;padding:0 .5em}
+#app.sb5 .board .it.k-sb .stag,#app.sb5 .pwk .it.k-sb .stag,.sbx.sb5 .it.k-sb .stag{background:var(--hsd,var(--sub));color:#fff;border-radius:999px;padding:0 .55em;font-weight:500}
+#app.sb6 .board .it.k-sb .stag,#app.sb6 .pwk .it.k-sb .stag,.sbx.sb6 .it.k-sb .stag{gap:.3em;color:color-mix(in srgb,var(--ink) 62%,var(--paper))}
+#app.sb6 .board .it.k-sb .stag::before,#app.sb6 .pwk .it.k-sb .stag::before,.sbx.sb6 .it.k-sb .stag::before{content:'';width:.55em;height:.55em;border-radius:50%;background:var(--hsd,var(--mute));flex:none}
+#app.sb7 .board .it.k-sb .stag,#app.sb7 .pwk .it.k-sb .stag,.sbx.sb7 .it.k-sb .stag{color:color-mix(in srgb,var(--ink) 52%,var(--paper));margin-left:-.15em}
+#app.sb7 .board .it.k-sb .stag::before,#app.sb7 .pwk .it.k-sb .stag::before,.sbx.sb7 .it.k-sb .stag::before{content:'·';margin-right:.3em}
+#app.sb7 .board .it.k-sb .tx,#app.sb7 .pwk .it.k-sb .tx,.sbx.sb7 .it.k-sb .tx{flex:0 1 auto}
+#app.sb7 .board .it.k-sb .tag,#app.sb7 .board .it.k-sb .aux:not(.sumn){margin-left:auto}
+.it.sum .aux.sumn{flex:none;margin-left:auto;padding-left:.35em;font-size:1em;letter-spacing:0;color:inherit;padding-top:0}
 .sbx{display:flex;flex-direction:column;gap:2px;margin-top:6px;width:100%}
 .sbx .it{font-size:12px}
 .vopt .sbx span,.vopt .sbx i{font-size:12px}
@@ -1147,7 +1193,7 @@ html.dark .ht.split .ln.base{background:color-mix(in srgb,var(--cc,var(--ink)) 5
 .portrait .hstackw .hstack{max-height:none}
 /* 월 캘린더 · 주간목표 칸: 길면 줄을 넘기지 않고 "□ 어쩌…" 한 줄로 (세부 이름표는 빼고) */
 .board.month .cell:not(.fold) .cb .it .tx,.board.month .wrow .wlist .it .tx,.full .cb .it .tx{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;word-break:normal}
-#app .board.month .cell .cb .it .stag,#app .board.month .cell .cb .it .tag{display:none}
+#app .board.month .cell .cb .it .tag{display:none}
 .board.month .cell .cb .it,.board.month .wrow .wlist .it{flex-wrap:nowrap}
 /* tall screens: the year scrolls instead of being squeezed into one screen */
 .portrait .year{height:auto}
@@ -1325,17 +1371,23 @@ addEventListener('storage', e => {
 });
 function L(coll, key){ S[coll] ||= {}; return (S[coll][key] ||= []); }
 function cats(){ return S.cats; }
-function catById(id){ return S.cats.find(c => c.id===id); }
+// while a screen is drawn the data can't change, so lookups made many times are kept until the drawing ends
+var MEMO = null;   // (var + function: usable by the data fixes that run before this line)
+function memo(key, f){ if (!MEMO) return f(); let v = MEMO.get(key); if (v===undefined){ v = f(); MEMO.set(key, v); } return v; }
+function byId(list, tag, id){ return MEMO ? memo(tag, () => new Map(list.map(x => [x.id, x]))).get(id) : list.find(x => x.id===id); }
+function catById(id){ return byId(S.cats, 'mc', id); }
 const catOf = id => catById(id) || catById('base');
 const userCats = () => S.cats.filter(c => c.id!=='base');
-const rById = id => S.routines.find(r => r.id===id);
-const rOn = k => { const w = dowOf(pIso(k)); return S.routines.filter(r => r.dows.includes(w) && r.start<=k && (!r.end || k<r.end) && !S.rskip?.[`${k}|${r.id}`]); };
+const shown = x => !x.hidden;   // 숨긴 분야 · 세부분야 stay out of the lists (숨김 n → bring one back)
+const rById = id => byId(S.routines, 'mr', id);
+const rOn = k => memo('r' + k, () => rOn0(k));
+const rOn0 = k => { const w = dowOf(pIso(k)); return S.routines.filter(r => (r.dows.includes(w) || r.extra?.[k]) && r.start<=k && (!r.end || k<r.end) && !S.rskip?.[`${k}|${r.id}`]); };
 const rDone = (k,rid) => !!S.rdone[`${k}|${rid}`];
-const subById = id => S.subs.find(s => s.id===id);
+const subById = id => byId(S.subs, 'msb', id);
 const subsOf = cid => S.subs.filter(s => s.cat===cid);
 const allSubs = () => userCats().flatMap(c => subsOf(c.id));
 const msOf = sid => S.ms.filter(m => m.sub===sid).sort((a,b) => (a.due||'~').localeCompare(b.due||'~'));
-const msById = id => S.ms.find(m => m.id===id);
+const msById = id => byId(S.ms, 'mm', id);
 // a milestone runs from its own start (if one was set) or from the day after the previous one / the day it was made —
 // never past its own due day, so a milestone moved earlier can't run backwards and push its neighbours onto a second line
 function msStart(m){
@@ -1346,12 +1398,19 @@ function msStart(m){
 }
 function stepDays(m){ const out = []; if (!m.due) return out; let k = msStart(m);
   for (let i=0; k<=m.due && i<400; i++, k = isoAdd(k,1)) if (m.dows.includes(dowOf(pIso(k)))) out.push(k); return out; }
-const stepsOn = k => S.ms.filter(m => m.due && k<=m.due && k>=msStart(m) && m.dows.includes(dowOf(pIso(k))) && subById(m.sub) && !S.sskip?.[`${k}|${m.id}`]);
+const stepsOn = k => memo('s' + k, () => stepsOn0(k));
+const stepsOn0 = k => S.ms.filter(m => m.due && k<=m.due && k>=msStart(m) && (m.dows.includes(dowOf(pIso(k))) || m.extra?.[k]) && subById(m.sub) && !S.sskip?.[`${k}|${m.id}`]);
 const msDueOn = k => [];   // a routine's last day is just another day of it
-const sDone = (k,id) => !!S.sdone[`${k}|${id}`];
+const sDone = (k,id) => !!S.sdone[`${k}|${id}`] || (!!msById(id)?.done && !S.sundone?.[`${k}|${id}`]);
+function setMsDays(m, ks, on){ // tick / untick these days of one 반복 (a whole-반복 tick stays, with these days as exceptions)
+  const sd = S.sdone ||= {}, su = S.sundone ||= {};
+  ks.forEach(k => { const key = `${k}|${m.id}`; if (on){ delete su[key]; if (!m.done) sd[key] = true; } else { delete sd[key]; if (m.done) su[key] = true; } });
+}
 function progSub(sid){ // what's been done under this 세부할일: its 할일 on the calendar (일반 · 이정표), its weekly goals and its 할일 루틴 — not what's still in the 보관함
-  const a = [...Object.values(S.days).flat().filter(i => i.sub===sid && i.type!=='event'), ...Object.values(S.weeks).flat().filter(i => i.sub===sid)];   // routines don't count
-  return {done:a.filter(x=>x.done).length, all:a.length}; }
+  return memo('ps', () => { const m = {}, put = i => { if (!i.sub) return; const x = m[i.sub] ||= {done:0, all:0}; x.all++; if (i.done) x.done++; };   // one pass for every 세부할일
+    for (const k in S.days) for (const i of S.days[k] || []) if (i.type!=='event') put(i);
+    for (const k in S.weeks) for (const i of S.weeks[k] || []) put(i);   // routines don't count
+    return m; })[sid] || {done:0, all:0}; }
 function progCat(cid){ return subsOf(cid).map(s => progSub(s.id)).reduce((a,b) => ({done:a.done+b.done, all:a.all+b.all}), {done:0, all:0}); }
 const pct = p => p.all ? Math.round(p.done/p.all*100) : 0;
 const catLabel = c => c?.emoji || graphemes(c?.name||'?')[0] || '?';
@@ -1405,7 +1464,7 @@ const hcOf = i => { const c = catById(i?.cat) || catById(subById(i?.sub)?.cat); 
 const kOf = (i, base) => base;   // (old: filed under a 할일 → the 할일 colour
 // 설정 → 세부 구분: how 세부할일 of the same 할일 are told apart on the 월 · 주 pages
 // 0 구분 안 함 · 1 세부 이름표 · 3 세부마다 다른 색 (2 · 4 · 5 were tried in a preview and dropped → 이름표)
-const sbv = () => { const v = S.set.sbv ?? 1; return [0, 1].includes(v) ? v : 1; };
+const sbv = () => S.set.sbv===0 ? 0 : 7;   // 이어 쓰기 · 표시 안 함 (older looks → 이어 쓰기)
 const sbOf = i => subById(i?.sub) || null;
 // colour helpers: a 세부's own shade, made from its 할일's colour (hue turned a little per 세부)
 function hexHsl(h){ const n = parseInt(h.slice(1,7),16), r = (n>>16&255)/255, g = (n>>8&255)/255, b = (n&255)/255, mx = Math.max(r,g,b), mn = Math.min(r,g,b), l = (mx+mn)/2;
@@ -1415,18 +1474,25 @@ const SB_TURN = [0, 38, -38, 76, -76, 114, -114];
 function sbStyle(i){ // the variables one row needs for every version
   const s = sbOf(i); if (!s) return '';
   const c = catById(s.cat), k = Math.max(0, subsOf(s.cat).indexOf(s)), base = c?.color || '#8a8a8a', [hh, ss, ll] = hexHsl(base);
-  return `--hs:hsl(${(hh + SB_TURN[k % SB_TURN.length] + 360) % 360} ${Math.max(35, ss)}% ${Math.min(80, Math.max(62, ll + 22))}% / .55)`;
+  const h2 = (hh + SB_TURN[k % SB_TURN.length] + 360) % 360;
+  return `--hs:hsl(${h2} ${Math.max(35, ss)}% ${Math.min(80, Math.max(62, ll + 22))}% / .55);--hsd:hsl(${h2} ${Math.max(40, Math.min(70, ss))}% 38%)`;   // --hsd: a deep shade for name chips
 }
 // a 기간 item lives on its first day (with `end`) and shows on every day up to its end; its rows always point at that first day
 const SPANK = new WeakMap();
-function spansOn(k){ const out = []; for (const k0 in S.days){ if (k0 >= k) continue; for (const i of S.days[k0] || []) if (i.end && i.end >= k){ SPANK.set(i, k0); out.push(i); } } return out; }
+const allSpans = () => memo('span', () => { const out = []; for (const k0 in S.days) for (const i of S.days[k0] || []) if (i.end){ SPANK.set(i, k0); out.push([k0, i]); } return out; });
+function spansOn(k){ return memo('p' + k, () => allSpans().filter(([k0, i]) => k0 < k && i.end >= k).map(([, i]) => i)); }
 const homeOf = (k, i) => L('days',k).includes(i) ? k : (SPANK.get(i) || k);
 const spanTag = (k, i) => i.end ? `<span class="aux span">${md(homeOf(k,i))}–${md(i.end)}</span>` : '';
 const tdRow = (k, i) => itemRow(`days|${homeOf(k,i)}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i), src:i, tag:spanTag(k,i)});
 const evRow = (k, i) => itemRow(`days|${homeOf(k,i)}|${i.id}`, 'ev', i.done, i.text, {drag:true, cls:'k-ev', hc:hcOf(i), src:i, tag:spanTag(k,i)});
-const rtRow = (k, x) => itemRow(`rt|${k}|${x.r.id}`, x.r.ev ? 'ev' : 'td', x.done, x.r.text, {cls:'rtn ' + (x.r.ev ? 'k-ev' : 'k-td'), hc:hcOf(x.r), tag:REP});
+const ovOf = (o, k) => o?.ov?.[k] || null;
+const txtOn = (o, k) => ovOf(o, k)?.text ?? o.text;
+// a week / month shown as one line: the changed name only when every day there got that same name
+const rangeTxt = (o, ks) => { const l = ks.map(k => txtOn(o, k)); return l.length && l.every(t => t===l[0]) ? l[0] : o.text; };
+const evOn = (o, k) => { const v = ovOf(o, k); return v && 'ev' in v ? v.ev : !!o.ev; };
+const rtRow = (k, x) => itemRow(`rt|${k}|${x.r.id}`, evOn(x.r,k) ? 'ev' : 'td', x.done, txtOn(x.r,k), {cls:'rtn ' + (evOn(x.r,k) ? 'k-ev' : 'k-td'), hc:hcOf(x.r), tag:REP});
 const msRow = (m, tag) => itemRow(`ms||${m.id}`, 'td', m.done, m.text, {drag:true, cls:'msi k-td', hc:hcOf(m), src:m, tag: tag ? tagOf(null, m.sub) : ''});
-const stRow = (k, x) => itemRow(`ss|${k}|${x.m.id}`, x.m.ev ? 'ev' : 'td', x.done, x.m.text, {cls:'step ' + (x.m.ev ? 'k-ev' : 'k-td'), hc:hcOf(x.m), src:x.m, tag:REP});
+const stRow = (k, x) => itemRow(`ss|${k}|${x.m.id}`, evOn(x.m,k) ? 'ev' : 'td', x.done, txtOn(x.m,k), {cls:'step ' + (evOn(x.m,k) ? 'k-ev' : 'k-td'), hc:hcOf(x.m), src:x.m, tag:REP});
 
 /* ---------- one day ---------- */
 function dayData(k){
@@ -1437,9 +1503,10 @@ function dayData(k){
 // week page: 일정 · 루틴 · 할일 · each 할일, split by very light labelled lines; each 세부할일 sits in a hairline box
 const lab = t => `<div class="gh"><span>${t}</span><i></i></div>`;
 // 기간 bars: every 기간 touching this week gets a lane; each day draws every lane (a piece of bar, or room), so a bar runs straight across
-function spanLanes(mon){
+function spanLanes(mon){ return memo('l' + mon, () => spanLanes0(mon)); }
+function spanLanes0(mon){
   const sun = isoAdd(mon, 6), list = [];
-  for (const k0 in S.days){ if (k0 > sun) continue; for (const i of S.days[k0] || []) if (i.end && i.end >= mon && i.end > k0) list.push({i, k0, a: k0 < mon ? mon : k0, b: i.end > sun ? sun : i.end}); }
+  for (const [k0, i] of allSpans()) if (k0 <= sun && i.end >= mon && i.end > k0) list.push({i, k0, a: k0 < mon ? mon : k0, b: i.end > sun ? sun : i.end});
   list.sort((x, y) => x.a.localeCompare(y.a) || y.b.localeCompare(x.b));
   const ends = [];
   list.forEach(x => { let j = ends.findIndex(e => e < x.a); if (j < 0){ j = ends.length; ends.push(''); } ends[j] = x.b; x.lane = j; });
@@ -1447,7 +1514,8 @@ function spanLanes(mon){
 }
 function spanBlock(k){
   if (st.portrait && st.view==='week' && !st.hal) return '';   // one day at a time: 기간 shows as a plain row with its dates
-  const {list, n} = spanLanes(iso(mondayOf(pIso(k)))); if (!n) return '';
+  const {list} = spanLanes(iso(mondayOf(pIso(k)))), here = list.filter(x => x.a <= k && k <= x.b); if (!here.length) return '';
+  const n = Math.max(...here.map(x => x.lane)) + 1;
   let h = '';
   for (let j = 0; j < n; j++){
     const x = list.find(x => x.lane===j && x.a <= k && k <= x.b);
@@ -1480,7 +1548,7 @@ function cellSum(k){
   h += all.filter(x => !catOf(x.o)).map(x => x.h()).join('');
   userCats().forEach(c => { const l = all.filter(x => catOf(x.o)===c); if (!l.length) return;
     const hc = c.color ? hcStyle(c) : '';
-    h += `<div class="it sum k-td${c.color?' k-hg':''}" data-act="goDay" data-iso="${k}"${hc?` style="${hc}"`:''}>${mark('td', l.every(x => x.done), 'def')}<span class="tx">${esc(c.name)} ${l.filter(x => x.done).length}/${l.length}</span></div>`; });
+    h += `<div class="it sum k-td${c.color?' k-hg':''}" data-act="goDay" data-iso="${k}"${hc?` style="${hc}"`:''}>${mark('td', l.every(x => x.done), 'def')}<span class="tx">${esc(c.name)}</span><span class="aux sumn">${l.filter(x => x.done).length}/${l.length}</span></div>`; });
   return `<div class="dlist">${h}${PLUS(`days|${k}`)}</div>`;
 }
 function cellHTML(k, lvl=0){
@@ -1535,7 +1603,8 @@ function sizeCal(){ // tall screens: the month (and the unfolded week) fill the 
   const wb = app.querySelector('.board .wkbox'); if (wb) wb.style.height = h + 'px';
 
 }
-const layout = () => { if (!st.hal && (st.view==='month' || st.view==='week')){ sizeCal(); if (st.view==='month') fitCells(); } };
+const layout = () => { if (MEMO) return layout0(); MEMO = new Map(); try { layout0(); } finally { MEMO = null; } };
+const layout0 = () => { if (!st.hal && (st.view==='month' || st.view==='week')){ sizeCal(); if (st.view==='month') fitCells(); } };
 const weekTitle = () => `${st.y}<span class="dim">·</span>${st.m+1}<span class="dim">·</span>week ${weekIndex()+1}`;
 function weekIndex(){ const i = monthGrid(st.y, st.m).findIndex(w => iso(w[0])===iso(st.wk)); return i<0 ? 0 : i; }
 
@@ -1567,12 +1636,12 @@ function yearView(){
 // 설정 → 연 페이지에 표시: up to three small dots under a date, each in its colour
 function yearDots(k){
   const y = S.set.ys || {}; if (!Object.values(y).some(Boolean)) return '';
-  const out = [], items = S.days[k] || [];
+  const out = [], items = [...(S.days[k] || []), ...spansOn(k)];   // a 기간 dots every one of its days
   const add = (c, t) => { if (out.length < 3 && !out.some(o => o.c===c)) out.push({c, t}); };
   items.forEach(i => {   // 일정 · 할일 (이정표 counts as a 할일) — 반복 ones count as what they are
     if (i.type==='event' && y.event) add(ydotColor('event'), i.text);
     else if (i.type!=='event' && y.todo) add(ydotColor('todo'), i.text); });
-  [...rOn(k), ...stepsOn(k)].forEach(r => { const kk = r.ev ? 'event' : 'todo'; if (y[kk]) add(ydotColor(kk), r.text); });
+  [...rOn(k), ...stepsOn(k)].forEach(r => { const kk = evOn(r, k) ? 'event' : 'todo'; if (y[kk]) add(ydotColor(kk), txtOn(r, k)); });
   return out.map(o => `<i style="background:${o.c}" title="${esc(o.t)}"></i>`).join('');
 }
 
@@ -1580,7 +1649,7 @@ function yearDots(k){
 function repStars(mon){
   const days = Array.from({length:7}, (_,i) => isoAdd(mon,i)), out = [];
   const one = (c, o, on, dn) => { const ks = days.filter(k => on(k).includes(o)); if (!ks.length) return; const n = ks.filter(k => dn[`${k}|${o.id}`]).length; out.push({c, o, ks, n, done:n===ks.length}); };
-  S.ms.filter(m => m.star && subById(m.sub)).forEach(m => one('ms', m, stepsOn, S.sdone || {}));
+  S.ms.filter(m => m.star && subById(m.sub)).forEach(m => one('ms', m, stepsOn, new Proxy({}, {get:(_, key) => sDone(String(key).split('|')[0], m.id)})));
   S.routines.filter(r => r.star).forEach(r => one('rt', r, rOn, S.rdone || {}));
   return out;
 }
@@ -1588,12 +1657,13 @@ function repStars(mon){
 function weekContent(mon, lvl=0, inMonth=false){
   // this week's 이정표: starred 할일 · 일정 on its days, and a starred 할일 루틴 in the week it ends
   const ms = []; for (let i=0;i<7;i++){ const k = isoAdd(mon,i); L('days',k).forEach(it => { if (it.star) ms.push({k, it, done:it.done}); }); }
+  spansOn(mon).forEach(it => { if (it.star) ms.unshift({k:SPANK.get(it), it, done:it.done}); });   // a 기간 이정표 started last week still counts here
   const rms = repStars(mon);
   const items = L('weeks', mon), sum = (label, l) => `<div class="it sum">${mark('td',false,'def')}<span class="tx">${label} ${l.filter(x=>x.done).length}/${l.length}</span></div>`;
   const ci = c => { const i = S.cats.findIndex(x => x.id===c); return i<0 ? 999 : i; }, si = id => { const i = S.subs.findIndex(x => x.id===id); return i<0 ? 999 : i; };
   const gk = (o, k) => { const sub = o.sub && subById(o.sub), cat = sub ? sub.cat : o.cat; return [ci(cat), si(sub?.id), k]; };   // 할일 → 세부할일 → day
   const rows = ms.map(({k, it}) => ({key:gk(it, k), h:itemRow(`days|${k}|${it.id}`, it.type==='event' ? 'ev' : 'td', it.done, it.text, {drag:true, cls:it.type==='event' ? 'k-ev' : 'k-td', hc:hcOf(it), src:it})}))
-    .concat(rms.map(x => ({key:gk(x.o, x.ks[0]), h:itemRow(`rw|${mon}|${x.c}:${x.o.id}`, x.o.ev ? 'ev' : 'td', x.done, x.o.text, {cls:x.o.ev ? 'k-ev' : 'k-td', hc:hcOf(x.o), src:x.o, tag: x.ks.length>1 ? `<span class="aux">${x.n}/${x.ks.length}</span>` : ''})})))
+    .concat(rms.map(x => ({key:gk(x.o, x.ks[0]), h:itemRow(`rw|${mon}|${x.c}:${x.o.id}`, x.o.ev ? 'ev' : 'td', x.done, rangeTxt(x.o, x.ks), {cls:x.o.ev ? 'k-ev' : 'k-td', hc:hcOf(x.o), src:x.o, tag: x.ks.length>1 ? `<span class="aux">${x.n}/${x.ks.length}</span>` : ''})})))
     .sort((a, b) => a.key[0]-b.key[0] || a.key[1]-b.key[1] || a.key[2].localeCompare(b.key[2]));
   let h = lvl>=1 && ms.length + rms.length>1 ? sum('이정표', [...ms, ...rms]) : rows.map(r => r.h).join('');
   h += lvl>=2 && items.length>1 ? sum('목표', items) : items.map(i => itemRow(`weeks|${mon}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i), src:i})).join('');
@@ -1641,8 +1711,8 @@ function qchips(){
    things here are 이정표 (finish by a day; small daily shares lead up to it) or 일반 (a plain to-do on a day).
    보관함 = not applied yet; drag in and out of it. Views: 1 표 · 2 로드맵 · 3 목록 */
 function visSubs(){
-  if (st.hcat==='all') return allSubs();
-  if (st.hsub==='all') return subsOf(st.hcat);
+  if (st.hcat==='all') return allSubs().filter(s => shown(s) && shown(catById(s.cat)));
+  if (st.hsub==='all') return subsOf(st.hcat).filter(shown);
   return [subById(st.hsub)].filter(Boolean);
 }
 function halRows(){
@@ -1658,16 +1728,23 @@ function halRows(){
     td: st.y===today.getFullYear() && m===today.getMonth()}));
 }
 // milestones that overlap in time get their own lane, so things running together sit side by side
+function realSpan(m){ return memo('R' + m.id, () => realSpan0(m)); }
+function realSpan0(m){ // first and last day it really happens (skipped days left out)
+  let a = msStart(m), b = m.due, n = 0;
+  while (a <= m.due && n++ < 400 && !stepsOn(a).includes(m)) a = isoAdd(a, 1);
+  if (m.due!==OPEN){ n = 0; while (b >= a && n++ < 400 && !stepsOn(b).includes(m)) b = isoAdd(b, -1); }
+  return a > b ? {a: msStart(m), b: m.due} : {a, b};
+}
 function lanesOf(sid){
-  const list = msOf(sid).filter(m => m.due).map(m => ({m, a:msStart(m), b:m.due})).sort((x,y) => x.a.localeCompare(y.a) || x.b.localeCompare(y.b));
+  const list = msOf(sid).filter(m => m.due).map(m => ({m, ...realSpan(m)})).sort((x,y) => x.a.localeCompare(y.a) || x.b.localeCompare(y.b));
   const ends = [], lane = {};
   list.forEach(x => { // only a milestone given its own start can truly overlap; the rest always stay on lane 0
     let j = x.m.start ? ends.findIndex(e => e < x.a) : 0; if (j<0){ j = ends.length; ends.push(''); }
     if (!ends.length) ends.push(''); ends[j] = ends[j] > x.b ? ends[j] : x.b; lane[x.m.id] = j; });
   return {lane, n: Math.max(1, ends.length), list};
 }
-const dayTodos = (sid, a, b) => Object.keys(S.days).filter(k => k>=a && k<=b).sort()   // 일정 and 할일 filed under this 세부할일
-  .flatMap(k => L('days',k).filter(i => i.sub===sid).map(i => ({k, i})));
+const dayTodos = (sid, a, b) => (memo('dt', () => { const m = {}; for (const k of Object.keys(S.days).sort()) for (const i of S.days[k] || []) if (i.sub) (m[i.sub] ||= []).push({k, i}); return m; })[sid] || [])   // 일정 and 할일 filed under this 세부할일
+  .filter(x => x.k >= a && x.k <= b);
 // in the 할일 page: 일반 = square, 이정표 (a starred 일반) = a larger circle, 루틴 (finish-by with daily shares) = routine mark
 // 할일 page. 주: everything. 연 · 월: 일정 and 이정표 in full; 기본 할일 and 루틴 only as tiny dots sitting on the road line
 // 설정 → 할일 페이지 표시: for each view (연 · 월 · 주) and kind, 'full' (named, as on the 주 page) · 'dot' (a tiny dot on the road) · 'none'
@@ -1676,34 +1753,38 @@ const HFULL_DEF = {star:true, event:true, todo:false, routine:false};
 const fullIn = kind => S.set.hfull?.[kind] ?? HFULL_DEF[kind];
 const showOf = (view, kind) => view==='week' || fullIn(kind) ? 'full' : 'dot';
 // one 루틴 row: its last day and its other days look the same, only the colour differs (lighter = not the last day)
-function pstHTML(m, ref, done, end, j){
+// the days of a 반복 inside a stretch, and whether every one of them is ticked
+const repDays = (m, a, b) => { const out = []; for (let k = a < msStart(m) ? msStart(m) : a; k <= b && k <= m.due; k = isoAdd(k, 1)) if (stepsOn(k).includes(m)) out.push(k); return out; };
+const rangeDone = (m, a, b) => { const ks = repDays(m, a, b); return ks.length > 0 && ks.every(k => sDone(k, m.id)); };
+function pstHTML(m, ref, done, end, j, k, label){
   const tog = ref ? ` data-act="tog" data-ref="${ref}"` : ' disabled';
-  const open = ref && ref.startsWith('ss|') ? `data-act="editDay" data-ref="${ref}"` : `data-act="editMs" data-id="${m.id}"`;
-  return `<div class="pst${end?' end':''}${done?' done':''}${m.star?' star':''}${m.ev?' ev':''}" style="--j:${j}"${end?` data-ref="ms||${m.id}" data-drag`:''}><button class="${done?'done':''}"${tog} title="${esc(m.text)}" aria-label="${esc(m.text)} 체크"></button><span ${open}>${esc(m.text)}</span></div>`;
+  const open = ref && (ref.startsWith('ss|') || ref.startsWith('rk|')) ? `data-act="editDay" data-ref="${ref}"` : `data-act="editMs" data-id="${m.id}"`;   // (rk| rows open the 반복 itself)
+  return `<div class="pst${end?' end':''}${done?' done':''}${m.star?' star':''}${m.ev?' ev':''}" style="--j:${j}"${end?` data-ref="ms||${m.id}" data-drag`:''}><button class="${done?'done':''}"${tog} title="${esc(label ?? (k ? txtOn(m,k) : m.text))}" aria-label="${esc(label ?? (k ? txtOn(m,k) : m.text))} 체크"></button><span ${open}>${esc(label ?? (k ? txtOn(m,k) : m.text))}</span></div>`;
 }
 function entriesOf(s, r, L2){
   const list = msOf(s.id), dayMode = !r.range, view = st.view, out = [];
-  const dot = (k, cls, title) => out.push({k, o:1, h:`<div class="ldot${cls}" title="${title}"><i></i></div>`});
+  const dot = (k, cls, title, ref) => out.push({k, o:1, h: ref ? `<button class="ldot${cls}" title="${title}" aria-label="${title} 체크" data-act="tog" data-ref="${ref}"><i></i></button>` : `<div class="ldot${cls}" title="${title}"><i></i></div>`});   // a dot can be ticked too
   // 일정 · 이정표 · 기본 할일
   dayTodos(s.id, r.a, r.b).forEach(({k:d, i}) => {
     const ev = i.type==='event', mode = showOf(view, i.star ? 'star' : ev ? 'event' : 'todo');   // an 이정표 is an 이정표 first, whatever it is
     if (mode==='none') return;
-    if (mode==='dot') return dot(d, i.done ? ' done' : '', `${md(d)} ${esc(i.text)}`);
+    if (mode==='dot') return dot(d, i.done ? ' done' : '', `${md(d)} ${esc(i.text)}`, `days|${d}|${i.id}`);
     out.push({k:d, h:`<div class="pm gen${ev?' ev':''}${i.star?' star':''}${i.done?' done':''}" style="--j:0" data-ref="days|${d}|${i.id}" data-drag><button class="pdot ${i.star?'c':ev?'e':'g'}" data-act="tog" data-ref="days|${d}|${i.id}" aria-label="${esc(i.text)} 완료 표시"></button><span class="pt" data-act="editDay" data-ref="days|${d}|${i.id}">${esc(i.text)}</span>${!dayMode?`<small>${md(d)}</small>`:''}</div>`});
   });
   // 루틴: a day row shows it on each of its days; a week / month row shows it once, however many days it has there
-  list.filter(m => m.due && msStart(m) <= r.b && m.due >= r.a && (dayMode || !m.done || m.due <= r.b)).forEach(m => {
+  list.filter(m => m.due && msStart(m) <= r.b && m.due >= r.a).forEach(m => {
     const rmode = showOf(view, m.star ? 'star' : m.ev ? 'event' : 'todo'); if (rmode==='none') return;
     if (dayMode){
       const end = m.due===r.key && !S.sskip?.[`${r.key}|${m.id}`];   // a last day removed on its own is gone here too, as in the planner
       if (!end && !stepsOn(r.key).includes(m)) return;
       const ref = end ? `ms||${m.id}` : `ss|${r.key}|${m.id}`, done = end ? m.done : sDone(r.key, m.id);
-      if (rmode==='dot') return dot(r.key, done ? ' done' : end ? '' : ' run', esc(m.text));
-      out.push({k:r.key, o:2, h:pstHTML(m, ref, done, end, L2.lane[m.id]||0)});
+      if (rmode==='dot') return dot(r.key, done ? ' done' : end ? '' : ' run', esc(m.text), ref);
+      out.push({k:r.key, o:2, h:pstHTML(m, ref, done, end, L2.lane[m.id]||0, r.key)});
     } else {
-      const end = m.due <= r.b, k = end ? m.due : (msStart(m) > r.a ? msStart(m) : r.a);
-      if (rmode==='dot') return dot(k, m.done ? ' done' : end ? '' : ' run', esc(m.text));
-      out.push({k, o:2, h:pstHTML(m, end ? `ms||${m.id}` : null, m.done, end, 0)});
+      if (!repDays(m, r.a, r.b).length && !(m.due >= r.a && m.due <= r.b && !S.sskip?.[`${m.due}|${m.id}`])) return;   // all its days there moved or skipped
+      const end = m.due <= r.b, k = end ? m.due : (msStart(m) > r.a ? msStart(m) : r.a), rd = rangeDone(m, r.a, r.b), nm = rangeTxt(m, repDays(m, r.a, r.b));
+      if (rmode==='dot') return dot(k, (end ? m.done : rd) ? ' done' : end ? '' : ' run', esc(nm), end ? `ms||${m.id}` : `rk|${r.a}~${r.b}|${m.id}`);
+      out.push({k, o:2, h:pstHTML(m, end ? `ms||${m.id}` : `rk|${r.a}~${r.b}|${m.id}`, end ? m.done : rd, end, 0, null, nm)});
     }
   });
   return out.sort((x,y) => x.k.localeCompare(y.k) || (x.o||0)-(y.o||0)).map(x => x.h).join('');
@@ -1834,7 +1915,7 @@ function roadListHTML(){
   let n = 0;
   const html = subs.map(s => {
     const out = dayTodos(s.id, '0000', '9999').map(({k, i}) => ({k, done:i.done,
-      h:itemRow(`days|${k}|${i.id}`, i.type==='event' ? 'ev' : i.star ? 'ms' : 'td', i.done, i.text, {drag:true, tag:`<span class="aux">${md(k)}</span>`})}))
+      h:itemRow(`days|${k}|${i.id}`, i.type==='event' ? 'ev' : 'td', i.done, i.text, {drag:true, tag:`<span class="aux">${md(k)}</span>`})}))
       .concat(msOf(s.id).filter(m => m.due).map(m => ({k:msStart(m), done:m.done,
         h:itemRow(`ms||${m.id}`, m.ev ? 'ev' : 'td', m.done, m.text, {drag:true, tag:`${REP}<span class="aux">${md(msStart(m))}–${m.due===OPEN ? '계속' : md(m.due)}</span>`})})))
       .sort((x, y) => x.k.localeCompare(y.k));
@@ -1850,17 +1931,20 @@ function halView(){
   if (st.hcat!=='all' && !catById(st.hcat)) st.hcat = 'all';
   if (st.hsub!=='all' && (!subById(st.hsub) || st.hcat==='all' || subById(st.hsub).cat!==st.hcat)) st.hsub = 'all';
   const r1 = `<div class="hrow"><button class="hchip${st.hcat==='all'?' on':''}" data-act="hcat" data-c="all">전체</button>` +
-    userCats().map(c => `<button class="hchip${st.hcat===c.id?' on':''}" data-act="hcat" data-c="${c.id}">${ring(pct(progCat(c.id)), 26, c.color, esc(catLabel(c)), 2)}<span>${esc(c.name)}</span><small>${pct(progCat(c.id))}%</small></button>`).join('') +
+    userCats().filter(c => shown(c) || st.hcat===c.id).map(c => `<button class="hchip${st.hcat===c.id?' on':''}${c.hidden?' hid':''}" data-act="hcat" data-c="${c.id}">${ring(pct(progCat(c.id)), 26, c.color, esc(catLabel(c)), 2)}<span>${esc(c.name)}</span><small>${pct(progCat(c.id))}%</small></button>`).join('') +
+    ((n => n ? `<button class="hchip hidt${st.hidOpen?' on':''}" data-act="showHid">숨김 ${n}</button>` : '')(userCats().filter(c => c.hidden).length + S.subs.filter(s => s.hidden && catById(s.cat)).length)) +
     `<div class="add" data-add="cats|"><input placeholder="+ 할일" autocomplete="off" enterkeyhint="done" aria-label="할일 추가"></div></div>`;
   const all = st.hcat==='all';
   const r2 = all ? '' : `<div class="hrow s"><button class="hchip${st.hsub==='all'?' on':''}" data-act="hsub" data-s="all">전체</button>` +
-    subsOf(st.hcat).map(s => `<button class="hchip${st.hsub===s.id?' on':''}" data-act="hsub" data-s="${s.id}" data-c="${s.cat}">${esc(s.name)}<small>${pct(progSub(s.id))}%</small></button>`).join('') +
+    subsOf(st.hcat).filter(s => shown(s) || st.hsub===s.id).map(s => `<button class="hchip${st.hsub===s.id?' on':''}${s.hidden?' hid':''}" data-act="hsub" data-s="${s.id}" data-c="${s.cat}">${esc(s.name)}<small>${pct(progSub(s.id))}%</small></button>`).join('') +
     `<div class="add" data-add="subs|${st.hcat}"><input placeholder="+ 세부" autocomplete="off" enterkeyhint="done" aria-label="세부할일 추가"></div></div>`;
   const what = st.view==='year' ? `${st.y}` : st.view==='month' ? `${st.y}.${st.m+1}` : `${st.m+1}월 week ${weekIndex()+1}`;
   const hint = '';
-  const sk = st.hcat==='all' ? null : stackHTML();   // 보관함 whenever a 할일 is chosen
+  const sk = st.hsub==='all' ? null : stackHTML();   // 로드맵 목록 · 보관함 once a 세부분야 is chosen
   const tp3 = S.set.hl===3 && !st.portrait;
-  return `<div class="hal${tp3?' tp3':''}">${tp3?`<div class="hside">${r1}${r2}</div>`:r1+r2}<div class="hbody b2${sk?'':' wide'}">
+  const hc = userCats().filter(c => c.hidden), hs = S.subs.filter(x => x.hidden && catById(x.cat));
+  const hidList = st.hidOpen && (hc.length || hs.length) ? `<div class="hidlist"><div class="hidh">숨긴 것<small>꺼내면 목록에 다시 나와요</small></div>${hc.map(c => `<div class="hidr"><span>${esc(catLabel(c))} ${esc(c.name)}</span><small>할일</small><button data-act="unhide" data-k="cat" data-id="${c.id}">꺼내기</button></div>`).join('')}${hs.map(x => `<div class="hidr"><span>${esc(catById(x.cat).name)} › ${esc(x.name)}</span><small>세부분야</small><button data-act="unhide" data-k="sub" data-id="${x.id}">꺼내기</button></div>`).join('')}</div>` : '';
+  return `<div class="hal${tp3?' tp3':''}">${tp3?`<div class="hside">${r1}${r2}${hidList}</div>`:r1+hidList+r2}<div class="hbody b2${sk?'':' wide'}">
     <div class="htable">${halTable()}</div>${sk ? `<div class="hstackw">${(rl => `<div class="whs">로드맵 목록<small>${rl.n||''}</small></div><div class="hroad">${rl.html}</div>`)(roadListHTML())}<div class="whs">보관함<small>${sk.n||''}</small></div><div class="hstack" data-drop="stack|all">${sk.html}</div></div>` : ''}</div></div>`;
 }
 /* going down a level: the chosen month / week stretches open, the rest folds away */
@@ -1907,14 +1991,19 @@ const TYPES = {plan:[['event','일정'],['todo','할일']], hal:[['todo','일반
 function chipRow(list, sel, act, attr){
   return `<div class="chips">${list.map(x => `<button type="button" class="chip${sel===x.id?' on':''}" style="--c:${x.color||'#9b9b9b'};--t:${x.color?x.color+'2e':'#ececec'}" data-act="${act}" data-${attr}="${x.id}">${x.emoji?esc(x.emoji)+' ':''}${esc(x.name)}</button>`).join('') || '<span class="hint">없음</span>'}</div>`;
 }
-function catEdHTML(e){
+function catEdHTML(e){ // 할일 · 세부할일: the same bar as 생성 · 수정 — name in the pill, 색 · 숨기기 under it
   const c = e.kind==='cat' ? catById(e.id) : subById(e.id); if (!c) return '';
-  const pal = e.kind==='cat' ? `<div class="rw"><div><div class="row"><span class="k w">색</span><div class="chips">${PALETTE.map(p => `<button type="button" class="sw2${e.color===p?' on':''}" style="--c:${p}" data-act="ecolor" data-v="${p}" aria-label="색"></button>`).join('')}<label class="cpick${e.color && !PALETTE.includes(e.color)?' on':''}" title="다른 색" style="${e.color && !PALETTE.includes(e.color)?`--c:${e.color}`:''}"><input type="color" data-cp="cat" value="${e.color||'#4a78c8'}"><span>+</span></label></div></div></div></div>
-    <div class="rw"><div><div class="row"><span class="k w">아이콘</span><input class="txt" id="eemo" placeholder="이모지 하나" value="${esc(e.emoji||'')}" autocomplete="off"></div></div></div>` : '';
-  return `<div class="ov edov${e.noanim?' still':''}" data-act="close"><div class="sheet" id="ed" role="dialog" aria-label="${e.kind==='cat'?'할일':'세부할일'}">
-    <div class="rw"><div><div class="row"><span class="ttl">${e.kind==='cat'?'할일':'세부할일'}</span></div></div></div>
-    <div class="rw"><div><div class="row"><span class="k w">이름</span><input class="txt" id="etext" value="${esc(e.text)}" autocomplete="off" enterkeyhint="done"></div></div></div>${pal}
-    ${delFoot(e, `<span class="note">${e.kind==='cat'?'삭제하면 세부할일과 그 반복 할일도 함께 지워집니다':'삭제하면 그 반복 할일도 함께 지워집니다'}</span>`)}</div></div>`;
+  const cat = e.kind==='cat', col = e.color || c.color || '#9b9b9b';
+  const cards = cat && e.pop==='color' ? `<div class="qcard"><span class="qcl">색</span><div class="qwrap">${PALETTE.map(p => `<button type="button" class="sw2${e.color===p?' on':''}" style="--c:${p}" data-act="ecolor" data-v="${p}" aria-label="색"></button>`).join('')}<label class="cpick${e.color && !PALETTE.includes(e.color)?' on':''}" title="다른 색" style="${e.color && !PALETTE.includes(e.color)?`--c:${e.color}`:''}"><input type="color" data-cp="cat" value="${e.color||'#4a78c8'}"><span>+</span></label></div></div>` : '';
+  const head = cat ? `<input id="eemo" class="qemo" value="${esc(e.emoji||'')}" placeholder="🙂" maxlength="4" autocomplete="off" aria-label="아이콘 (이모지)">` : `<span class="qpm still"><span>세부</span></span>`;
+  const row = (cat ? `<button class="qc${e.pop==='color'?' open':''}" data-act="ecolpop"><i class="dot" style="--c:${col}"></i>색</button>` : '')
+    + `<button class="qc" data-act="ehide">${c.hidden ? '꺼내기' : '숨기기'}</button>`
+    + `<span class="qnote">${c.hidden ? '지금 숨겨져 있어요' : '숨기면 목록에서만 빠지고 기록은 그대로예요'}</span>`;
+  const note = cat ? '삭제하면 세부할일과 그 반복 할일도 함께 지워집니다' : '삭제하면 그 반복 할일도 함께 지워집니다';
+  const foot = e.delAsk ? delFoot(e, `<span class="note">${note}</span>`) : `<div class="qfoot"><button class="qfb" data-act="delAsk">삭제</button><button class="qfb" data-act="close">취소</button></div>`;
+  return `<div class="ov edov qov${e.noanim?' still':''}" data-act="close"><div class="qa2 edit" id="ed" role="dialog" aria-label="${cat?'할일':'세부할일'} 수정">${cards}
+    <div class="qpill">${head}<input id="etext" value="${esc(e.text)}" placeholder="${cat?'할일 이름':'세부할일 이름'}" autocomplete="off" enterkeyhint="done" aria-label="이름"><button class="qgo" data-act="esave">저장</button></div>
+    <div class="qrow2">${row}</div>${foot}</div></div>`;
 }
 const PALETTE = ['#4a78c8','#3f9bd6','#4aa3a8','#2f8f7a','#5a9e6f','#8aa83a','#c4a23a','#d0893f','#e06a3b','#c75b4a','#d1497a','#b9568a','#9b59b6','#7a68c4','#5b6ad0','#6d7f8c','#8a6d55','#333333'];
 
@@ -1928,10 +2017,10 @@ function settingsHTML(){
       <button class="sw3 none${!S.set.hlc[k]?' on':''}" data-act="setc" data-k="${k}" data-v="" aria-label="없음">✕</button>${HL.map(c => `<button class="sw3${S.set.hlc[k]===c?' on':''}" style="--c:${c}" data-act="setc" data-k="${k}" data-v="${c}" aria-label="형광펜 색"></button>`).join('')}<label class="cpick sm${S.set.hlc[k] && !HL.includes(S.set.hlc[k])?' on':''}" title="다른 색" style="${S.set.hlc[k] && !HL.includes(S.set.hlc[k])?`--c:${S.set.hlc[k]}`:''}"><input type="color" data-cp="hl" data-k="${k}" value="${S.set.hlc[k]||'#fff1a6'}"><span>+</span></label></div>`;
   const HK = [['star','이정표'],['event','일정'],['todo','할일']], HV = [['year','연'],['month','월'],['week','주']];
   const HM = {full:'전체', dot:'<i></i>점', none:'숨김'};
-  const cur = allFonts().some(f => f[0]===S.set.font) ? S.set.font : 'base';
+  const cur = allFonts().some(f => f[0]===S.set.font) ? S.set.font : 'base', stab = st.setTab || 'all';
   return `<div class="ov${st.setStill?' still':''}" data-act="setClose"><div class="sheet set" id="set" role="dialog" aria-label="설정">
-    <div class="shead"><h4>설정</h4><button class="btn dark" data-act="setClose">완료</button></div>
-    <div class="sgrp">전체</div>
+    <div class="shead"><h4>설정</h4><div class="stabs" role="tablist">${[['all','전체'],['plan','캘린더'],['hal','할일']].map(([v,t]) => `<button role="tab" aria-selected="${stab===v}" class="${stab===v?'on':''}" data-act="setTab" data-v="${v}">${t}</button>`).join('')}</div><button class="btn dark" data-act="setClose">완료</button></div>
+    <div class="sgp"${stab!=='all'?' hidden':''}>
     ${themeHTML()}
     <div class="sec"><div class="sh">글씨체</div><div class="sd">앱 전체에 쓰이는 글씨체를 고릅니다.</div>
       <div class="vopts">${allFonts().map(([k,name,en,stack]) => `<button class="vopt${cur===k?' on':''}" data-act="setv" data-k="font" data-v="${k}"><span style="font-family:${esc(stack)}">${esc(name)} 2026 할일</span><small>${esc(en)}</small>${k.startsWith('u_')?`<span class="fdel" data-act="fontDel" data-v="${k}" title="이 글씨체 삭제" aria-label="삭제">✕</span>`:''}</button>`).join('')}</div>
@@ -1948,21 +2037,23 @@ function settingsHTML(){
       <div class="sd" style="margin-top:16px">모든 기록을 지우고 빈 플래너로 시작합니다. 설정은 그대로 유지돼요.</div>
       <div class="hlrow">${st.resetAsk ? `<span class="hltx">모든 기록을 지울까요? 되돌릴 수 없어요.</span><button class="btn quiet" data-act="resetNo">취소</button><button class="btn dark" data-act="resetYes">모두 지우기</button>` : `<button class="btn" data-act="resetAsk">새로 시작하기</button>`}</div></div>
 
-    <div class="sgrp">플래너 페이지</div>
+    </div><div class="sgp"${stab!=='plan'?' hidden':''}>
     <div class="sec"><div class="sh">월간 달력 표시</div><div class="sd">월간 달력 칸에 항목을 보여 주는 방식을 고릅니다.</div>
       <div class="vopts">${[[3,'요약','할일은 분야별 개수로 묶어서 보여 줘요 (예: 대학공부 2/5). 일정은 하나씩 보여 줘요.'],[2,'전체','모든 항목을 한 줄씩 보여 줘요.']].map(([v,t,d]) => `<button class="vopt${S.set.sum===v?' on':''}" data-act="setv" data-k="sum" data-v="${v}"><span>${t}</span><small>${d}</small></button>`).join('')}</div>
       <div class="mvrow"><span class="mvl">체크 표시</span><div class="hfrow">${[[1,'보이기'],[0,'숨기기']].map(([v,t]) => `<button class="hft${(S.set.emo??1)===v?' on':''}" data-act="setv" data-k="emo" data-v="${v}">${t}</button>`).join('')}</div></div></div>
     <div class="sec"><div class="sh">항목 색</div><div class="sd">일정과 할일에 칠할 색을 고릅니다. 월간·주간 페이지에 적용돼요.</div>
       ${hl('event','일정','ev')}${hl('todo','할일','td')}<div class="hint">반복 항목도 같은 색을 따라요.</div>
       <div class="hlrow"><button class="sw4${S.set.hlcat!==false?' on':''}" data-act="setcat" role="switch" aria-checked="${S.set.hlcat!==false}"><i></i></button><span class="hltx">분류된 항목은 분야 색으로 칠하기 <small>(할일 페이지에서 정한 색)</small></span></div></div>
-    <div class="sec"><div class="sh">세부분야 표시</div><div class="sd">항목 옆에 세부분야 이름을 함께 보여 줄지 고릅니다. 월간 달력 칸은 좁아서 표시하지 않아요.</div>
+    <div class="sec"><div class="sh">세부분야 표시</div><div class="sd">항목 이름 뒤에 세부분야 이름을 함께 보여 줄지 고릅니다.</div>
       <div class="vopts">${SBV.map(([n,t,d]) => `<button class="vopt${sbv()===n?' on':''}" data-act="setv" data-k="sbv" data-v="${n}"><span>${t}</span><small>${d}</small>${n ? sbSample(n) : ''}</button>`).join('')}</div></div>
     <div class="sec"><div class="sh">연간 달력 점 표시</div><div class="sd">연간 달력의 날짜 아래에 작은 점으로 표시할 항목을 고릅니다. 점 색은 항목 색을 따라요.</div>
       ${[['event','일정'],['todo','할일']].map(([k,l]) => `<div class="hlrow"><button class="sw4${S.set.ys[k]?' on':''}" data-act="ysw" data-k="${k}" role="switch" aria-checked="${!!S.set.ys[k]}"><i></i></button><span class="hltx">${l}</span><i class="ydot" style="background:${ydotColor(k)}"></i></div>`).join('')}</div>
 
-    <div class="sgrp">할일 페이지</div>
+    </div><div class="sgp"${stab!=='hal'?' hidden':''}>
     <div class="sec"><div class="sh">연간·월간 보기에서 이름 표시</div><div class="sd">켠 항목은 주간 보기처럼 이름까지 보여 주고, 끈 항목은 작은 점으로만 보여 줘요.</div>
       <div class="hfrow">${HK.map(([k,l]) => `<button class="hft${fullIn(k)?' on':''}" data-act="hfull" data-k="${k}" role="switch" aria-checked="${fullIn(k)}">${l}</button>`).join('')}</div></div>
+      <div class="hint" style="padding:0 20px 18px">할일이나 세부분야 칩을 길게 눌러 끌면 순서를 바꿀 수 있어요.</div>
+    </div>
   </div></div>`;
 }
 
@@ -1989,8 +2080,7 @@ function addFont(){
   S.set.font = f.k; save(); render();
 }
 // 설정 → 세부 구분: the versions, each with a live sample made from the person's own 할일 and its 세부
-const SBV = [[1,'표시','항목 옆에 세부분야 이름을 작게 보여 줘요'],
-  [0,'표시 안 함','분야 색만 보여 줘요']];
+const SBV = [[7,'표시','항목 이름 뒤에 · 세부분야'],[0,'표시 안 함','분야 색만 보여 줘요']];
 function sbSample(n){
   const c = userCats().find(x => subsOf(x.id).length >= 2) || userCats().find(x => subsOf(x.id).length);
   const subs = c ? subsOf(c.id).slice(0, 3) : []; if (!subs.length) return '';
@@ -2063,7 +2153,8 @@ function refreshBehind(){
   app.querySelector('#pg').innerHTML = body(); layout(); m.scrollTop = top;
   const nt = app.querySelector('.htable'); if (nt && hs){ nt.scrollTop = hs[0]; nt.scrollLeft = hs[1]; }
 }
-function render(){
+function render(){ if (MEMO) return render0(); MEMO = new Map(); try { return render0(); } finally { MEMO = null; } }
+function render0(){
   const same = st.lastView===`${st.hal}${st.view}`, old = app.querySelector('main'), keep = old && same ? old.scrollTop : 0;
   const hs = null;
   const hc = S.set.hlc || {};
@@ -2187,10 +2278,14 @@ function step(dir){
 }
 function toggleRef(ref){
   const [coll, key, id] = ref.split('|');
-  if (coll==='rt' || coll==='ss'){ const o = coll==='rt' ? S.rdone : S.sdone, k = `${key}|${id}`; if (o[k]) delete o[k]; else o[k] = true; }
+  if (coll==='ss'){ const m = msById(id); if (m) setMsDays(m, [key], !sDone(key, id)); }
+  else if (coll==='rt'){ const o = S.rdone, k = `${key}|${id}`; if (o[k]) delete o[k]; else o[k] = true; }
   else if (coll==='rw'){ const [c, rid] = id.split(':'), x = repStars(key).find(x => x.c===c && x.o.id===rid); if (!x) return;
-    const o = c==='rt' ? (S.rdone ||= {}) : (S.sdone ||= {}); x.ks.forEach(k => { if (x.done) delete o[`${k}|${rid}`]; else o[`${k}|${rid}`] = true; }); }
-  else if (coll==='ms'){ const m = msById(id); if (m) m.done = !m.done; }
+    if (c==='ms') setMsDays(x.o, x.ks, !x.done);
+    else { const o = S.rdone ||= {}; x.ks.forEach(k => { if (x.done) delete o[`${k}|${rid}`]; else o[`${k}|${rid}`] = true; }); } }
+  else if (coll==='ms'){ const m = msById(id); if (m){ m.done = !m.done; for (const k in S.sundone || {}) if (k.endsWith('|' + id)) delete S.sundone[k]; } }   // the whole 반복, fresh
+  else if (coll==='rk'){ const [a, b] = key.split('~'), m = msById(id); if (!m) return;   // a week / month row of a 반복: all its days there
+    const ks = repDays(m, a, b), all = ks.length && ks.every(k => sDone(k, id)); setMsDays(m, ks, !all); }
   else { const it = L(coll,key).find(x => x.id===id); if (it) it.done = !it.done; }
   save(); refreshBehind();
 }
@@ -2247,7 +2342,7 @@ function barHTML(q, ed){
   const d1 = q.date && /^\d{4}-\d\d-\d\d$/.test(q.date) ? q.date : '';
   const when = q.rep ? `${q.start?md(q.start):'오늘'} – ${q.noEnd ? '계속' : q.end ? md(q.end) : '?'}`
     : !d1 ? '날짜' : q.dend ? `${md(d1)} – ${md(q.dend)}` : `${md(d1)} ${DOW_K[dowOf(pIso(d1))]}`;
-  const cat = catById(q.cat), sub = subById(q.sub), canStar = !wk && (!!q.cat || coll==='pc' || coll==='stack');
+  const cat = catById(q.cat), sub = subById(q.sub), canStar = !wk;
   let row = '';
   if (dated) row += `<button class="qc cal${q.cal?' open':''}" id="rdate" data-q="cal">${CAL_ICON}${when}</button>`;
   if (!wk) row += `<button class="qc rep${q.rep?' on':''}" data-q="rep" title="요일마다 반복">반복</button>`;
@@ -2257,13 +2352,15 @@ function barHTML(q, ed){
   let cards = '';
   if (q.ask) cards += `<div class="qask">세부분야를 골라야 ${ed ? '저장' : '추가'}할 수 있어요</div>`;
   if (q.pop==='cat' && !q.lock){
-    const subs = cat ? subsOf(cat.id) : [];
-    cards += `<div class="qcard"><span class="qcl">할일</span><div class="qwrap">${userCats().map(c => `<button class="qc cat${q.cat===c.id?' on':''}" style="--c:${c.color||'#9b9b9b'}" data-q="cat" data-c="${c.id}"><i class="dot"></i>${esc(c.name)}</button>`).join('')}</div>`
+    const subs = cat ? subsOf(cat.id).filter(x => !x.hidden || x.id===q.sub) : [];
+    cards += `<div class="qcard"><span class="qcl">할일</span><div class="qwrap">${userCats().filter(c => !c.hidden || c.id===q.cat).map(c => `<button class="qc cat${q.cat===c.id?' on':''}" style="--c:${c.color||'#9b9b9b'}" data-q="cat" data-c="${c.id}"><i class="dot"></i>${esc(c.name)}</button>`).join('')}</div>`
       + (subs.length ? `<span class="qcl">세부</span><div class="qwrap${q.ask?' need':''}" id="rsub">${subs.map(x => `<button class="qc${q.sub===x.id?' on':''}" data-q="sub" data-s="${x.id}">${esc(x.name)}</button>`).join('')}</div>` : '') + `</div>`;
   }
   if (q.pop==='dow' && q.rep) cards += `<div class="qcard" id="rdows"><span class="qcl">반복 요일</span><div class="qdw7">${DOW_K.map((x,i) => `<button class="${q.dows.includes(i)?'on':''}" data-q="dw" data-i="${i}">${x}</button>`).join('')}</div></div>`;
   if (q.cal && dated) cards += `<div class="qcard">${qcalHTML(q)}</div>`;
-  const foot = !ed ? '' : q.delAsk ? delFoot(q) : `<div class="qfoot"><button class="qfb" data-act="delAsk">삭제</button><button class="qfb" data-act="close">취소</button></div>`;
+  const scopes = [['day','이날만'],['week','이번 주만'],['month','이번 달만'],['all','전체']].filter(([v]) => !(v==='day' && q.fromRange));
+  const foot = !ed ? '' : q.saveAsk ? `<div class="foot ask"><div class="askq">어디까지 바꿀까요?</div><div class="seg delseg">${scopes.map(([v,l]) => `<button type="button" class="${q.scopePick===v?'on':''}" data-act="scopePick" data-v="${v}">${l}</button>`).join('')}</div><span class="sp"></span><button class="btn" data-act="scopeNo">취소</button><button class="btn dark" data-act="scopeGo">저장</button></div>`
+    : q.delAsk ? delFoot(q) : `<div class="qfoot"><button class="qfb" data-act="delAsk">삭제</button><button class="qfb" data-act="close">취소</button></div>`;
   return `${cards}<div class="qpill" id="rtext">${head}${input}${go}</div><div class="qrow2">${row}</div>${foot}`;
 }
 function qpHTML(){
@@ -2317,11 +2414,18 @@ function qpAct(b){
 }
 // asks for a moment, above the bar, when a 할일 was picked but no 세부할일 — the bar stays as it is underneath
 function askSub(){ const q = st.qp; q.ask = true; q.pop = 'cat'; q.cal = false; drawQp(true); clearTimeout(askSub.t); askSub.t = setTimeout(() => { if (st.qp===q && q.ask){ q.ask = false; drawQp(); } }, 4500); return false; }
+// the one day a 반복 lands on, when its whole stretch holds just one (else '')
+function oneDayOf(start, end, dows){
+  if (!start || !end || end < start) return '';
+  let hit = '', n = 0; for (let k = start; k <= end && n < 2; k = isoAdd(k, 1)) if (dows.includes(dowOf(pIso(k)))){ hit = k; n++; }
+  return n===1 ? hit : '';
+}
 function qpAdd(){
   const q = st.qp, inp = app.querySelector('#qin'), text = inp.value.trim(); if (!text) return false;
   const [coll, key, x] = q.t.split('|'), dows = [...q.dows].sort();
-  const noSub = q.cat && !q.sub && subsOf(q.cat).length && !q.lock;
+  const noSub = q.cat && !q.sub && subsOf(q.cat).some(x => !x.hidden) && !q.lock;
   if (noSub) return askSub();
+  if (q.rep && !q.noEnd && (coll==='days' || coll==='pc')){ const d1 = oneDayOf(q.start || (coll==='days' ? key : q.date), q.end, dows); if (d1){ q.rep = false; q.date = d1; q.dend = ''; } }   // one day only → not a 반복
   if (coll==='days'){
     if (q.rep){
       if (!dows.length) return shake();
@@ -2331,7 +2435,7 @@ function qpAdd(){
       applyRoutine.skipSub = false;
       if (bad) return shake();
     }
-    else { const d0 = q.date || key, o = {id:uid(), text, type:q.type, done:false}; setCS(o, q.cat, q.sub); if (q.star && o.cat) o.star = true; if (q.dend && q.dend > d0) o.end = q.dend; L('days', d0).push(o); }
+    else { const d0 = q.date || key, o = {id:uid(), text, type:q.type, done:false}; setCS(o, q.cat, q.sub); if (q.star) o.star = true; if (q.dend && q.dend > d0) o.end = q.dend; L('days', d0).push(o); }
   } else if (coll==='weeks'){ const o = {id:uid(), text, done:false}; setCS(o, q.cat, q.sub); L('weeks', key).push(o); }
   else if (coll==='pc'){
     const sub = q.sub, due = q.date || (x.length===7 ? monthDue(x) : x);
@@ -2396,6 +2500,7 @@ const kindsOf = coll => coll==='weeks' ? null : ['todo','event'];   // 할일 ·
    opened by tapping the words of anything (the mark only checks). One state shape for every item:
    {src:'days'|'rdef'|'ms'|'stack'|'weeks', key, id, type:'todo'|'event'|'routine', text, star, date, start, end, noEnd, dows, cat, sub, place} */
 function openEditor(ref){
+  if (ref.startsWith('rk|')){ const [, rng, rid] = ref.split('|'); openEditor(`ss|${rng.split('~')[0]}|${rid}`); if (st.ed) st.ed.fromRange = true; return; }   // a week / month row of a 반복
   if (ref.startsWith('rw|')){ const [c, rid] = ref.split('|')[2].split(':'); return openEditor(c==='rt' ? `rdef||${rid}` : `ms||${rid}`); }
   const [coll, key, id] = ref.split('|'), all = [0,1,2,3,4,5,6];
   let e = null;
@@ -2409,6 +2514,9 @@ function openEditor(ref){
     e = {src:'weeks', key, id, type:'todo', text:it.text, cat:it.cat || null, sub:it.sub || null, dows:all}; }
   else { const it = L(coll,key).find(x => x.id===id); if (!it) return;
     e = {src:'days', key, id, type:it.type, text:it.text, star:!!it.star, date:key, dend:it.end || '', start:key, end:'', noEnd:true, dows:all, cat:it.cat || null, sub:it.sub || null}; }
+  // where it was opened decides the first choice of "어디까지 바꿀까요"
+  if (e.day && (e.src==='ms' || e.src==='rdef')){ const o = e.src==='ms' ? msById(e.id) : rById(e.id); e.text = txtOn(o, e.day); e.type = evOn(o, e.day) ? 'event' : 'todo'; }
+  e.ctx = st.hal ? (st.view==='week' ? 'day' : st.view==='month' ? 'week' : 'month') : (st.view==='week' ? 'week' : 'day');
   st.ed = e; render();
 }
 function readEd(){ const e = st.ed; if (!e) return; const v = id => app.querySelector('#'+id);
@@ -2441,7 +2549,7 @@ function applyRoutine({text, dows, start, until, cat, sub, src, id, star, ev}){
   } else { // 일반 루틴
     if (src==='ms'){ S.ms = S.ms.filter(x => x.id!==id); id = null; }
     const end = until ? isoAdd(until,1) : null, r = src==='rdef' ? rById(id) : null;
-    const mark2 = o => { if (ev) o.ev = true; else delete o.ev; if (star && cat && cat!=='base' && catById(cat)) o.star = true; else delete o.star; if (cat && cat!=='base' && catById(cat)) o.cat = cat; else delete o.cat; return o; };   // 일정 or 할일 · its 할일
+    const mark2 = o => { if (ev) o.ev = true; else delete o.ev; if (star) o.star = true; else delete o.star; if (cat && cat!=='base' && catById(cat)) o.cat = cat; else delete o.cat; return o; };   // 일정 or 할일 · its 할일
     if (r){ const same = r.dows.join()===dows.join();
       if (same || r.start>=TODAY){ Object.assign(r, {text, dows, start}); if (end) r.end = end; else delete r.end; mark2(r); }
       else { r.end = TODAY; const n = mark2({id:uid(), text, dows, start:TODAY, grp: r.grp || r.id}); if (end) n.end = end; S.routines.push(n); } }   // grp: the pieces of one routine, deleted together
@@ -2449,16 +2557,48 @@ function applyRoutine({text, dows, start, until, cat, sub, src, id, star, ev}){
   }
   return '';
 }
+// one stretch of a 반복 changed on its own: the old 반복 skips those days, a new 반복 takes them (with their ticks)
+function saveScoped(e, text, t){
+  const d = e.day, mon = iso(mondayOf(pIso(d)));
+  let [a, b] = e.scope==='day' ? [d, d] : e.scope==='week' ? [mon, isoAdd(mon, 6)] : [d.slice(0,8) + '01', iso(new Date(+d.slice(0,4), +d.slice(5,7), 0))];
+  const isMs = e.src==='ms', o = isMs ? msById(e.id) : rById(e.id); if (!o) return;
+  const on = isMs ? stepsOn : rOn, oS = isMs ? msStart(o) : o.start, oE = isMs ? o.due : (o.end ? isoAdd(o.end, -1) : OPEN);
+  if (a < oS) a = oS; if (b > oE) b = oE;
+  const days = []; for (let k = a; k <= b; k = isoAdd(k, 1)) if (on(k).includes(o)) days.push(k);
+  if (!days.length){ e.saveAsk = false; e.scoped = false; redrawEd(); return; }
+  if (isMs ? (e.sub || null)===o.sub : (e.cat || null)===(o.cat || null)){
+    const ev = t==='event', nd = e.scope==='day' ? null : [...e.dows].sort();
+    for (let k = a; k <= b; k = isoAdd(k, 1)){
+      const w = dowOf(pIso(k)), was = days.includes(k), skip = isMs ? (S.sskip ||= {}) : (S.rskip ||= {});
+      if (nd && !nd.includes(w)){ if (was) skip[`${k}|${o.id}`] = true; continue; }   // a weekday taken out for this stretch
+      if (nd && !was && !o.dows.includes(w)){ (o.extra ||= {})[k] = true; delete skip[`${k}|${o.id}`]; }   // a weekday added for this stretch
+      if (!was && !(nd && nd.includes(w))) continue;
+      const v = {}; if (text!==o.text) v.text = text; if (ev!==!!o.ev) v.ev = ev;
+      if (Object.keys(v).length) (o.ov ||= {})[k] = v; else if (o.ov) delete o.ov[k];
+    }
+    save(); st.ed = null; render(); return;
+  }
+  const before = new Set([...S.ms, ...S.routines].map(x => x.id));
+  const dows = e.scope==='day' ? [dowOf(pIso(d))] : e.dows;
+  const bad = applyRoutine({text, dows, start:a, until:b, cat:e.cat, sub:e.sub, star:!!e.star, ev:t==='event'});
+  if (bad){ e.saveAsk = false; e.scoped = false; redrawEd(); return warn(bad); }
+  const skip = isMs ? (S.sskip ||= {}) : (S.rskip ||= {}), dn = isMs ? (S.sdone ||= {}) : (S.rdone ||= {});
+  const n = [...S.ms, ...S.routines].find(x => !before.has(x.id)), nd = n && S.ms.includes(n) ? (S.sdone ||= {}) : (S.rdone ||= {});
+  if (n && !isMs && S.routines.includes(n)) n.grp = o.grp || o.id;
+  days.forEach(k => { skip[`${k}|${o.id}`] = true; if (n && (isMs ? sDone(k, o.id) : dn[`${k}|${o.id}`])) nd[`${k}|${n.id}`] = true; delete dn[`${k}|${o.id}`]; if (S.sundone) delete S.sundone[`${k}|${o.id}`]; });
+  save(); st.ed = null; render();
+}
 function saveEd(){
   readEd();
   const e = st.ed, text = (e.text||'').trim();
   if (!text){ app.querySelector('#etext')?.focus(); return warn('rtext'); }
-  if (!e.kind && e.cat && catById(e.cat) && e.cat!=='base' && subsOf(e.cat).length && !(e.sub && subById(e.sub)?.cat===e.cat)){ e.ask = true; e.pop = 'cat'; e.cal = false; redrawEd(); return; }   // 분야 picked → its 세부 too
+  if (!e.kind && e.cat && catById(e.cat) && e.cat!=='base' && subsOf(e.cat).some(x => !x.hidden) && !(e.sub && subById(e.sub)?.cat===e.cat)){ e.ask = true; e.pop = 'cat'; e.cal = false; redrawEd(); return; }   // 분야 picked → its 세부 too
   if (e.kind==='cat' || e.kind==='sub'){
     const c = e.kind==='cat' ? catById(e.id) : subById(e.id);
     if (c){ c.name = text; if (e.kind==='cat'){ c.emoji = e.emoji || ''; if (e.color) c.color = e.color; } }
     save(); st.ed = null; render(); return;
   }
+  if (e.rep && !e.noEnd && e.place!=='stack' && e.src!=='weeks' && !(e.scope && e.scope!=='all')){ const d1 = oneDayOf(e.start, e.end, [...e.dows]); if (d1){ e.rep = false; e.date = d1; e.dend = ''; e.oneDay = true; } }   // one day only → a 할일 / 일정
   const t = e.type;
   if (e.src==='weeks'){ const o = L('weeks',e.key).find(x => x.id===e.id); if (o){ o.text = text; setCS(o, e.cat, e.sub); } }
   else if (e.place==='stack'){ // 보관함: always filed under a 세부할일
@@ -2469,10 +2609,12 @@ function saveEd(){
     if (e.rep){ o.dows = [...e.dows].sort(); if (t==='event') o.ev = true; else delete o.ev; } else { delete o.dows; delete o.ev; }
   }
   else if (e.rep){
+    if (e.day && !e.scoped && (e.src==='rdef' || e.src==='ms')){ e.saveAsk = true; e.scopePick ||= (e.fromRange && e.ctx==='day' ? 'week' : e.ctx); e.pop = null; e.cal = false; redrawEd(); return; }   // ask: 어디까지
+    if (e.scope && e.scope!=='all') return saveScoped(e, text, t);
     if (!e.noEnd && !e.end){ e.cal = true; e.calYM = (e.start || TODAY).slice(0,7); redrawEd(); return warn('rdate'); }
     let src = e.src, id = e.id, done = false;
     if (src==='days'){ done = !!takeItem(`days|${e.key}|${e.id}`)?.done; src = null; id = null; }   // a 할일 / 일정 becoming a 반복
-    const bad = applyRoutine({text, dows:e.dows, start:e.start, until:e.noEnd ? '' : e.end, cat:e.cat, sub:e.sub, src, id, star:!!e.star && !!e.cat, ev:t==='event'});
+    const bad = applyRoutine({text, dows:e.dows, start:e.start, until:e.noEnd ? '' : e.end, cat:e.cat, sub:e.sub, src, id, star:!!e.star, ev:t==='event'});
     if (bad) return warn(bad);
   } else {
     const date = e.date || e.key || TODAY;
@@ -2480,10 +2622,10 @@ function saveEd(){
     if (e.src==='days'){ o = L('days',e.key).find(x => x.id===e.id); if (o && date!==e.key){ takeItem(`days|${e.key}|${e.id}`); L('days', date).push(o); } }
     else { o = {id:uid(), done:false}; L('days', date).push(o);   // a routine becoming a 할일 / 일정
       if (e.src==='ms') S.ms = S.ms.filter(x => x.id!==e.id);
-      if (e.src==='rdef'){ const r = rById(e.id); if (r){ if (r.start>=TODAY) S.routines = S.routines.filter(x => x!==r); else r.end = TODAY; } } }
+      if (e.src==='rdef'){ const r = rById(e.id); if (r){ if (r.start>=TODAY || e.oneDay) S.routines = S.routines.filter(x => x!==r); else r.end = TODAY; } } }
     if (!o) return;
     o.text = text; o.type = t; setCS(o, e.cat, e.sub);
-    if (e.star && o.cat) o.star = true; else delete o.star;   // 이정표: only something filed under a 할일
+    if (e.star) o.star = true; else delete o.star;   // 이정표 (filed or not): it shows in 주간목표
     if (e.dend && e.dend > date) o.end = e.dend; else delete o.end;   // two days picked = 기간
   }
   save(); st.ed = null; render();
@@ -2576,10 +2718,17 @@ function edAct(a){
     case 'ecycle': edAct({dataset:{act:'etype', t:e.type==='event' ? 'todo' : 'event'}}); break;   // the mark in the sheet: 할일 ⇄ 일정   // the mark in the 카드 sheet: tap to change kind
     case 'dw': { if (!e.rep) return; const i = +ds.i; e.dows = e.dows.includes(i) ? e.dows.filter(x=>x!==i) : [...e.dows, i]; a.classList.toggle('on'); break; }
     case 'estar': if (!e.cat) return; readEd(); e.star = !e.star; redrawEd(); break;
-    case 'ecolor': e.color = ds.v; app.querySelectorAll('#ed .sw2').forEach(b => b.classList.toggle('on', b===a)); app.querySelector('#ed .cpick')?.classList.remove('on'); break;
+    case 'ecolor': readEd(); e.color = ds.v; redrawEd(); break;
     case 'esave': saveEd(); break;
     case 'delAsk': readEd(); e.delAsk = true; e.delMode ||= delOpts(e)?.[0][0]; redrawEd(); break;
     case 'delPick': e.delMode = ds.v; redrawEd(); break;
+    case 'ecolpop': readEd(); e.pop = e.pop==='color' ? null : 'color'; redrawEd(); break;
+    case 'scopePick': e.scopePick = ds.v; redrawEd(); break;
+    case 'scopeNo': e.saveAsk = false; redrawEd(); break;
+    case 'scopeGo': readEd(); e.scope = e.scopePick || 'all'; e.scoped = true; e.saveAsk = false; saveEd(); break;
+    case 'ehide': { const c = e.kind==='cat' ? catById(e.id) : subById(e.id); if (!c) break;
+      if (c.hidden) delete c.hidden; else { c.hidden = true; if (e.kind==='cat' && st.hcat===c.id){ st.hcat = 'all'; st.hsub = 'all'; } if (e.kind==='sub' && st.hsub===c.id) st.hsub = 'all'; }
+      save(); st.ed = null; render(); break; }
     case 'delNo': e.delAsk = false; redrawEd(); break;
     case 'delYes': doDelete(e); save(); st.ed = null; render(); break;
   }
@@ -2609,13 +2758,13 @@ document.addEventListener('click', e => {
   switch (ds.act){
     case 'prev': case 'next': { const d = ds.act==='next' ? 1 : -1; step(d); if (st.portrait) st.slide = st.view==='week' ? (d>0?'left':'right') : (d>0?'up':'down'); break; }
     case 'view': {
-      if (ds.v===st.view) return;
+      if (ds.v===st.view){ st.y = today.getFullYear(); st.m = today.getMonth(); st.wk = mondayOf(today); st.sel = dowOf(today); st.anim = 'in'; break; }   // again → this year / month / week
       if (!st.hal){
         if (ds.v==='week' && st.view==='month'){ goWeek(iso(st.wk)); return; }
         if (ds.v==='month' && st.view==='week'){ st.view = 'month'; st.anim = 'fold'; break; } }
       st.view = ds.v; st.anim = 'in'; if (ds.v==='week' && iso(st.wk)===iso(mondayOf(today))) st.sel = dowOf(today); break; }
-    case 'hal': st.hal = !st.hal; st.anim = 'in'; st.padd = null; break;
-    case 'today': st.hal = false; st.view = 'month'; st.y = today.getFullYear(); st.m = today.getMonth(); st.wk = mondayOf(today); st.sel = dowOf(today); st.pm = 'cal'; st.anim = 'in'; break;
+    case 'hal': if (st.hal) st.view = 'month'; else st.hal = true; st.anim = 'in'; st.padd = null; break;   // 할일 again → 월
+    case 'today': st.hal = false; st.y = today.getFullYear(); st.m = today.getMonth(); st.wk = mondayOf(today); st.sel = dowOf(today); st.pm = 'cal'; st.anim = 'in'; break;
     case 'settings': try { document.activeElement?.blur?.(); } catch(err) {} st.setOpen = true; break;   // nothing keeps the keyboard while the sheet is open
     case 'goMonthOf': setYM(st.y, +ds.m); st.view = 'month'; st.anim = 'in'; break;
     case 'goMonth': st.view = 'month'; st.anim = 'fold'; break;
@@ -2629,6 +2778,9 @@ document.addEventListener('click', e => {
     case 'pm': if (st.pm===ds.v) return; st.pm = ds.v; setPm(); return;
     case 'tog': toggleRef(ds.ref); return;
     case 'editMs': openEditor(`ms||${ds.id}`); return;
+    case 'showHid': st.hidOpen = !st.hidOpen; break;
+    case 'unhide': { const c = ds.k==='cat' ? catById(ds.id) : subById(ds.id); if (c) delete c.hidden; save();
+      if (!userCats().some(x => x.hidden) && !S.subs.some(x => x.hidden)) st.hidOpen = false; break; }
     case 'hcat': if (ds.c!=='all' && st.hcat===ds.c){ if (st.hsub!=='all'){ st.hsub = 'all'; break; } openCatEd('cat', ds.c); return; }
       if (ds.c!=='all' && st.hcat==='all'){ const c = ds.c; halNarrow(col => col==='c:'+c || subById(col)?.cat===c, () => { st.hcat = c; st.hsub = 'all'; }); return; }  // 공부-수학 → 공부-전체 → (again) edit 공부 st.hcat = ds.c; st.hsub = 'all'; break;
     case 'hsub': if (ds.s!=='all' && st.hsub===ds.s){ openCatEd('sub', ds.s); return; }
@@ -2898,6 +3050,7 @@ function openCatEd(kind, id){
 function setAct(a){
   const ds = a.dataset;
   if (ds.act==='setClose'){ st.setOpen = false; st.pasteOpen = false; st.imp = null; st.bakMsg = ''; st.bakShow = ''; st.syForm = false; render(); }
+  else if (ds.act==='setTab'){ st.setTab = ds.v; st.setStill = true; render(); app.querySelector('#set')?.scrollTo(0, 0); }
   else if (ds.act==='setv'){ S.set[ds.k] = isNaN(+ds.v) ? ds.v : +ds.v; save(); render(); }
   else if (ds.act==='ysw'){ S.set.ys[ds.k] = !S.set.ys[ds.k]; save(); render(); }
   else if (ds.act==='resetAsk'){ st.resetAsk = true; render(); }
@@ -3000,7 +3153,38 @@ function endDrag(drop){
 }
 document.addEventListener('pointerup', () => { pdown = false; endDrag(true); if (st.dirty) setTimeout(flushDirty, 0); });
 document.addEventListener('pointercancel', () => { pdown = false; endDrag(false); });
-document.addEventListener('touchmove', e => { if (drag) e.preventDefault(); }, {passive:false});
+document.addEventListener('touchmove', e => { if (drag || chipDrag?.on) e.preventDefault(); }, {passive:false});
+// long-press a 할일 or 세부분야 chip, then slide it along its row to change the order
+let chipDrag = null;
+document.addEventListener('pointerdown', e => {
+  const c = e.target.closest?.('.hrow .hchip[data-c]:not([data-c="all"]), .hrow.s .hchip[data-s]:not([data-s="all"])'); if (!c || e.button > 0) return;
+  const sub = !!c.dataset.s && c.closest('.hrow.s');
+  chipDrag = {el:c, sub, x:e.clientX, y:e.clientY, on:false, t:setTimeout(() => { if (!chipDrag) return; chipDrag.on = true; c.classList.add('chipdrag'); document.body.classList.add('dnd'); navigator.vibrate?.(12); }, 420)};
+});
+document.addEventListener('pointermove', e => {
+  const d = chipDrag; if (!d) return;
+  if (!d.on){ if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8){ clearTimeout(d.t); chipDrag = null; } return; }
+  e.preventDefault();
+  const row = d.el.parentElement, sel = d.sub ? '.hchip[data-s]:not([data-s="all"])' : '.hchip[data-c]:not([data-c="all"])';
+  const col = getComputedStyle(row).flexDirection==='column';
+  const over = [...row.querySelectorAll(sel)].find(x => x!==d.el && (r => col ? e.clientY > r.top && e.clientY < r.bottom : e.clientX > r.left && e.clientX < r.right)(x.getBoundingClientRect()));
+  if (!over) return;
+  const r = over.getBoundingClientRect(), after = col ? e.clientY > r.top + r.height/2 : e.clientX > r.left + r.width/2;
+  row.insertBefore(d.el, after ? over.nextSibling : over);
+}, {passive:false});
+const endChip = () => { const d = chipDrag; chipDrag = null; if (!d) return; clearTimeout(d.t); if (!d.on) return;
+  document.body.classList.remove('dnd'); d.el.classList.remove('chipdrag');
+  st.noClick = Date.now();   // the release is not a tap on the chip
+  const row = d.el.parentElement;
+  if (d.sub){ const ids = [...row.querySelectorAll('.hchip[data-s]:not([data-s="all"])')].map(x => x.dataset.s), mine = ids.map(subById).filter(Boolean);
+    const i0 = S.subs.findIndex(x => x===mine[0] || ids.includes(x.id)); const rest = S.subs.filter(x => !ids.includes(x.id)); rest.splice(Math.max(0, Math.min(i0, rest.length)), 0, ...mine); S.subs = rest; }
+  else { const ids = [...row.querySelectorAll('.hchip[data-c]:not([data-c="all"])')].map(x => x.dataset.c);
+    S.cats = [...S.cats.filter(c => !ids.includes(c.id)), ...ids.map(catById).filter(Boolean)]; }
+  save(); render(); };
+document.addEventListener('pointerup', endChip);
+document.addEventListener('pointercancel', () => { if (chipDrag && !chipDrag.on){ clearTimeout(chipDrag.t); chipDrag = null; } else endChip(); });
+document.addEventListener('click', e => { if (st.noClick && Date.now() - st.noClick < 400){ e.stopPropagation(); e.preventDefault(); st.noClick = 0; } }, true);
+document.addEventListener('contextmenu', e => { if (e.target.closest?.('.hrow .hchip')) e.preventDefault(); });
 document.addEventListener('contextmenu', e => { if (pd || drag) e.preventDefault(); });
 document.addEventListener('click', e => { if (Date.now() - noClick < 250){ e.stopPropagation(); e.preventDefault(); } }, true);
 document.addEventListener('dragstart', e => { if (e.target.closest?.('[data-drag]')) e.preventDefault(); });
@@ -3063,7 +3247,7 @@ let tStart = null;
 document.addEventListener('touchstart', e => { if (st.ed || st.setOpen || st.qp) return; const t = e.touches[0]; tStart = {x:t.clientX, y:t.clientY, el:e.target}; }, {passive:true});
 document.addEventListener('touchend', e => {
   if (!tStart) return; const t = e.changedTouches[0], dx = t.clientX - tStart.x, dy = t.clientY - tStart.y, el = tStart.el; tStart = null;
-  if (drag || Date.now() - noClick < 400 || el.closest?.('input, .qbar')) return;
+  if (drag || chipDrag?.on || Date.now() - noClick < 400 || Date.now() - (st.noClick || 0) < 400 || el.closest?.('input, .qbar, .hrow')) return;
   const vert = Math.abs(dy) > 50 && Math.abs(dy) > Math.abs(dx)*1.3, horiz = Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)*1.3;
   if (false && vert) return;
   if (!horiz || !el.closest?.('main')) return;
@@ -3087,6 +3271,17 @@ const h = location.hash.slice(1), hv = h.match(/(year|month|week)/);
 if (hv) st.view = hv[1];
 if (/hal/.test(h)) st.hal = true;
 if (/goal/.test(h)) st.pm = 'goal';
+// pieces made by an earlier "이번 주만 / 이번 달만" (a separate 반복 under the same 세부) go back inside their 반복
+(function joinPieces(){ let moved = false;
+  S.ms.slice().forEach(n => { if (!n.start || n.due===OPEN) return;
+    const days = []; for (let k = n.start; k <= n.due; k = isoAdd(k, 1)) if (stepsOn(k).includes(n)) days.push(k);
+    if (!days.length || days.length > 31) return;
+    const o = S.ms.find(o => o!==n && o.sub===n.sub && msStart(o) <= n.start && o.due >= n.due && days.every(k => S.sskip?.[`${k}|${o.id}`] && o.dows.includes(dowOf(pIso(k)))));
+    if (!o) return;
+    days.forEach(k => { delete S.sskip[`${k}|${o.id}`]; const v = {}; if (n.text!==o.text) v.text = n.text; if (!!n.ev!==!!o.ev) v.ev = !!n.ev; if (Object.keys(v).length) (o.ov ||= {})[k] = v;
+      if (S.sdone?.[`${k}|${n.id}`] || n.done){ if (o.done) delete S.sundone?.[`${k}|${o.id}`]; else S.sdone[`${k}|${o.id}`] = true; } delete S.sdone?.[`${k}|${n.id}`]; });
+    S.ms = S.ms.filter(x => x!==n); moved = true; });
+  if (moved) save(); })();
 const hv2 = h.match(/ver([123])/); if (hv2) S.set.ver = +hv2[1];
 const hh = h.match(/hv([123])/); if (hh) S.set.hv = +hh[1]; for (const k of ['hl','hy','hm']){ const mm = h.match(new RegExp(k+'([123])')); if (mm) S.set[k] = +mm[1]; }
 render();
