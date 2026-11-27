@@ -1418,6 +1418,13 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .qcm.td{font-weight:500}
 .qcm.cur{border-color:var(--faint)}
 .qcm.s{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ===== round 36: 일정's time inside the small calendar ===== */
+.qct{display:flex;align-items:center;gap:8px;padding:8px 2px 0;margin-top:6px;border-top:var(--hl) solid var(--soft);font-size:12px;color:var(--sub)}
+.qct input[type=time]{height:34px;border:var(--lw) solid var(--soft);border-radius:9px;padding:0 8px;font:inherit;font-size:14px;background:var(--paper);color:var(--ink)}
+.qct input[type=time]:focus{border-color:var(--ink);outline:none}
+.qct .hint{margin:0}
+.qctx{font-size:12px;padding:5px 10px;border-radius:999px;border:var(--lw) solid var(--soft);color:var(--sub)}
 </style>
 
 <div id="app"></div>
@@ -2802,10 +2809,10 @@ function barHTML(q, ed){
   const d1 = q.date && /^\d{4}-\d\d-\d\d$/.test(q.date) ? q.date : '';
   const when = q.rep ? `${q.start?md(q.start):'오늘'} – ${q.noEnd ? '계속' : q.end ? md(q.end) : '?'}`
     : !d1 ? '날짜' : q.dend ? `${md(d1)} – ${md(q.dend)}` : `${md(d1)} ${DOW_K[dowOf(pIso(d1))]}`;
+  const whenT = q.type==='event' && q.time ? ` · ${q.time}` : '';   // 일정: its time rides on the date chip
   const cat = catById(q.cat), sub = subById(q.sub), canStar = !wk;
   let row = '';
-  if (dated) row += `<button class="qc cal${q.cal?' open':''}" id="rdate" data-q="cal">${CAL_ICON}${when}</button>`;
-  if (dated) row += `<button class="qc${q.time?' set':''}${q.pop==='time'?' open':''}" data-q="timeopen">${q.time || '시간'}</button>`;
+  if (dated) row += `<button class="qc cal${q.cal?' open':''}" id="rdate" data-q="cal">${CAL_ICON}${when}${whenT}</button>`;
   if (!wk && !box) row += `<button class="qc rep${q.rep || q.yearly?' on':''}" data-q="rep" title="요일마다 · 매년 반복">${q.yearly ? '매년' : '반복'}</button>`;
   if (canStar) row += `<button class="qc star${q.star?' on':''}" data-q="star" title="중요한 것 · 주간목표에도 나와요">★ 중요</button>`;
   const cl = cat && cat.id!=='base' ? `${cat.color?`<i class="dot" style="background:${cat.color}"></i>`:''}${esc(cat.name)}${sub && sub.cat===cat.id ? ` › ${esc(sub.name)}` : ''}` : '분류';
@@ -2868,10 +2875,10 @@ function barAct(q, d){
     case 'star': q.star = !q.star; return true;
     case 'cat': q.cat = q.cat===d.c ? null : d.c; q.sub = null; q.ask = false; return true;
     case 'sub': q.sub = q.sub===d.s ? null : d.s; q.ask = false; return true;
-    case 'kind': q.type = q.type==='event' ? 'todo' : 'event'; return true;
+    case 'kind': q.type = q.type==='event' ? 'todo' : 'event'; if (q.type!=='event') q.time = ''; return true;   // 할일 has no time
     case 'timeopen': q.pop = q.pop==='time' ? null : 'time'; q.cal = false; return true;
     case 'timeok': { const v = app.querySelector('#qtime')?.value; q.time = v || ''; q.pop = null; return true; }
-    case 'timeclr': q.time = ''; q.pop = null; return true;
+    case 'timeclr': q.time = ''; return true;   // (the calendar stays open)
     case 'memoopen': { const v = app.querySelector('#qmemo'); if (v) q.memo = v.value.trim(); q.pop = q.pop==='memo' ? null : 'memo'; q.cal = false; return true; }
     case 'memook': { const v = app.querySelector('#qmemo'); if (v) q.memo = v.value.trim(); q.pop = null; return true; }
     case 'yearly': q.yearly = true; q.rep = false; q.date = q.start || q.date || TODAY; q.dend = ''; q.pop = null; return true;
@@ -2901,7 +2908,7 @@ function oneDayOf(start, end, dows){
   let hit = '', n = 0; for (let k = start; k <= end && n < 2; k = isoAdd(k, 1)) if (dows.includes(dowOf(pIso(k)))){ hit = k; n++; }
   return n===1 ? hit : '';
 }
-const qtm = (q, o) => { if (q.time) o.time = q.time; if (q.memo) o.memo = q.memo; if (q.yearly){ o.yearly = true; delete o.end; } };
+const qtm = (q, o) => { if (q.time && q.type==='event') o.time = q.time; if (q.memo) o.memo = q.memo; if (q.yearly){ o.yearly = true; delete o.end; } };
 function qpAdd(){
   const q = st.qp, inp = app.querySelector('#qin'), text = inp.value.trim(); if (!text) return false;
   const [coll, key, x] = q.t.split('|'), dows = [...q.dows].sort();
@@ -2913,7 +2920,7 @@ function qpAdd(){
       if (!dows.length) return shake();
       if (!q.noEnd && !q.end){ q.cal = true; q.calYM = (q.start||TODAY).slice(0,7); drawQp(true); return false; }   // the stretch isn't finished yet
       applyRoutine.skipSub = !!q.skipSub;
-      const bad = applyRoutine({text, dows, start:q.start || key, until:q.noEnd ? '' : (q.end || ''), cat:q.cat, sub:q.sub, star:!!q.star, ev:q.type==='event', time:q.time, memo:q.memo});
+      const bad = applyRoutine({text, dows, start:q.start || key, until:q.noEnd ? '' : (q.end || ''), cat:q.cat, sub:q.sub, star:!!q.star, ev:q.type==='event', time:q.type==='event' ? q.time : '', memo:q.memo});
       applyRoutine.skipSub = false;
       if (bad) return shake();
     }
@@ -2946,6 +2953,7 @@ function qcalHTML(q){ // one small calendar: one day, or two days for a 기간 (
     : `<div class="qcg">${DOW_K.map(d => `<span>${d}</span>`).join('')}${days}</div>`;
   return `<div class="qcal${pick?' pick':''}" id="qcal"><div class="qch"><button data-q="calp" aria-label="${pick?'이전 해':'이전 달'}">‹</button><button class="qcy" data-q="calym" aria-label="연도 · 월 고르기">${pick ? `${y}년` : `${y}.${m}`}<i>▾</i></button><button data-q="caln" aria-label="${pick?'다음 해':'다음 달'}">›</button></div>
     ${grid}
+    ${q.type==='event' && !pick ? `<div class="qct"><span>시간</span><input type="time" id="qtime" value="${q.time||''}" aria-label="시간">${q.time ? '<button type="button" class="qctx" data-q="timeclr">지우기</button>' : '<span class="hint">비우면 하루 종일</span>'}</div>` : ''}
     <div class="qcf"><span class="hint">${hint}</span><div class="qcb">${one ? '' : `<button class="sw${q.noEnd?' on':''}" data-q="noend" role="switch" aria-checked="${!!q.noEnd}"><i></i><span>끝 없음</span></button>`}<button class="ok" data-q="calok">완료</button></div></div></div>`;
 }
 // keep the small calendar inside the screen
@@ -3101,7 +3109,7 @@ function saveScoped(e, text, t){
   const before = new Set([...S.ms, ...S.routines].map(x => x.id));
   const dows = e.scope==='day' ? [dowOf(pIso(d))] : e.dows;
   const baseT = tc ? text : rangeTxt(o, days), baseE = ec ? ev : days.every(k => evOn(o, k));
-  const bad = applyRoutine({text:baseT, dows, start:a, until:b, cat:e.cat, sub:e.sub, star:!!e.star, ev:baseE, time:e.time, memo:e.memo});
+  const bad = applyRoutine({text:baseT, dows, start:a, until:b, cat:e.cat, sub:e.sub, star:!!e.star, ev:baseE, time:baseE ? e.time : '', memo:e.memo});
   if (bad){ e.saveAsk = false; e.scoped = false; redrawEd(); return warn(bad); }
   const dn = isMs ? (S.sdone ||= {}) : (S.rdone ||= {});
   const n = [...S.ms, ...S.routines].find(x => !before.has(x.id)), nd = n && S.ms.includes(n) ? (S.sdone ||= {}) : (S.rdone ||= {});
@@ -3114,7 +3122,7 @@ function saveScoped(e, text, t){
 // 기간 and ★ are the whole 반복's, whatever stretch is being changed; days it newly reaches take its own name (no per-day changes there)
 function wholePart(e){
   const isMs = e.src==='ms', o = isMs ? msById(e.id) : rById(e.id); if (!o) return;
-  if ((e.time || '')!==(e.time0 || '')){ if (e.time) o.time = e.time; else delete o.time; }   // 시간 · 메모 belong to the whole 반복
+  { const tm = e.type==='event' ? (e.time || '') : ''; if (tm!==(e.time0 || '') || (!tm && o.time)){ if (tm) o.time = tm; else delete o.time; } }   // 시간 · 메모 belong to the whole 반복
   if ((e.memo || '')!==(e.memo0 || '')){ if (e.memo) o.memo = e.memo; else delete o.memo; }
   const pc = e.start!==e.start0 || e.noEnd!==e.noEnd0 || (!e.noEnd && e.end!==e.end0);
   if (!!e.star!==e.star0){ if (e.star) o.star = true; else delete o.star; }
@@ -3125,7 +3133,7 @@ function wholePart(e){
   if (e.start!==e.start0 && e.start) first.start = e.start;
   if (e.noEnd) delete last.end; else if (e.end) last.end = isoAdd(e.end, 1);
 }
-const setTM = (o, e, withTime) => { if (withTime && e.time) o.time = e.time; else delete o.time; if (e.memo) o.memo = e.memo; else delete o.memo; };
+const setTM = (o, e, withTime) => { if (withTime && e.time && e.type==='event') o.time = e.time; else delete o.time; if (e.memo) o.memo = e.memo; else delete o.memo; };
 function saveEd(){
   readEd();
   const e = st.ed, text = (e.text||'').trim();
@@ -3165,7 +3173,7 @@ function saveEd(){
     const tc = !o0 || text!==(e.text0 ?? o0.text), ec = !o0 || (t==='event')!==((e.type0 ?? (o0.ev ? 'event' : 'todo'))==='event');
     const baseT = tc ? text : o0.text, baseE = ec ? t==='event' : !!o0.ev;
     const g = o0 && S.routines.includes(o0) ? (o0.grp || o0.id) : null, before = new Set([...S.ms, ...S.routines].map(x => x.id));
-    const bad = applyRoutine({text:baseT, dows:e.dows, start:e.start, until:e.noEnd ? '' : e.end, cat:e.cat, sub:e.sub, src, id, star:!!e.star, ev:baseE, time:e.time, memo:e.memo});
+    const bad = applyRoutine({text:baseT, dows:e.dows, start:e.start, until:e.noEnd ? '' : e.end, cat:e.cat, sub:e.sub, src, id, star:!!e.star, ev:baseE, time:baseE ? e.time : '', memo:e.memo});
     if (bad) return warn(bad);
     if (o0){
       const sibs = g ? S.routines.filter(x => x!==o0 && before.has(x.id) && (x.grp===g || x.id===g)) : [];   // the other pieces of one 반복
@@ -3200,7 +3208,7 @@ function calAct(q, d){
     else if (q.noEnd) q.start = k;   // 끝 없음: a tapped day is just its new start (turn 끝 없음 off to give it an end)
     else { const l = two(q.start, q.end); q.start = l[0] || ''; q.end = l[1] || ''; } }
   else if (d.q==='noend'){ if (q.needEnd) return true; q.noEnd = !q.noEnd; if (q.noEnd) q.end = ''; }
-  else if (d.q==='calok') q.cal = false;
+  else if (d.q==='calok'){ const v = app.querySelector('#qtime'); if (v) q.time = v.value || ''; q.cal = false; }
   else return false;
   return true;
 }

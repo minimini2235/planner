@@ -3,7 +3,7 @@
 // · Fonts: the saved copy first (they never change).
 // · The planner's data is NOT here — it lives in the browser's storage, so a new version never touches it.
 // Change VERSION whenever this file or the CORE list changes; the app then offers "새로고침".
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'bw-planner-' + VERSION;
 const CORE = ['./', './index.html', './manifest.json', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 
