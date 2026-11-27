@@ -1366,6 +1366,58 @@ html.dark .mvov{background:rgba(0,0,0,.4)}
 .mvf{display:flex;align-items:center;gap:6px}
 .mvwhat{flex:1;min-width:0;font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mvf .btn{border-radius:999px;height:32px;padding:0 14px}
+
+/* ===== round 34: time · memo · 매년 · 빨간날 · bigger tap on marks ===== */
+.it .tm{flex:none;font-size:.85em;color:var(--sub);font-variant-numeric:tabular-nums;padding-top:.08em;letter-spacing:-.01em}
+.mmo{flex:none;width:1.4em;height:1.25em;margin-left:.1em;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;color:var(--mute)}
+.mmo svg{width:.85em;height:.85em;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
+.mmo:hover,.mmo.on{color:var(--ink);background:var(--hover)}
+.itmemo{font-size:.88em;line-height:1.45;color:var(--sub);white-space:pre-wrap;word-break:break-word;margin:0 0 4px 1.4em;padding:3px 9px;border-left:2px solid var(--line2)}
+.cb .mmo,.cb .itmemo,.cb .aux.yr{display:none}
+.it .aux.yr{font-size:.74em;letter-spacing:0}
+.qc.set{color:var(--ink);border-color:var(--faint)}
+.qc.qx{margin-left:auto;padding:0 11px}
+.qtrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.qtrow.end{justify-content:flex-end}
+.qtrow input[type=time]{height:36px;border:var(--lw) solid var(--soft);border-radius:10px;padding:0 10px;font:inherit;font-size:15px;background:var(--paper);color:var(--ink)}
+#qmemo{width:100%;border:var(--lw) solid var(--soft);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;line-height:1.45;resize:vertical;background:var(--paper);color:var(--ink);outline:none}
+#qmemo:focus{border-color:var(--ink)}
+.qcard a.qc{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+.qfb.on{border-color:var(--ink);color:var(--ink)}
+.qa2.warn,#ed.warn{animation:shake .3s}
+/* 빨간날 */
+.cell .d.hol,.dn.hol,.mgrid span.hol,.dbh b.hol{color:#d8463c}
+.cell.today .d.hol,.dn.td.hol,.mgrid span.td.hol{color:var(--paper)}
+.cell .d .hn,.dbh .hn{font-style:normal;font-weight:400;font-size:8.5px;margin-left:4px;color:#d8463c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:7em}
+.dbh .hn{font-size:11px}
+.portrait .cell .d .hn{display:none}
+.dhol{font-size:10.5px;color:#d8463c;margin-bottom:3px}
+html.dark .cell .d.hol,html.dark .dn.hol,html.dark .mgrid span.hol,html.dark .dbh b.hol,html.dark .cell .d .hn,html.dark .dbh .hn,html.dark .dhol{color:#ff8a80}
+/* phones: the check mark takes a tap from a little around it (it looks the same) */
+@media (pointer:coarse){
+  .ck{position:relative}
+  .ck::after{content:'';position:absolute;inset:-7px -6px -7px -9px}
+  .days.one .ck,.dbox .ck,.boxl .ck,.hstack .ck,.hroad .ck,.wkbox.one .ck{width:1.08em;height:1.08em;margin-top:.14em}
+  .mmo{width:1.9em;height:1.6em}
+}
+
+/* ===== round 35 ===== */
+/* phones: no zooming in — inputs are 16px (iPhone zooms into anything smaller) and a quick double tap doesn't zoom */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (pointer:coarse){
+  input,textarea,select,#qin,#etext,.qpill input,.add input,.txt,#qmemo,.qtrow input[type=time],.syform input,.fontadd input,#imptext,#baktext{font-size:16px!important}
+}
+/* the small calendar: year · month picker */
+.qch .qcy{display:inline-flex;align-items:center;gap:4px;width:auto;margin:0 auto;padding:0 10px;font-size:13px;color:var(--ink);border-radius:8px}
+.qch .qcy i{font-style:normal;font-size:9px;color:var(--mute)}
+.qch .qcy:hover{background:var(--hover)}
+.qch b{display:none}
+.qcmo{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 0 6px}
+.qcm{height:40px;border-radius:10px;font-size:13px;border:var(--lw) solid var(--soft)}
+.qcm:hover{background:var(--hover)}
+.qcm.td{font-weight:500}
+.qcm.cur{border-color:var(--faint)}
+.qcm.s{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 </style>
 
 <div id="app"></div>
@@ -1644,10 +1696,13 @@ function gearSvg(){
 /* ---------- one row ---------- */
 // hc: the 할일 (category) this row is filed under — its colour light / strong / solid and its icon, for 설정 → 분류 표시
 const hcStyle = c => `--hc:${c.color}30;--hc2:${c.color}70;--hcs:${c.color}`;
-function itemRow(ref, kind, done, text, {tag='', drag=false, cls='', hc=null, src=null} = {}){
+const MEMO_SVG = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 3.5h8M2 6h8M2 8.5h5"/></svg>`;
+const memoBtn = ref => { const mo = !!st.memoOpen?.[ref]; return `<button class="mmo${mo?' on':''}" aria-label="메모 ${mo?'접기':'펼치기'}">${MEMO_SVG}</button>`; };
+const memoBox = (ref, memo) => memo && st.memoOpen?.[ref] ? `<div class="itmemo">${esc(memo)}</div>` : '';
+function itemRow(ref, kind, done, text, {tag='', drag=false, cls='', hc=null, src=null, time='', memo=''} = {}){
   const sb = sbOf(src), style = (hc ? hcStyle(hc) + ';' : '') + (sb ? sbStyle(src) : '');
   const stag = sb ? `<span class="stag">${esc(sb.name)}</span>` : '';
-  return `<div class="it${cls?' '+cls:''}${hc?' k-hg':''}${sb?' k-sb':''}${done?' done':''}" data-ref="${ref}"${drag?' data-drag':''}${style?` style="${style}"`:''}>${mark(kind,done)}<span class="tx">${esc(text)}</span>${stag}${tag}</div>`;
+  return `<div class="it${cls?' '+cls:''}${hc?' k-hg':''}${sb?' k-sb':''}${done?' done':''}" data-ref="${ref}"${drag?' data-drag':''}${style?` style="${style}"`:''}>${mark(kind,done)}${time?`<span class="tm">${time}</span>`:''}<span class="tx">${esc(text)}</span>${stag}${tag}${memo ? memoBtn(ref) : ''}</div>${memoBox(ref, memo)}`;
 }
 const tagOf = (cat, sub) => sub && subById(sub) ? `<span class="tag">${esc(subById(sub).name)}</span>`
   : cat && cat!=='base' && catById(cat) ? `<span class="tag">${esc(catById(cat).name)}</span>` : '';
@@ -1672,25 +1727,31 @@ function sbStyle(i){ // the variables one row needs for every version
 const SPANK = new WeakMap();
 const allSpans = () => memo('span', () => { const out = []; for (const k0 in S.days) for (const i of S.days[k0] || []) if (i.end){ SPANK.set(i, k0); out.push([k0, i]); } return out; });
 function spansOn(k){ return memo('p' + k, () => allSpans().filter(([k0, i]) => k0 < k && i.end >= k).map(([, i]) => i)); }
-const homeOf = (k, i) => L('days',k).includes(i) ? k : (SPANK.get(i) || k);
+// 매년: a thing on its first day comes back on the same month · day every year after (each year ticked on its own)
+const YHOME = new WeakMap();
+const allYearly = () => memo('yrs', () => { const out = []; for (const k0 in S.days) for (const i of S.days[k0] || []) if (i.yearly){ YHOME.set(i, k0); out.push([k0, i]); } return out; });
+function yearlyOn(k){ return memo('y' + k, () => allYearly().filter(([k0]) => k0 < k && k0.slice(5)===k.slice(5)).map(([, i]) => i)); }
+const homeOf = (k, i) => L('days',k).includes(i) ? k : (SPANK.get(i) || YHOME.get(i) || k);
+const yrRef = (k, i) => i.yearly && !L('days',k).includes(i) ? `yr|${k}|${i.id}` : '';
+const yrTag = i => i.yearly ? '<span class="aux yr">매년</span>' : '';
 const spanTag = (k, i) => i.end ? `<span class="aux span">${md(homeOf(k,i))}–${md(i.end)}</span>` : '';
-const tdRow = (k, i) => itemRow(`days|${homeOf(k,i)}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i), src:i, tag:spanTag(k,i)});
-const evRow = (k, i) => itemRow(`days|${homeOf(k,i)}|${i.id}`, 'ev', i.done, i.text, {drag:true, cls:'k-ev', hc:hcOf(i), src:i, tag:spanTag(k,i)});
+const tdRow = (k, i) => { const yr = yrRef(k, i); return itemRow(yr || `days|${homeOf(k,i)}|${i.id}`, 'td', yr ? !!i.ydone?.[k.slice(0,4)] : i.done, i.text, {drag:!yr, cls:'k-td', hc:hcOf(i), src:i, tag:spanTag(k,i) + yrTag(i), time:i.time, memo:i.memo}); };
+const evRow = (k, i) => { const yr = yrRef(k, i); return itemRow(yr || `days|${homeOf(k,i)}|${i.id}`, 'ev', yr ? !!i.ydone?.[k.slice(0,4)] : i.done, i.text, {drag:!yr, cls:'k-ev', hc:hcOf(i), src:i, tag:spanTag(k,i) + yrTag(i), time:i.time, memo:i.memo}); };
 const ovOf = (o, k) => o?.ov?.[k] || null;
 const txtOn = (o, k) => ovOf(o, k)?.text ?? o.text;
 // a week / month shown as one line: the changed name only when every day there got that same name
 const rangeTxt = (o, ks) => { const l = ks.map(k => txtOn(o, k)); return l.length && l.every(t => t===l[0]) ? l[0] : o.text; };
 const evOn = (o, k) => { const v = ovOf(o, k); return v && 'ev' in v ? v.ev : !!o.ev; };
 const rangeEv = (o, ks) => { const l = ks.map(k => evOn(o, k)); return l.length && l.every(x => x===l[0]) ? l[0] : !!o.ev; };
-const rtRow = (k, x) => itemRow(`rt|${k}|${x.r.id}`, evOn(x.r,k) ? 'ev' : 'td', x.done, txtOn(x.r,k), {cls:'rtn ' + (evOn(x.r,k) ? 'k-ev' : 'k-td'), hc:hcOf(x.r), tag:REP});
+const rtRow = (k, x) => itemRow(`rt|${k}|${x.r.id}`, evOn(x.r,k) ? 'ev' : 'td', x.done, txtOn(x.r,k), {cls:'rtn ' + (evOn(x.r,k) ? 'k-ev' : 'k-td'), hc:hcOf(x.r), tag:REP, time:x.r.time, memo:x.r.memo});
 const msRow = (m, tag) => itemRow(`ms||${m.id}`, 'td', m.done, m.text, {drag:true, cls:'msi k-td', hc:hcOf(m), src:m, tag: tag ? tagOf(null, m.sub) : ''});
-const stRow = (k, x) => itemRow(`ss|${k}|${x.m.id}`, evOn(x.m,k) ? 'ev' : 'td', x.done, txtOn(x.m,k), {cls:'step ' + (evOn(x.m,k) ? 'k-ev' : 'k-td'), hc:hcOf(x.m), src:x.m, tag:REP});
+const stRow = (k, x) => itemRow(`ss|${k}|${x.m.id}`, evOn(x.m,k) ? 'ev' : 'td', x.done, txtOn(x.m,k), {cls:'step ' + (evOn(x.m,k) ? 'k-ev' : 'k-td'), hc:hcOf(x.m), src:x.m, tag:REP, time:x.m.time, memo:x.m.memo});
 
 /* ---------- one day ---------- */
 function dayData(k){
-  const items = [...L('days',k), ...spansOn(k)];
-  return {ev: items.filter(i => i.type==='event'), td: items.filter(i => i.type!=='event'),
-    rts: rOn(k).map(r => ({r, done:rDone(k,r.id)})), due: msDueOn(k), steps: stepsOn(k).map(m => ({m, done:sDone(k,m.id)}))};
+  const items = [...L('days',k), ...spansOn(k), ...yearlyOn(k)], byT = (a, b) => (a.time || '').localeCompare(b.time || ''), byT2 = f => (a, b) => byT(f(a), f(b));   // a day in time order (no time first)
+  return {ev: items.filter(i => i.type==='event').sort(byT), td: items.filter(i => i.type!=='event').sort(byT),
+    rts: rOn(k).map(r => ({r, done:rDone(k,r.id)})).sort(byT2(x => x.r)), due: msDueOn(k), steps: stepsOn(k).map(m => ({m, done:sDone(k,m.id)})).sort(byT2(x => x.m))};
 }
 // week page: 일정 · 루틴 · 할일 · each 할일, split by very light labelled lines; each 세부할일 sits in a hairline box
 const lab = t => `<div class="gh"><span>${t}</span><i></i></div>`;
@@ -1821,7 +1882,7 @@ function yearView(){
     let cells = '';
     for (let i=0;i<dowOf(first);i++) cells += '<span></span>';
     for (let d=1; d<=n; d++){ const k = iso(new Date(st.y,m,d)), dots = yearDots(k);
-      cells += `<span${k===TODAY?' class="td"':''}>${d}${dots ? `<em class="yd">${dots}</em>` : ''}</span>`; }
+      cells += `<span class="${k===TODAY?'td':''}${holOf(k)?' hol':''}"${holOf(k)?` title="${esc(holOf(k))}"`:''}>${d}${dots ? `<em class="yd">${dots}</em>` : ''}</span>`; }
     return `<div class="mm" data-act="goMonthOf" data-m="${m}"><div class="t">${m+1}</div><div class="mface"><div class="mgrid">${cells}</div></div></div>`;
   }).join('') + `</div></div>`;
 }
@@ -1829,7 +1890,7 @@ function yearView(){
 // 설정 → 연 페이지에 표시: up to three small dots under a date, each in its colour
 function yearDots(k){
   const y = S.set.ys || {}; if (!Object.values(y).some(Boolean)) return '';
-  const out = [], items = [...(S.days[k] || []), ...spansOn(k)];   // a 기간 dots every one of its days
+  const out = [], items = [...(S.days[k] || []), ...spansOn(k), ...yearlyOn(k)];   // a 기간 dots every one of its days
   const add = (c, t) => { if (out.length < 3 && !out.some(o => o.c===c)) out.push({c, t}); };
   items.forEach(i => {   // 일정 · 할일 (★ counts as a 할일) — 반복 ones count as what they are
     if (i.type==='event' && y.event) add(ydotColor('event'), i.text);
@@ -1859,9 +1920,189 @@ function weekContent(mon, lvl=0, inMonth=false){
     .concat(rms.map(x => ({key:gk(x.o, x.ks[0]), h:itemRow(`rw|${mon}|${x.c}:${x.o.id}`, rangeEv(x.o, x.ks) ? 'ev' : 'td', x.done, rangeTxt(x.o, x.ks), {cls:rangeEv(x.o, x.ks) ? 'k-ev' : 'k-td', hc:hcOf(x.o), src:x.o, tag: x.ks.length>1 ? `<span class="aux">${x.n}/${x.ks.length}</span>` : ''})})))
     .sort((a, b) => a.key[0]-b.key[0] || a.key[1]-b.key[1] || a.key[2].localeCompare(b.key[2]));
   let h = lvl>=1 && ms.length + rms.length>1 ? sum('★ 중요', [...ms, ...rms]) : rows.map(r => r.h).join('');
-  h += lvl>=2 && items.length>1 ? sum('목표', items) : items.map(i => itemRow(`weeks|${mon}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i), src:i})).join('');
+  h += lvl>=2 && items.length>1 ? sum('목표', items) : items.map(i => itemRow(`weeks|${mon}|${i.id}`, 'td', i.done, i.text, {drag:true, cls:'k-td', hc:hcOf(i), src:i, memo:i.memo})).join('');
   return h + PLUS(`weeks|${mon}`, '주간 목표 추가');
 }
+
+/* ---------- other calendars (Google · Apple · …): a link, or a .ics file either way ---------- */
+const ymd = k => k.replace(/-/g, ''), hms = t => t.replace(':', '') + '00';
+const BYDAY = ['MO','TU','WE','TH','FR','SA','SU'];
+function rruleOf(o){ if (o.yearly) return 'FREQ=YEARLY';
+  if (o.dows?.length){ let r = 'FREQ=WEEKLY;BYDAY=' + [...o.dows].sort().map(i => BYDAY[i]).join(','); if (o.due && o.due!==OPEN) r += ';UNTIL=' + ymd(o.due); return r; } return ''; }
+function edCalObj(q){ const k = q.rep ? (q.start || TODAY) : (q.date || TODAY);
+  const o = {id:q.id || uid(), text:((app.querySelector('#etext')?.value || q.text || '').trim() || '(제목 없음)'), time:q.time || '', memo:q.memo || '', yearly:!!q.yearly, end:!q.rep && q.dend ? q.dend : ''};
+  if (q.rep){ o.dows = q.dows; o.due = q.noEnd ? OPEN : q.end; } return [o, k]; }
+function gcalURL(o, k){
+  const p = new URLSearchParams({action:'TEMPLATE', text:o.text, ctz:'Asia/Seoul'}), end0 = !o.dows && o.end && o.end > k ? o.end : k;
+  if (o.time){ const [h, mi] = o.time.split(':').map(Number), e = h < 23 ? `${ymd(k)}T${pad(h+1)}${pad(mi)}00` : `${ymd(k)}T235900`; p.set('dates', `${ymd(k)}T${hms(o.time)}/${e}`); }
+  else p.set('dates', `${ymd(k)}/${ymd(isoAdd(end0, 1))}`);
+  const rr = rruleOf(o); if (rr) p.set('recur', 'RRULE:' + rr); if (o.memo) p.set('details', o.memo);
+  return 'https://calendar.google.com/calendar/render?' + p.toString(); }
+const icsEsc = s => String(s).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
+function icsEvent(o, k){
+  const out = ['BEGIN:VEVENT', `UID:${o.id}@bw-planner`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`, `SUMMARY:${icsEsc(o.text)}`], end0 = !o.dows && o.end && o.end > k ? o.end : k;
+  if (o.time) out.push(`DTSTART;TZID=Asia/Seoul:${ymd(k)}T${hms(o.time)}`, 'DURATION:PT1H');
+  else out.push(`DTSTART;VALUE=DATE:${ymd(k)}`, `DTEND;VALUE=DATE:${ymd(isoAdd(end0, 1))}`);
+  const rr = rruleOf(o); if (rr) out.push('RRULE:' + rr); if (o.memo) out.push(`DESCRIPTION:${icsEsc(o.memo)}`);
+  out.push('END:VEVENT'); return out; }
+const icsFile = evs => ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//bw-planner//KO', 'CALSCALE:GREGORIAN', ...evs.flat(), 'END:VCALENDAR'].join('\r\n');
+function downloadText(name, text, type){
+  try { const url = URL.createObjectURL(new Blob([text], {type})), a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 3000); return true; }
+  catch(e){ toast('여기서는 파일 저장이 막혀 있어요'); return false; } }
+function exportICS(all){
+  const evs = [], want = o => all || o.type==='event' || o.ev;
+  for (const k in S.days) for (const i of S.days[k] || []) if (want(i)) evs.push(icsEvent(i, k));
+  S.routines.forEach(r => { if (want(r)) evs.push(icsEvent({...r, end:'', due:r.end ? isoAdd(r.end, -1) : OPEN}, r.start)); });
+  S.ms.forEach(m => { if (subById(m.sub) && want(m)) evs.push(icsEvent(m, msStart(m))); });
+  downloadText(`흑백플래너-${TODAY}.ics`, icsFile(evs), 'text/calendar'); return evs.length; }
+/* ---------- 애플 캘린더 가져오기: an iCloud public calendar, read (never written) through the Supabase "ical" function ----------
+   things that came from it carry `apple` (their event id, plus the day for a repeating one); each fetch makes the planner match it:
+   new ones come in, changed ones change, ones gone from the calendar go. A tick made here stays. */
+function icsDT(v){ const m = String(v).trim().match(/^(\d{4})(\d\d)(\d\d)(?:T(\d\d)(\d\d)\d*(Z)?)?/); if (!m) return null;
+  const d = m[6] ? new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5])) : new Date(+m[1], +m[2]-1, +m[3], +(m[4] || 0), +(m[5] || 0));
+  return {k:iso(d), t:m[4] ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : ''}; }
+function icsEvents(text){
+  const lines = String(text).replace(/\r?\n[ \t]/g, '').split(/\r?\n/), out = [];
+  const val = l => l.slice(l.indexOf(':') + 1).replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1');
+  let ev = null;
+  for (const l of lines){
+    if (l==='BEGIN:VEVENT'){ ev = {ex:[]}; continue; }
+    if (l==='END:VEVENT'){ if (ev?.start && ev.uid) out.push(ev); ev = null; continue; }
+    if (!ev) continue;
+    const name = l.split(/[;:]/)[0].toUpperCase(), v = val(l);
+    if (name==='SUMMARY') ev.text = v.trim();
+    else if (name==='DESCRIPTION') ev.memo = v.trim().slice(0, 500);
+    else if (name==='UID') ev.uid = v.trim();
+    else if (name==='RRULE') ev.rrule = v.trim();
+    else if (name==='STATUS') ev.cancelled = /CANCELLED/i.test(v);
+    else if (name==='RECURRENCE-ID') ev.rid = icsDT(v)?.k;
+    else if (name==='EXDATE') v.split(',').forEach(x => { const d = icsDT(x); if (d) ev.ex.push(d.k); });
+    else if (name==='DTSTART'){ const d = icsDT(v); if (d){ ev.start = d.k; ev.time = d.t && d.t!=='00:00' ? d.t : ''; ev.allDay = !d.t; } }
+    else if (name==='DTEND'){ const d = icsDT(v); if (d) ev.end = d.t ? d.k : isoAdd(d.k, -1); }
+  }
+  out.forEach(e => { if (!e.text) e.text = '(제목 없음)'; }); return out;
+}
+// the days a repeating event falls on between `from` and `to` (daily · weekly · monthly · yearly, with INTERVAL · BYDAY · UNTIL · COUNT)
+function icsDays(e, from, to){
+  if (!e.rrule) return [e.start];
+  const r = Object.fromEntries(e.rrule.split(';').map(x => x.split('=')).map(([a, b]) => [a.toUpperCase(), b || '']));
+  const iv = Math.max(1, +r.INTERVAL || 1), until = r.UNTIL ? (icsDT(r.UNTIL)?.k || '9999') : '9999', count = r.COUNT ? +r.COUNT : Infinity;
+  const by = r.BYDAY ? r.BYDAY.split(',').map(x => ({n:+(x.slice(0, -2) || 0), d:BYDAY.indexOf(x.slice(-2).toUpperCase())})) : null;
+  const s = pIso(e.start), sm = iso(mondayOf(s)), end = until < to ? until : to, out = [];
+  let n = 0;
+  for (let k = e.start, i = 0; k <= end && n < count && i < 40000; k = isoAdd(k, 1), i++){
+    const d = pIso(k), w = dowOf(d), dd = Math.round((d - s) / 864e5);
+    let hit = false;
+    if (r.FREQ==='DAILY') hit = dd % iv === 0;
+    else if (r.FREQ==='WEEKLY') hit = Math.round((pIso(iso(mondayOf(d))) - pIso(sm)) / (7*864e5)) % iv === 0 && (by ? by.some(b => b.d===w) : w===dowOf(s));
+    else if (r.FREQ==='MONTHLY'){ const mm = (d.getFullYear() - s.getFullYear())*12 + d.getMonth() - s.getMonth();
+      if (mm % iv === 0){ if (by) hit = by.some(b => { if (b.d!==w) return false; if (!b.n) return true; const nth = Math.ceil(d.getDate()/7), last = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate() - d.getDate() < 7; return b.n>0 ? nth===b.n : b.n===-1 && last; });
+        else hit = d.getDate()===s.getDate(); } }
+    else if (r.FREQ==='YEARLY') hit = (d.getFullYear() - s.getFullYear()) % iv === 0 && d.getMonth()===s.getMonth() && d.getDate()===s.getDate();
+    if (!hit) continue;
+    n++; if (k >= from && !e.ex.includes(k)) out.push(k);
+  }
+  return out;
+}
+function appleMerge(text){
+  const evs = icsEvents(text), from = isoAdd(TODAY, -120), to = isoAdd(TODAY, 400), want = new Map();
+  evs.filter(e => !e.rid && !e.cancelled).forEach(e => {
+    if (/^FREQ=YEARLY$/i.test(e.rrule || '') && !e.ex.length){ want.set(e.uid, {k:e.start, e, yearly:true}); return; }   // a birthday · 기념일: one row, 매년
+    icsDays(e, from, to).forEach(k => want.set(e.rrule ? `${e.uid}|${k}` : e.uid, {k, e}));
+  });
+  evs.filter(e => e.rid).forEach(o => { const key = `${o.uid}|${o.rid}`;   // one day of a repeating event changed on its own
+    if (o.cancelled){ want.delete(key); return; } if (o.start >= from && o.start <= to) want.set(key, {k:o.start, e:o}); else want.delete(key); });
+  const have = new Map(); for (const k0 in S.days) for (const i of S.days[k0] || []) if (i.apple) have.set(i.apple, {k0, i});
+  let add = 0, upd = 0, del = 0;
+  want.forEach(({k, e, yearly}, key) => {
+    const put = o => { o.text = e.text; o.type = 'event'; if (e.time) o.time = e.time; else delete o.time; if (e.memo) o.memo = e.memo; else delete o.memo;
+      if (yearly) o.yearly = true; else delete o.yearly; if (!yearly && !e.rrule && e.end && e.end > k) o.end = e.end; else delete o.end; };
+    const h = have.get(key);
+    if (h){ const was = JSON.stringify(h.i); put(h.i); if (h.k0!==k){ S.days[h.k0] = S.days[h.k0].filter(x => x!==h.i); L('days', k).push(h.i); }
+      if (h.k0!==k || JSON.stringify(h.i)!==was) upd++; have.delete(key); }
+    else { const o = {id:uid(), done:false, apple:key}; put(o); L('days', k).push(o); add++; }
+  });
+  have.forEach(({k0, i}, key) => { if (key.includes('|') && (k0 < from || k0 > to)) return;   // an old day of a repeating event stays
+    S.days[k0] = S.days[k0].filter(x => x!==i); del++; });
+  return {add, upd, del, n:want.size};
+}
+const AP_KEY = KEY + '-apple';
+let ap = (() => { try { return JSON.parse(store.get(AP_KEY)) || {}; } catch(e) { return {}; } })();   // {at, n, err} on this device
+const apSave = () => store.set(AP_KEY, JSON.stringify(ap));
+const apLine = () => ap.err ? ap.err : ap.at ? `${new Date(ap.at).toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'})}에 가져옴 · 일정 ${ap.n}개` : '아직 가져오기 전이에요';
+let apBusy = false;
+async function appleSync(force){
+  if (!S.set.appleIcs || !signedIn() || apBusy) return;
+  if (!force && ap.at && Date.now() - ap.at < 10*60000) return;
+  if (st.ed || st.qp){ setTimeout(() => appleSync(force), 5000); return; }   // never under an open sheet
+  apBusy = true; ap.err = ''; const line = () => { const el = app.querySelector('#apstate'); if (el) el.textContent = apBusy ? '가져오는 중…' : apLine(); }; line();
+  try {
+    const t = await sbToken(); if (!t) throw Object.assign(new Error('동기화에 다시 로그인해 주세요'), {status:401});
+    const r = await fetch(SB_URL + '/functions/v1/ical', {method:'POST', headers:{apikey:SB_KEY, Authorization:'Bearer ' + t, 'Content-Type':'application/json'}, body:JSON.stringify({url:S.set.appleIcs})});
+    const txt = await r.text();
+    if (!r.ok) throw Object.assign(new Error(r.status===404 ? 'Supabase에 ical 함수가 아직 없어요' : txt.slice(0, 120) || ('HTTP ' + r.status)), {status:r.status});
+    if (st.ed || st.qp){ apBusy = false; setTimeout(() => appleSync(true), 5000); return; }
+    const res = appleMerge(txt); ap = {at:Date.now(), n:res.n, err:''}; apSave();
+    if (res.add || res.upd || res.del){ save(); refreshBehind(); if (force) toast(`애플 캘린더: 새로 ${res.add} · 바뀜 ${res.upd} · 지움 ${res.del}`); }
+    else if (force) toast('애플 캘린더: 바뀐 게 없어요');
+  } catch(e){ ap.err = e instanceof TypeError ? '연결하지 못했어요 — 인터넷과 Supabase의 ical 함수를 확인해 주세요' : '가져오지 못했어요: ' + e.message; apSave(); }
+  finally { apBusy = false; line(); }
+}
+function appleHTML(){
+  if (!CAN_DOWNLOAD) return '';
+  const on = !!S.set.appleIcs;
+  let h = `<div class="sec"><div class="sh">애플 캘린더 가져오기</div><div class="sd">아이폰 · 맥 캘린더의 일정을 저절로 가져와요 (가져오기만 해요). 아이폰 캘린더 앱 → 아래 <b>캘린더</b> → 가져올 캘린더의 ⓘ → <b>공개 캘린더</b> 켜기 → <b>링크 공유…</b> → 복사한 주소를 아래에 붙여 넣으세요.</div>`;
+  if (!signedIn()) return h + `<div class="hint">위 <b>동기화</b>에 로그인해야 쓸 수 있어요.</div></div>`;
+  if (on) h += `<div class="sd">연결됨 · <span id="apstate">${esc(apBusy ? '가져오는 중…' : apLine())}</span></div>
+      ${st.apAsk ? `<div class="impask"><b>연결을 끊을까요?</b><span>가져와 있던 애플 일정은 어떻게 할까요?</span><div class="bakrow"><button class="btn quiet" data-act="apAskNo">취소</button><button class="btn" data-act="apOff" data-v="keep">남겨 두기</button><button class="btn dark" data-act="apOff" data-v="drop">지우기</button></div></div>`
+        : `<div class="bakrow"><button class="btn" data-act="apNow">지금 가져오기</button><button class="btn quiet" data-act="apAsk">연결 끊기</button></div>`}`;
+  else h += `<div class="syform"><input id="apurl" type="url" inputmode="url" placeholder="webcal://p00-caldav.icloud.com/published/…" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="애플 공개 캘린더 주소"></div>
+      <div class="bakrow"><button class="btn dark" data-act="apOn">연결</button></div>${st.apMsg ? `<div class="bakmsg">${esc(st.apMsg)}</div>` : ''}`;
+  return h + `</div>`;
+}
+function importICS(text){
+  const lines = String(text).replace(/\r?\n[ \t]/g, '').split(/\r?\n/), have = new Set(Object.values(S.days).flat().map(i => i.ics).filter(Boolean));
+  const val = l => l.slice(l.indexOf(':') + 1).replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1');
+  let ev = null, n = 0, skip = 0;
+  for (const l of lines){
+    if (l==='BEGIN:VEVENT'){ ev = {}; continue; }
+    if (l==='END:VEVENT'){ if (ev?.start && ev.text){ if (ev.uid && have.has(ev.uid)) skip++; else {
+        const o = {id:uid(), text:ev.text, type:'event', done:false}; if (ev.time) o.time = ev.time; if (ev.memo) o.memo = ev.memo;
+        if (ev.yearly) o.yearly = true; else if (ev.end && ev.end > ev.start) o.end = ev.end; if (ev.uid) o.ics = ev.uid; L('days', ev.start).push(o); n++; } }
+      ev = null; continue; }
+    if (!ev) continue;
+    const name = l.split(/[;:]/)[0].toUpperCase();
+    if (name==='SUMMARY') ev.text = val(l).trim();
+    else if (name==='DESCRIPTION') ev.memo = val(l).trim().slice(0, 500);
+    else if (name==='UID') ev.uid = val(l).trim();
+    else if (name==='RRULE') ev.yearly = /FREQ=YEARLY/i.test(l);
+    else if (name==='DTSTART' || name==='DTEND'){
+      const m = val(l).trim().match(/^(\d{4})(\d\d)(\d\d)(?:T(\d\d)(\d\d)\d*(Z)?)?/); if (!m) continue;
+      const d = m[6] ? new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5])) : new Date(+m[1], +m[2]-1, +m[3], +(m[4] || 0), +(m[5] || 0));
+      const k = iso(d), t = m[4] ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : '';
+      if (name==='DTSTART'){ ev.start = k; if (t && t!=='00:00') ev.time = t; } else ev.end = m[4] ? k : isoAdd(k, -1); }   // an all-day end is the day after
+  }
+  if (n) save(); return {n, skip}; }
+
+/* ---------- 빨간날 ---------- */
+const HFIX = {'01-01':'신정','03-01':'삼일절','05-05':'어린이날','06-06':'현충일','08-15':'광복절','10-03':'개천절','10-09':'한글날','12-25':'성탄절'};   // when offline
+const HOL = {}, holAsked = new Set();
+function holLoad(y){
+  if (holAsked.has(y) || !(y > 1900)) return; holAsked.add(y);
+  const key = `${KEY}-hol-${y}`; let c = null; try { c = JSON.parse(store.get(key)); } catch(e) {}
+  const fixedName = new Set(Object.values(HFIX));
+  const put = list => { const m = {};
+    list.forEach(([k, n]) => { if (fixedName.has(n) && HFIX[k.slice(5)]!==n) n = '대체공휴일'; m[k] = m[k] && m[k]!==n ? m[k] + ' · ' + n : n; });
+    Object.keys(m).forEach(k => { const k2 = isoAdd(k, 2), k1 = isoAdd(k, 1); if (!m[k1] && m[k2]===m[k] && !HFIX[k1.slice(5)]) m[k1] = m[k]; });
+    Object.assign(HOL, m); };
+  if (c?.list) put(c.list);
+  if (c && Date.now() - c.at < 30*864e5) return;
+  try { fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/KR`).then(r => r.ok ? r.json() : null).then(a => {
+    if (!Array.isArray(a)) return; const list = a.map(h => [h.date, h.localName || h.name]);
+    store.set(key, JSON.stringify({at:Date.now(), list})); put(list);
+    if (!st.ed && !st.qp && !st.setOpen && !st.boxOpen) refreshBehind(); }).catch(() => {}); } catch(e) {}
+}
+const holOf = k => { holLoad(+k.slice(0,4)); return HOL[k] || HFIX[k.slice(5)] || ''; };
 
 /* ---------- month ---------- */
 function monthView(){
@@ -1870,7 +2111,7 @@ function monthView(){
   g.forEach((w,wi) => w.forEach(d => {
     const last = wi===g.length-1 ? ' last' : '', k = iso(d), out = d.getMonth()!==st.m;
     cells += `<div class="cell${out?' out':''}${k===TODAY?' today':''}${last}" data-iso="${k}" data-act="goDay"${out?'':` data-drop="days|${k}"`}>
-      <span class="d">${out?'':d.getDate()}</span><div class="cb" data-iso="${k}"></div></div>`;
+      <span class="d${!out && holOf(k)?' hol':''}"${!out && holOf(k)?` title="${esc(holOf(k))}"`:''}>${out?'':d.getDate()}${!out && holOf(k) ? `<em class="hn">${esc(holOf(k))}</em>` : ''}</span><div class="cb" data-iso="${k}"></div></div>`;
   }));
   const wrows = g.map((w,i) => { const k = iso(w[0]);
     return `<div class="wrow${k===nowMon?' now':''}" data-act="goWeek" data-w="${k}" data-drop="weeks|${k}"><div class="wl">week ${i+1}</div><div class="wlist">${weekContent(k, 0, true)}</div></div>`; }).join('');
@@ -1888,11 +2129,11 @@ function weekView(){
   // 일 = one day, big (every screen) · 주 = seven columns (wide) or the seven days stacked, each in its own rounded box (tall)
   const days = Array.from({length:7}, (_,i)=>addDays(st.wk,i)), wi = weekIndex(), mon = iso(st.wk), P = st.portrait, goal = false;
   const one = st.view==='day', stk = P && !one;
-  const heads = days.map((d,i) => `<span class="dw${one && i===st.sel?' sel':''}${iso(d)===TODAY?' tdw':''}"${one || stk ? ` data-act="${one ? 'sel' : 'openDay'}" data-i="${i}"` : ''}>${DOW[i]}<i class="dn${iso(d)===TODAY?' td':''}${d.getMonth()!==st.m?' out':''}">${d.getDate()}</i></span>`).join('');
+  const heads = days.map((d,i) => `<span class="dw${one && i===st.sel?' sel':''}${iso(d)===TODAY?' tdw':''}"${one || stk ? ` data-act="${one ? 'sel' : 'openDay'}" data-i="${i}"` : ''}>${DOW[i]}<i class="dn${iso(d)===TODAY?' td':''}${d.getMonth()!==st.m?' out':''}${holOf(iso(d))?' hol':''}">${d.getDate()}</i></span>`).join('');
   const col = (d,i) => { const k = iso(d);
-    return `<div class="dcol" data-drop="days|${k}" data-iso="${k}" data-i="${i}">${dayList(k)}${PLUS(`days|${k}`)}</div>`; };
+    return `<div class="dcol" data-drop="days|${k}" data-iso="${k}" data-i="${i}">${holOf(k) ? `<div class="dhol">${esc(holOf(k))}</div>` : ''}${dayList(k)}${PLUS(`days|${k}`)}</div>`; };
   const dbox = (d,i) => { const k = iso(d);
-    return `<div class="dbox${k===TODAY?' td':''}${d.getMonth()!==st.m?' out':''}" data-act="openDay" data-i="${i}" data-drop="days|${k}" data-iso="${k}"><div class="dbh"><b>${d.getDate()}</b><span>${DOW_K[i]}</span></div>${dayList(k)}${PLUS(`days|${k}`)}</div>`; };
+    return `<div class="dbox${k===TODAY?' td':''}${d.getMonth()!==st.m?' out':''}" data-act="openDay" data-i="${i}" data-drop="days|${k}" data-iso="${k}"><div class="dbh"><b${holOf(k)?' class="hol"':''}>${d.getDate()}</b><span>${DOW_K[i]}</span>${holOf(k)?`<em class="hn">${esc(holOf(k))}</em>`:''}</div>${dayList(k)}${PLUS(`days|${k}`)}</div>`; };
   const cols = one ? `<div class="days one" id="oneday"><div class="dwrap${st.dslide?' slide-'+st.dslide:''}">${col(days[st.sel], st.sel)}</div></div>`
     : stk ? `<div class="wstack">${days.map(dbox).join('')}</div>` : `<div class="days">${days.map(col).join('')}</div>`;
   const box = `<div class="wkbox one" style="grid-template-rows:1fr"><div class="wrow" data-drop="weeks|${mon}">${weekContent(mon)}</div></div>`;
@@ -2106,7 +2347,7 @@ function stackHTML(){
     : [{name:'', list:all.filter(i => i.sub===st.hsub)}];
   const n = groups.flatMap(g => g.list).filter(x => !x.done).length;
   let h = groups.filter(g => g.list.length).map(g => (g.name ? lab(esc(g.name)) : '') +
-    g.list.map(x => itemRow(`stack|all|${x.id}`, x.kind==='ms' ? (x.ev ? 'ev' : 'td') : x.kind==='event' ? 'ev' : 'td', x.done, x.text, {drag:true, tag:(x.kind==='ms' ? REP : '') + (x.star ? '<span class="aux star">★</span>' : '')})).join('')).join('');   // ★ = 중요 (a plain mark, never a circle)
+    g.list.map(x => itemRow(`stack|all|${x.id}`, x.kind==='ms' ? (x.ev ? 'ev' : 'td') : x.kind==='event' ? 'ev' : 'td', x.done, x.text, {drag:true, tag:(x.kind==='ms' ? REP : '') + (x.star ? '<span class="aux star">★</span>' : ''), memo:x.memo})).join('')).join('');   // ★ = 중요 (a plain mark, never a circle)
   const sub = st.hsub==='all' ? '' : st.hsub;
   h += PLUS(`stack|${st.hcat}|${sub}`, '보관함에 추가');
   return {html: h + `<div class="note2">보관함은 아직 적용하지 않은 것들입니다. 왼쪽 날짜로 끌어 놓으면 적용되고, 왼쪽에서 여기로 끌어 오면 빠집니다.</div>`, n};
@@ -2229,6 +2470,10 @@ function settingsHTML(){
       <div class="fontadd"><input id="fontin" placeholder="글씨체 이름 (예: Gaegu)" autocomplete="off" enterkeyhint="done" aria-label="추가할 글씨체 이름"><button class="btn" data-act="fontAdd">추가</button></div>
       <div class="hint">Google Fonts에 있거나 이 기기에 설치된 글씨체 이름을 입력하면 목록에 추가돼요.</div></div>
     ${syncHTML()}
+    ${appleHTML()}
+    <div class="sec"><div class="sh">다른 캘린더</div><div class="sd">구글 캘린더 · 애플 캘린더와 주고받는 캘린더 파일(.ics)이에요. 내보낸 파일을 그 캘린더 앱에서 열면 들어가고, 그쪽에서 내보낸 파일을 여기로 가져올 수 있어요. 항목 하나는 수정 창의 <b>캘린더로</b>에서 바로 넣을 수 있어요.</div>
+      <div class="bakrow">${CAN_DOWNLOAD ? `<button class="btn" data-act="icsOut" data-v="ev">일정 내보내기</button><button class="btn" data-act="icsOut" data-v="all">전부 내보내기</button>` : ''}<button class="btn" data-act="icsIn">파일 가져오기</button><input type="file" id="icsfile" accept=".ics,text/calendar" hidden></div>
+      ${st.icsMsg ? `<div class="bakmsg">${esc(st.icsMsg)}</div>` : ''}</div>
     <div class="sec"><div class="sh">백업 및 복원</div><div class="sd">모든 기록을 백업하거나 백업에서 복원합니다. 다른 기기로 옮길 때도 사용해요.</div>
       <div class="bakrow">${CAN_DOWNLOAD ? `<button class="btn" data-act="bakFile">백업 파일 저장</button>` : ''}<button class="btn" data-act="bakCopy">백업 복사</button></div>
       <div class="bakrow"><button class="btn" data-act="impFile">파일에서 복원</button><button class="btn" data-act="impPaste">붙여넣어 복원</button><input type="file" id="impfile" accept=".json,application/json,text/plain" hidden></div>
@@ -2500,6 +2745,7 @@ function toggleRef(ref){
   else if (coll==='ms'){ const m = msById(id); if (m){ m.done = !m.done; for (const k in S.sundone || {}) if (k.endsWith('|' + id)) delete S.sundone[k]; } }   // the whole 반복, fresh
   else if (coll==='rk'){ const [a, b] = key.split('~'), m = msById(id); if (!m) return;   // a week / month row of a 반복: all its days there
     const ks = repDays(m, a, b), all = ks.length && ks.every(k => sDone(k, id)); setMsDays(m, ks, !all); }
+  else if (coll==='yr'){ for (const k0 in S.days){ const it = (S.days[k0] || []).find(x => x.id===id); if (it){ const y = key.slice(0,4); it.ydone ||= {}; if (it.ydone[y]) delete it.ydone[y]; else it.ydone[y] = true; break; } } }   // 매년: this year's only
   else { const it = L(coll,key).find(x => x.id===id); if (it) it.done = !it.done; }
   save(); refreshBehind();
 }
@@ -2559,10 +2805,13 @@ function barHTML(q, ed){
   const cat = catById(q.cat), sub = subById(q.sub), canStar = !wk;
   let row = '';
   if (dated) row += `<button class="qc cal${q.cal?' open':''}" id="rdate" data-q="cal">${CAL_ICON}${when}</button>`;
-  if (!wk && !box) row += `<button class="qc rep${q.rep?' on':''}" data-q="rep" title="요일마다 반복">반복</button>`;
+  if (dated) row += `<button class="qc${q.time?' set':''}${q.pop==='time'?' open':''}" data-q="timeopen">${q.time || '시간'}</button>`;
+  if (!wk && !box) row += `<button class="qc rep${q.rep || q.yearly?' on':''}" data-q="rep" title="요일마다 · 매년 반복">${q.yearly ? '매년' : '반복'}</button>`;
   if (canStar) row += `<button class="qc star${q.star?' on':''}" data-q="star" title="중요한 것 · 주간목표에도 나와요">★ 중요</button>`;
   const cl = cat && cat.id!=='base' ? `${cat.color?`<i class="dot" style="background:${cat.color}"></i>`:''}${esc(cat.name)}${sub && sub.cat===cat.id ? ` › ${esc(sub.name)}` : ''}` : '분류';
   row += q.lock ? `<span class="qc catc still">${cl}</span>` : `<button class="qc catc${q.pop==='cat'?' open':''}${cat && cat.id!=='base'?' set':''}" id="rcat" data-q="catopen">${cl}</button>`;
+  row += `<button class="qc${q.memo?' set':''}${q.pop==='memo'?' open':''}" data-q="memoopen">메모${q.memo ? ' •' : ''}</button>`;
+  if (!ed && !box) row += `<button class="qc qx" data-q="cancel" aria-label="닫기">✕</button>`;
   let cards = '';
   if (q.ask) cards += `<div class="qask">세부분야를 골라야 ${ed ? '저장' : '추가'}할 수 있어요</div>`;
   if (q.pop==='cat' && !q.lock){
@@ -2570,11 +2819,15 @@ function barHTML(q, ed){
     cards += `<div class="qcard"><span class="qcl">할일</span><div class="qwrap">${userCats().filter(c => !c.hidden || c.id===q.cat).map(c => `<button class="qc cat${q.cat===c.id?' on':''}" style="--c:${c.color||'#9b9b9b'}" data-q="cat" data-c="${c.id}"><i class="dot"></i>${esc(c.name)}</button>`).join('')}</div>`
       + (subs.length ? `<span class="qcl">세부</span><div class="qwrap${q.ask?' need':''}" id="rsub">${subs.map(x => `<button class="qc${q.sub===x.id?' on':''}" data-q="sub" data-s="${x.id}">${esc(x.name)}</button>`).join('')}</div>` : '') + `</div>`;
   }
-  if (q.pop==='dow' && q.rep) cards += `<div class="qcard" id="rdows"><span class="qcl">반복 요일</span><div class="qdw7">${DOW_K.map((x,i) => `<button class="${q.dows.includes(i)?'on':''}" data-q="dw" data-i="${i}">${x}</button>`).join('')}</div></div>`;
+  if (q.pop==='dow' && q.rep) cards += `<div class="qcard" id="rdows"><span class="qcl">반복 요일</span><div class="qdw7">${DOW_K.map((x,i) => `<button class="${q.dows.includes(i)?'on':''}" data-q="dw" data-i="${i}">${x}</button>`).join('')}</div>${dated ? '<div class="qtrow"><button class="qc" data-q="yearly">대신 매년 같은 날 (기념일)</button></div>' : ''}</div>`;
   if (q.cal && dated) cards += `<div class="qcard">${qcalHTML(q)}</div>`;
+  if (q.pop==='time') cards += `<div class="qcard"><span class="qcl">시간</span><div class="qtrow"><input type="time" id="qtime" value="${q.time||''}" aria-label="시간"><span class="sp"></span><button class="qc" data-q="timeclr">시간 없음</button><button class="qc on" data-q="timeok">완료</button></div></div>`;
+  if (q.pop==='memo') cards += `<div class="qcard"><span class="qcl">메모</span><textarea id="qmemo" rows="3" placeholder="짧게 적어 두기 · 목록에서 ≡ 를 누르면 펼쳐져요">${esc(q.memo||'')}</textarea><div class="qtrow end"><button class="qc on" data-q="memook">완료</button></div></div>`;
+  if (q.pop==='gcal'){ const [co, ck] = edCalObj(q);
+    cards += `<div class="qcard"><span class="qcl">다른 캘린더에 넣기</span><div class="qwrap"><a class="qc" href="${esc(gcalURL(co, ck))}" target="_blank" rel="noopener">Google 캘린더</a>${CAN_DOWNLOAD ? '<button class="qc" data-q="icsone">애플 · 기타 (.ics 파일)</button>' : ''}</div><span class="qcl">지금 이 창의 내용으로 넣어요. 나중에 바꾼 건 저절로 따라가지 않아요.</span></div>`; }
   const scopes = [['day','이날만'],['week','이번 주만'],['month','이번 달만'],['all','전체']].filter(([v]) => !(q.fromRange && (v==='day' || (v==='week' && q.fromRange==='month'))));
   const foot = !ed ? '' : q.saveAsk ? `<div class="foot ask"><div class="askq">어디까지 바꿀까요?</div><div class="seg delseg">${scopes.map(([v,l]) => `<button type="button" class="${q.scopePick===v?'on':''}" data-act="scopePick" data-v="${v}">${l}</button>`).join('')}</div><span class="sp"></span><button class="btn" data-act="scopeNo">취소</button><button class="btn dark" data-act="scopeGo">저장</button></div>`
-    : q.delAsk ? delFoot(q) : `<div class="qfoot"><button class="qfb" data-act="delAsk">삭제</button><button class="qfb" data-act="close">취소</button></div>`;
+    : q.delAsk ? delFoot(q) : `<div class="qfoot"><button class="qfb" data-act="delAsk">삭제</button>${['days','rdef','ms'].includes(q.src) ? `<button class="qfb${q.pop==='gcal'?' on':''}" data-q="gcal">캘린더로</button>` : ''}<button class="qfb" data-act="close">취소</button></div>`;
   return `${cards}<div class="qpill" id="rtext">${head}${input}${go}</div><div class="qrow2">${row}</div>${foot}`;
 }
 const boxQ = () => ({t:'box||', type:'todo', rep:false, cat:null, sub:null, lock:false, dows:[], x:0, y:0, top:0, n:0, start:'', end:'', noEnd:true, date:'', dend:'', pop:null, inBox:true});
@@ -2592,12 +2845,15 @@ function drawQp(focus){
   if (old && n) old.replaceWith(n); else if (n && !st.qp.inBox) app.appendChild(n); else if (!n) old?.remove();
   const inp = app.querySelector('#qin'); if (inp){ inp.value = val; if (had || (!coarse && (focus || document.activeElement===document.body))) inp.focus(); }
 }
+function nudge(sel){ const el = app.querySelector(sel); if (!el) return; el.classList.remove('warn'); void el.offsetWidth; el.classList.add('warn');
+  if (!nudge.told){ nudge.told = true; toast('쓰던 내용이 있어요 · 닫으려면 ✕ 나 취소'); } }
 function closeQp(){ st.qp = null; app.querySelector('#qpop')?.remove(); }
 function barAct(q, d){
   if (calAct(q, d)) return true;
   switch (d.q){
     case 'catopen': q.pop = q.pop==='cat' ? null : 'cat'; q.cal = false; return true;
     case 'rep':   // 반복: off → on (요일 card) · on → its 요일 card · card open → off
+      if (q.yearly){ q.yearly = false; q.pop = null; return true; }   // 매년 → back to one day
       if (!q.rep){ q.rep = true; q.start = q.date || q.start || TODAY;
         if (q.dend){ q.end = q.dend; q.noEnd = false; } else if (!q.end || q.end < q.start){ q.end = ''; q.noEnd = true; }
         if (!q.t && (!q.dows?.length || q.dows.length===7)) q.dows = [dowOf(pIso(q.start))];
@@ -2613,6 +2869,14 @@ function barAct(q, d){
     case 'cat': q.cat = q.cat===d.c ? null : d.c; q.sub = null; q.ask = false; return true;
     case 'sub': q.sub = q.sub===d.s ? null : d.s; q.ask = false; return true;
     case 'kind': q.type = q.type==='event' ? 'todo' : 'event'; return true;
+    case 'timeopen': q.pop = q.pop==='time' ? null : 'time'; q.cal = false; return true;
+    case 'timeok': { const v = app.querySelector('#qtime')?.value; q.time = v || ''; q.pop = null; return true; }
+    case 'timeclr': q.time = ''; q.pop = null; return true;
+    case 'memoopen': { const v = app.querySelector('#qmemo'); if (v) q.memo = v.value.trim(); q.pop = q.pop==='memo' ? null : 'memo'; q.cal = false; return true; }
+    case 'memook': { const v = app.querySelector('#qmemo'); if (v) q.memo = v.value.trim(); q.pop = null; return true; }
+    case 'yearly': q.yearly = true; q.rep = false; q.date = q.start || q.date || TODAY; q.dend = ''; q.pop = null; return true;
+    case 'gcal': q.pop = q.pop==='gcal' ? null : 'gcal'; q.cal = false; return true;
+    case 'icsone': { const [o, k] = edCalObj(q); downloadText(`${o.text.slice(0, 20)}.ics`, icsFile([icsEvent(o, k)]), 'text/calendar'); return false; }
   }
   return false;
 }
@@ -2637,6 +2901,7 @@ function oneDayOf(start, end, dows){
   let hit = '', n = 0; for (let k = start; k <= end && n < 2; k = isoAdd(k, 1)) if (dows.includes(dowOf(pIso(k)))){ hit = k; n++; }
   return n===1 ? hit : '';
 }
+const qtm = (q, o) => { if (q.time) o.time = q.time; if (q.memo) o.memo = q.memo; if (q.yearly){ o.yearly = true; delete o.end; } };
 function qpAdd(){
   const q = st.qp, inp = app.querySelector('#qin'), text = inp.value.trim(); if (!text) return false;
   const [coll, key, x] = q.t.split('|'), dows = [...q.dows].sort();
@@ -2648,21 +2913,21 @@ function qpAdd(){
       if (!dows.length) return shake();
       if (!q.noEnd && !q.end){ q.cal = true; q.calYM = (q.start||TODAY).slice(0,7); drawQp(true); return false; }   // the stretch isn't finished yet
       applyRoutine.skipSub = !!q.skipSub;
-      const bad = applyRoutine({text, dows, start:q.start || key, until:q.noEnd ? '' : (q.end || ''), cat:q.cat, sub:q.sub, star:!!q.star, ev:q.type==='event'});
+      const bad = applyRoutine({text, dows, start:q.start || key, until:q.noEnd ? '' : (q.end || ''), cat:q.cat, sub:q.sub, star:!!q.star, ev:q.type==='event', time:q.time, memo:q.memo});
       applyRoutine.skipSub = false;
       if (bad) return shake();
     }
-    else { const d0 = q.date || key, o = {id:uid(), text, type:q.type, done:false}; setCS(o, q.cat, q.sub); if (q.star) o.star = true; if (q.dend && q.dend > d0) o.end = q.dend; L('days', d0).push(o); }
-  } else if (coll==='weeks'){ const o = {id:uid(), text, done:false}; setCS(o, q.cat, q.sub); L('weeks', key).push(o); }
+    else { const d0 = q.date || key, o = {id:uid(), text, type:q.type, done:false}; setCS(o, q.cat, q.sub); if (q.star) o.star = true; if (q.dend && q.dend > d0) o.end = q.dend; qtm(q, o); L('days', d0).push(o); }
+  } else if (coll==='weeks'){ const o = {id:uid(), text, done:false}; setCS(o, q.cat, q.sub); if (q.memo) o.memo = q.memo; L('weeks', key).push(o); }
   else if (coll==='pc'){
     const sub = q.sub, due = q.date || (x.length===7 ? monthDue(x) : x);
     if (!sub) return shake();
-    if (q.rep){ if (!q.end && !q.noEnd) return needEnd(q, due); const m = {id:uid(), sub, text, due:q.noEnd ? OPEN : (q.end || due), dows:dows.length ? dows : [0,2,4], done:false, created:TODAY}; const s0 = q.start || due; if (s0 <= m.due) m.start = s0; if (q.star) m.star = true; if (q.type==='event') m.ev = true; S.ms.push(m); }   // always its own start, so it never waits for the one before it
-    else { const o = {id:uid(), text, type:q.type==='event' ? 'event' : 'todo', done:false}; setCS(o, subById(sub).cat, sub); if (q.star) o.star = true; if (q.dend && q.dend > due) o.end = q.dend; L('days', due).push(o); }
-  } else if (coll==='box'){ const o = {id:uid(), text, done:false, type:q.type==='event' ? 'event' : 'todo'}; setCS(o, q.cat, q.sub); if (q.star) o.star = true; (S.box ||= []).push(o); }
-  else { if (!q.sub) return shake(); const o = {id:uid(), text, done:false, kind:q.rep ? 'ms' : q.type}; setCS(o, q.cat, q.sub); if (q.rep){ o.dows = dows.length ? dows : [0,2,4]; if (q.type==='event') o.ev = true; } if (q.star) o.star = true; L('stack','all').push(o); }
+    if (q.rep){ if (!q.end && !q.noEnd) return needEnd(q, due); const m = {id:uid(), sub, text, due:q.noEnd ? OPEN : (q.end || due), dows:dows.length ? dows : [0,2,4], done:false, created:TODAY}; const s0 = q.start || due; if (s0 <= m.due) m.start = s0; if (q.star) m.star = true; if (q.type==='event') m.ev = true; qtm(q, m); S.ms.push(m); }   // always its own start, so it never waits for the one before it
+    else { const o = {id:uid(), text, type:q.type==='event' ? 'event' : 'todo', done:false}; setCS(o, subById(sub).cat, sub); if (q.star) o.star = true; if (q.dend && q.dend > due) o.end = q.dend; qtm(q, o); L('days', due).push(o); }
+  } else if (coll==='box'){ const o = {id:uid(), text, done:false, type:q.type==='event' ? 'event' : 'todo'}; setCS(o, q.cat, q.sub); if (q.star) o.star = true; if (q.memo) o.memo = q.memo; (S.box ||= []).push(o); }
+  else { if (!q.sub) return shake(); const o = {id:uid(), text, done:false, kind:q.rep ? 'ms' : q.type}; setCS(o, q.cat, q.sub); if (q.rep){ o.dows = dows.length ? dows : [0,2,4]; if (q.type==='event') o.ev = true; } if (q.star) o.star = true; if (q.memo) o.memo = q.memo; L('stack','all').push(o); }
   if (q.apply){ takeItem(q.apply); save(); closeQp(); refreshBehind(); return true; }   // it came out of the 보관함
-  save(); inp.value = ''; q.n++; if (q.inBox) q.pop = null;   // 보관함: the open card folds after each add
+  save(); inp.value = ''; q.n++; q.memo = ''; if (q.pop==='memo') q.pop = null; if (q.inBox) q.pop = null;   // 보관함: the open card folds after each add
   refreshBehind(); if (st.boxOpen) drawBoxList(); drawQp(true);
   return true;
 }
@@ -2676,8 +2941,11 @@ function qcalHTML(q){ // one small calendar: one day, or two days for a 기간 (
     return `<button class="qcd${out?' out':''}${inR?(!one && q.noEnd?' on':' in'):''}${s?' s':''}${e?' e':''}${k===TODAY?' td':''}" data-q="day" data-k="${k}">${d.getDate()}</button>`; }).join('');
   const hint = one ? (!a ? '날짜를 누르세요' : b ? `${md(a)} – ${md(b)} 기간` : '하루 더 고르면 기간')
     : q.noEnd ? (a ? `${md(a)}부터 계속` : '시작하는 날을 누르세요') : !a ? '시작하는 날을 누르세요' : !b ? '끝나는 날을 누르세요' : `${md(a)} – ${md(b)}`;
-  return `<div class="qcal" id="qcal"><div class="qch"><button data-q="calp" aria-label="이전 달">‹</button><b>${y}.${m}</b><button data-q="caln" aria-label="다음 달">›</button></div>
-    <div class="qcg">${DOW_K.map(d => `<span>${d}</span>`).join('')}${days}</div>
+  const pick = !!q.calPick, chosen = (one ? q.date : q.start) || '';
+  const grid = pick ? `<div class="qcmo">${Array.from({length:12}, (_, i) => `<button class="qcm${i+1===m?' cur':''}${chosen.slice(0,7)===mk(y, i)?' s':''}${TODAY.slice(0,7)===mk(y, i)?' td':''}" data-q="calmon" data-m="${i+1}">${i+1}월</button>`).join('')}</div>`
+    : `<div class="qcg">${DOW_K.map(d => `<span>${d}</span>`).join('')}${days}</div>`;
+  return `<div class="qcal${pick?' pick':''}" id="qcal"><div class="qch"><button data-q="calp" aria-label="${pick?'이전 해':'이전 달'}">‹</button><button class="qcy" data-q="calym" aria-label="연도 · 월 고르기">${pick ? `${y}년` : `${y}.${m}`}<i>▾</i></button><button data-q="caln" aria-label="${pick?'다음 해':'다음 달'}">›</button></div>
+    ${grid}
     <div class="qcf"><span class="hint">${hint}</span><div class="qcb">${one ? '' : `<button class="sw${q.noEnd?' on':''}" data-q="noend" role="switch" aria-checked="${!!q.noEnd}"><i></i><span>끝 없음</span></button>`}<button class="ok" data-q="calok">완료</button></div></div></div>`;
 }
 // keep the small calendar inside the screen
@@ -2718,6 +2986,7 @@ const kindsOf = coll => coll==='weeks' ? null : ['todo','event'];   // 할일 ·
    opened by tapping the words of anything (the mark only checks). One state shape for every item:
    {src:'days'|'rdef'|'ms'|'stack'|'weeks', key, id, type:'todo'|'event'|'routine', text, star, date, start, end, noEnd, dows, cat, sub, place} */
 function openEditor(ref){
+  if (ref.startsWith('yr|')){ const id = ref.split('|')[2]; for (const k0 in S.days) if ((S.days[k0] || []).some(x => x.id===id)) return openEditor(`days|${k0}|${id}`); return; }   // 매년: the thing itself
   if (ref.startsWith('rw|')){ const [, mon, cr] = ref.split('|'), rid = cr.split(':')[1]; return openEditor(`rk|${mon}~${isoAdd(mon, 6)}|${rid}`); }   // a weekly-goal row of a 반복 = that week of it
   if (ref.startsWith('rk|')){ // a week / month row of a 반복: opened on its first day there, showing the name that row shows
     const [, rng, rid] = ref.split('|'), [a, b] = rng.split('~'), m = msById(rid), r = m ? null : rById(rid), o = m || r; if (!o) return;
@@ -2741,8 +3010,11 @@ function openEditor(ref){
     e = {src:'days', key, id, type:it.type, text:it.text, star:!!it.star, date:key, dend:it.end || '', start:key, end:'', noEnd:true, dows:all, cat:it.cat || null, sub:it.sub || null}; }
   // where it was opened decides the first choice of "어디까지 바꿀까요"
   if (e.day && (e.src==='ms' || e.src==='rdef')){ const o = e.src==='ms' ? msById(e.id) : rById(e.id); e.text = txtOn(o, e.day); e.type = evOn(o, e.day) ? 'event' : 'todo'; }
+  const so = e.src==='rdef' ? rById(e.id) : e.src==='ms' ? msById(e.id) : e.src==='stack' ? L('stack','all').find(x => x.id===e.id) : e.src==='box' ? (S.box || []).find(x => x.id===e.id)
+    : e.src==='weeks' ? L('weeks', e.key).find(x => x.id===e.id) : L('days', e.key).find(x => x.id===e.id);
+  e.time = so?.time || ''; e.memo = so?.memo || ''; e.yearly = !!so?.yearly;
   e.ctx = st.hal ? (st.view==='week' ? 'day' : st.view==='month' ? 'week' : 'month') : (st.view==='week' ? 'week' : 'day');
-  e.text0 = e.text; e.type0 = e.type; e.dows0 = [...(e.dows || [])]; e.start0 = e.start; e.end0 = e.end; e.noEnd0 = e.noEnd; e.star0 = !!e.star; e.cat0 = e.cat; e.sub0 = e.sub;   // what was shown: only what the user changes is written back
+  e.text0 = e.text; e.type0 = e.type; e.dows0 = [...(e.dows || [])]; e.start0 = e.start; e.end0 = e.end; e.noEnd0 = e.noEnd; e.star0 = !!e.star; e.cat0 = e.cat; e.sub0 = e.sub; e.time0 = e.time; e.memo0 = e.memo;   // what was shown: only what the user changes is written back
   st.ed = e; render();
 }
 function readEd(){ const e = st.ed; if (!e) return; const v = id => app.querySelector('#'+id);
@@ -2770,7 +3042,8 @@ function carryDays(o, oMs, n, nMs, keep = () => true){
   else ks(S.rdone).forEach(k => { dn1[`${k}|${n.id}`] = true; delete S.rdone[`${k}|${o.id}`]; });
 }
 // one place that writes a routine — used by the bar and by the sheet. returns the id of the row to flag, or '' when done
-function applyRoutine({text, dows, start, until, cat, sub, src, id, star, ev}){
+function applyRoutine({text, dows, start, until, cat, sub, src, id, star, ev, time, memo}){
+  const tmSet = o => { if (time) o.time = time; else delete o.time; if (memo) o.memo = memo; else delete o.memo; };
   dows = [...dows].sort();
   if (!dows.length) return 'rdows';
   start = start || TODAY;
@@ -2782,14 +3055,14 @@ function applyRoutine({text, dows, start, until, cat, sub, src, id, star, ev}){
     if (!m){ m = {id:uid(), done:false, created:TODAY}; S.ms.push(m); }
     Object.assign(m, {text, sub, due:until || OPEN, dows, start});   // no 언제까지 → it just keeps going
     if (star) m.star = true; else delete m.star;   // a 반복 can be a ★ too
-    if (ev) m.ev = true; else delete m.ev;
+    if (ev) m.ev = true; else delete m.ev; tmSet(m);
     if (r0){ if (r0.start < TODAY && m.start < TODAY) m.start = TODAY;   // the old routine keeps its past
       carryDays(r0, false, m, true, k => k >= m.start); stop(); }
   } else { // 일반 루틴
     const m0 = src==='ms' ? msById(id) : null;
     if (src==='ms'){ S.ms = S.ms.filter(x => x.id!==id); id = null; }
     const end = until ? isoAdd(until,1) : null, r = src==='rdef' ? rById(id) : null;
-    const mark2 = o => { if (ev) o.ev = true; else delete o.ev; if (star) o.star = true; else delete o.star; if (cat && cat!=='base' && catById(cat)) o.cat = cat; else delete o.cat; return o; };   // 일정 or 할일 · its 할일
+    const mark2 = o => { tmSet(o); if (ev) o.ev = true; else delete o.ev; if (star) o.star = true; else delete o.star; if (cat && cat!=='base' && catById(cat)) o.cat = cat; else delete o.cat; return o; };   // 일정 or 할일 · its 할일
     if (r){ const same = r.dows.join()===dows.join();
       if (same || r.start>=TODAY){ Object.assign(r, {text, dows, start}); if (end) r.end = end; else delete r.end; mark2(r); }
       else { r.end = TODAY; r.text = text; mark2(r); const n = mark2({id:uid(), text, dows, start:TODAY, grp: r.grp || r.id}); if (end) n.end = end; S.routines.push(n); carryDays(r, false, n, false, k => k >= TODAY); } }   // grp: the pieces of one routine, deleted together
@@ -2828,7 +3101,7 @@ function saveScoped(e, text, t){
   const before = new Set([...S.ms, ...S.routines].map(x => x.id));
   const dows = e.scope==='day' ? [dowOf(pIso(d))] : e.dows;
   const baseT = tc ? text : rangeTxt(o, days), baseE = ec ? ev : days.every(k => evOn(o, k));
-  const bad = applyRoutine({text:baseT, dows, start:a, until:b, cat:e.cat, sub:e.sub, star:!!e.star, ev:baseE});
+  const bad = applyRoutine({text:baseT, dows, start:a, until:b, cat:e.cat, sub:e.sub, star:!!e.star, ev:baseE, time:e.time, memo:e.memo});
   if (bad){ e.saveAsk = false; e.scoped = false; redrawEd(); return warn(bad); }
   const dn = isMs ? (S.sdone ||= {}) : (S.rdone ||= {});
   const n = [...S.ms, ...S.routines].find(x => !before.has(x.id)), nd = n && S.ms.includes(n) ? (S.sdone ||= {}) : (S.rdone ||= {});
@@ -2841,6 +3114,8 @@ function saveScoped(e, text, t){
 // 기간 and ★ are the whole 반복's, whatever stretch is being changed; days it newly reaches take its own name (no per-day changes there)
 function wholePart(e){
   const isMs = e.src==='ms', o = isMs ? msById(e.id) : rById(e.id); if (!o) return;
+  if ((e.time || '')!==(e.time0 || '')){ if (e.time) o.time = e.time; else delete o.time; }   // 시간 · 메모 belong to the whole 반복
+  if ((e.memo || '')!==(e.memo0 || '')){ if (e.memo) o.memo = e.memo; else delete o.memo; }
   const pc = e.start!==e.start0 || e.noEnd!==e.noEnd0 || (!e.noEnd && e.end!==e.end0);
   if (!!e.star!==e.star0){ if (e.star) o.star = true; else delete o.star; }
   if (!pc) return;
@@ -2850,6 +3125,7 @@ function wholePart(e){
   if (e.start!==e.start0 && e.start) first.start = e.start;
   if (e.noEnd) delete last.end; else if (e.end) last.end = isoAdd(e.end, 1);
 }
+const setTM = (o, e, withTime) => { if (withTime && e.time) o.time = e.time; else delete o.time; if (e.memo) o.memo = e.memo; else delete o.memo; };
 function saveEd(){
   readEd();
   const e = st.ed, text = (e.text||'').trim();
@@ -2862,13 +3138,13 @@ function saveEd(){
   }
   if (e.rep && !e.noEnd && e.place!=='stack' && e.src!=='weeks' && !(e.scope && e.scope!=='all')){ const d1 = oneDayOf(e.start, e.end, [...e.dows]); if (d1){ e.rep = false; e.date = d1; e.dend = ''; e.oneDay = true; } }   // one day only → a 할일 / 일정
   const t = e.type;
-  if (e.src==='weeks'){ const o = L('weeks',e.key).find(x => x.id===e.id); if (o){ o.text = text; setCS(o, e.cat, e.sub); } }
+  if (e.src==='weeks'){ const o = L('weeks',e.key).find(x => x.id===e.id); if (o){ o.text = text; setCS(o, e.cat, e.sub); setTM(o, e, false); } }
   else if (e.src==='box'){ const o = (S.box || []).find(x => x.id===e.id); if (!o) return;   // 보관함 (menu): words · 할일/일정 · 분류 · ★
-    o.text = text; o.type = t==='event' ? 'event' : 'todo'; setCS(o, e.cat, e.sub); if (e.star) o.star = true; else delete o.star; }
+    o.text = text; o.type = t==='event' ? 'event' : 'todo'; setCS(o, e.cat, e.sub); if (e.star) o.star = true; else delete o.star; setTM(o, e, false); }
   else if (e.place==='stack'){ // 보관함: always filed under a 세부할일
     if (!e.sub) return warn(e.cat ? 'rsub' : 'rcat');
     const o = L('stack','all').find(x => x.id===e.id); if (!o) return;
-    o.text = text; o.kind = e.rep ? 'ms' : t; setCS(o, e.cat, e.sub);
+    o.text = text; o.kind = e.rep ? 'ms' : t; setCS(o, e.cat, e.sub); setTM(o, e, false);
     if (e.star) o.star = true; else delete o.star;
     if (e.rep){ o.dows = [...e.dows].sort(); if (t==='event') o.ev = true; else delete o.ev; } else { delete o.dows; delete o.ev; }
   }
@@ -2889,7 +3165,7 @@ function saveEd(){
     const tc = !o0 || text!==(e.text0 ?? o0.text), ec = !o0 || (t==='event')!==((e.type0 ?? (o0.ev ? 'event' : 'todo'))==='event');
     const baseT = tc ? text : o0.text, baseE = ec ? t==='event' : !!o0.ev;
     const g = o0 && S.routines.includes(o0) ? (o0.grp || o0.id) : null, before = new Set([...S.ms, ...S.routines].map(x => x.id));
-    const bad = applyRoutine({text:baseT, dows:e.dows, start:e.start, until:e.noEnd ? '' : e.end, cat:e.cat, sub:e.sub, src, id, star:!!e.star, ev:baseE});
+    const bad = applyRoutine({text:baseT, dows:e.dows, start:e.start, until:e.noEnd ? '' : e.end, cat:e.cat, sub:e.sub, src, id, star:!!e.star, ev:baseE, time:e.time, memo:e.memo});
     if (bad) return warn(bad);
     if (o0){
       const sibs = g ? S.routines.filter(x => x!==o0 && before.has(x.id) && (x.grp===g || x.id===g)) : [];   // the other pieces of one 반복
@@ -2908,13 +3184,16 @@ function saveEd(){
     o.text = text; o.type = t; setCS(o, e.cat, e.sub);
     if (e.star) o.star = true; else delete o.star;   // ★ (filed or not): it shows in 주간목표
     if (e.dend && e.dend > date) o.end = e.dend; else delete o.end;   // two days picked = 기간
+    setTM(o, e, true); if (e.yearly){ o.yearly = true; delete o.end; } else delete o.yearly;
   }
   save(); st.ed = null; render();
 }
 // the small calendar is shared by the bar and the sheet
 function calAct(q, d){
-  if (d.q==='cal'){ q.cal = !q.cal; q.pop = null; q.calYM = ((q.rep ? q.start : q.date) || q.start || q.date || TODAY).slice(0,7); }
-  else if (d.q==='calp' || d.q==='caln'){ const [y,m] = q.calYM.split('-').map(Number), nd = new Date(y, m-1 + (d.q==='caln'?1:-1), 1); q.calYM = mk(nd.getFullYear(), nd.getMonth()); }
+  if (d.q==='cal'){ q.cal = !q.cal; q.pop = null; q.calPick = false; q.calYM = ((q.rep ? q.start : q.date) || q.start || q.date || TODAY).slice(0,7); }
+  else if (d.q==='calp' || d.q==='caln'){ const [y,m] = q.calYM.split('-').map(Number), step = d.q==='caln' ? 1 : -1, nd = q.calPick ? new Date(y + step, m-1, 1) : new Date(y, m-1 + step, 1); q.calYM = mk(nd.getFullYear(), nd.getMonth()); }   // picking: a year at a time
+  else if (d.q==='calym') q.calPick = !q.calPick;
+  else if (d.q==='calmon'){ q.calYM = `${q.calYM.slice(0,4)}-${pad(+d.m)}`; q.calPick = false; }
   else if (d.q==='day'){ const k = d.k;
     const two = (a, b) => { let l = [a, b].filter(Boolean); if (l.includes(k)) l = l.filter(x => x!==k); else if (l.length < 2) l.push(k); else if (k < l[0]) l[0] = k; else l[1] = k; l.sort(); return l; };
     if (q.calOne){ const l = two(q.date, q.dend); q.date = l[0] || ''; q.dend = l[1] || ''; }   // one day, or two = 기간
@@ -3026,8 +3305,11 @@ document.addEventListener('click', e => {
     if (t.closest('.boxov')){ closeBox(); render(); return; } }   // outside the window = close
   const inSet = t.closest('#set'); if (inSet){ const a = t.closest('[data-act]'); if (a && inSet.contains(a)) setAct(a); return; } // stop at the sheet: the backdrop behind it means "close"
   const inEd = t.closest('#ed, #edcal'); if (inEd){ const a = t.closest('[data-act], [data-q]'); if (a && inEd.contains(a)) edAct(a); return; }
-  if (t.classList.contains('ov')){ if (t.dataset.act==='setClose') st.setOpen = false; else st.ed = null; render(); return; }
+  if (t.classList.contains('ov')){ if (t.dataset.act==='setClose') st.setOpen = false;
+    else { readEd(); const e2 = st.ed; if (e2 && e2.text0!==undefined && ((e2.text || '')!==(e2.text0 || '') || (e2.memo || '')!==(e2.memo0 || ''))){ nudge('#ed'); return; } st.ed = null; }   // changed something: keep it (취소 / Esc to leave)
+    render(); return; }
   if (st.qp){ const b = t.closest('#qpop [data-q]'); if (b){ qpAct(b); return; } if (t.closest('#qpop')) return;
+    if (app.querySelector('#qin')?.value.trim() || st.qp.memo){ nudge('#qpop'); return; }   // something typed: the bar stays (✕ / Esc to leave)
     closeQp(); if (!t.closest('[data-act="plus"]')) return; }
   const a = t.closest('[data-act]');
   if (a && ['qt','qth','qcat','qsub'].includes(a.dataset.act)){ quickAct(a); return; }
@@ -3035,6 +3317,7 @@ document.addEventListener('click', e => {
   const it = t.closest('.it[data-ref]');
   if (it && !it.classList.contains('sum')){
     const ref = it.dataset.ref, wrow = it.closest('.month .wrow');
+    if (t.closest('.mmo')){ (st.memoOpen ||= {})[ref] = !st.memoOpen[ref]; refreshBehind(); return; }   // the small ≡ folds its memo open / shut
     if (t.closest('.ck')) toggleRef(ref);          // the mark checks
     else openEditor(ref);                           // the words open the edit sheet — on every page
     return;
@@ -3125,6 +3408,8 @@ function quickAct(a){ // the quick line's mark and chips never take the keyboard
 }
 document.addEventListener('pointerdown', e => { if (e.target.closest('.qchips button, .qt, #qpop button[data-q]')) e.preventDefault(); });
 document.addEventListener('change', e => { if (e.target.id==='qend' && st.qp) st.qp.end = e.target.value; });
+document.addEventListener('input', e => { const id = e.target.id; if (id!=='qmemo' && id!=='qtime') return;   // 메모 · 시간 as they are typed
+  const q = st.ed || st.qp; if (!q) return; if (id==='qmemo') q.memo = e.target.value; else q.time = e.target.value; });
 document.addEventListener('input', e => { // any colour, from the + swatch
   const cp = e.target.dataset?.cp; if (!cp) return;
   if (cp==='cat' && st.ed){ st.ed.color = e.target.value; app.querySelectorAll('#ed .sw2').forEach(b => b.classList.remove('on')); e.target.parentElement.style.setProperty('--c', e.target.value); e.target.parentElement.classList.add('on'); }
@@ -3167,6 +3452,11 @@ function applyImport(){
   st.imp = null; st.hcat = 'all'; st.hsub = 'all'; save();
   st.bakMsg = '가져왔어요. 바꾸기 전 데이터도 따로 보관해 두었어요.'; render();
 }
+document.addEventListener('change', e => {
+  if (e.target.id!=='icsfile') return; const f = e.target.files?.[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { const {n, skip} = importICS(r.result); st.icsMsg = n ? `${n}개를 가져왔어요.${skip ? ` (이미 있던 ${skip}개는 건너뛰었어요)` : ''}` : skip ? `모두 이미 있는 것들이에요.` : '가져올 일정을 찾지 못했어요.'; render(); };
+  r.readAsText(f);
+});
 document.addEventListener('change', e => {
   if (e.target.id!=='impfile') return; const f = e.target.files?.[0]; if (!f) return;
   const r = new FileReader(); r.onload = () => stageImport(r.result); r.onerror = () => { st.bakMsg = '파일을 열지 못했어요.'; render(); }; r.readAsText(f);
@@ -3321,6 +3611,9 @@ if (CAN_DOWNLOAD){
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncNow(); });
   setInterval(() => { if (!document.hidden) syncNow(); }, 60000);
   setTimeout(() => syncNow(), 800);
+  setTimeout(() => appleSync(), 2500);   // 애플 캘린더: on opening, then every 30 minutes and on coming back to the app
+  setInterval(() => { if (!document.hidden) appleSync(); }, 30*60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) appleSync(); });
 }
 
 /* ---------- installed app (PWA): opens offline, takes new versions when online ---------- */
@@ -3355,6 +3648,18 @@ function setAct(a){
   else if (ds.act==='syLogout') syncLogout();
   else if (ds.act==='syUseRemote'){ const r = st.syncAsk; st.syncAsk = null; if (r){ takeRemote(r); st.syncMsg = '클라우드의 기록으로 맞췄어요. 이 기기에 있던 것은 따로 보관했어요.'; } render(); }
   else if (ds.act==='syUseLocal'){ const r = st.syncAsk; st.syncAsk = null; if (r) store.set(`${KEY}-conflict-${Date.now()}`, JSON.stringify(r.data)); push().then(() => { st.syncMsg = '이 기기의 기록을 클라우드에 올렸어요.'; sy.last = Date.now(); sySave(); render(); }, e => { st.syncMsg = syncErrText(e); render(); }); }
+  else if (ds.act==='apOn'){ const u = (app.querySelector('#apurl')?.value || '').trim();
+    if (!/^(webcal|https):\/\/[^\s]*icloud\.com\//i.test(u)){ st.apMsg = '아이클라우드 공개 캘린더 주소(webcal://…icloud.com/…)를 붙여 넣어 주세요.'; render(); return; }
+    S.set.appleIcs = u; st.apMsg = ''; ap = {}; apSave(); save(); render(); appleSync(true); }
+  else if (ds.act==='apNow') appleSync(true);
+  else if (ds.act==='apAsk'){ st.apAsk = true; render(); }
+  else if (ds.act==='apAskNo'){ st.apAsk = false; render(); }
+  else if (ds.act==='apOff'){ delete S.set.appleIcs; st.apAsk = false; ap = {}; apSave();
+    if (ds.v==='drop') for (const k in S.days) S.days[k] = S.days[k].filter(i => !i.apple);
+    else for (const k in S.days) S.days[k].forEach(i => { delete i.apple; });   // kept as ordinary 일정
+    save(); render(); }
+  else if (ds.act==='icsOut'){ const n = exportICS(ds.v==='all'); st.icsMsg = `${n}개를 캘린더 파일로 저장했어요. 그 파일을 구글 · 애플 캘린더에서 열어 주세요.`; render(); }
+  else if (ds.act==='icsIn') app.querySelector('#icsfile')?.click();
   else if (ds.act==='bakFile') saveBackupFile();
   else if (ds.act==='bakCopy') copyBackup();
   else if (ds.act==='impFile') app.querySelector('#impfile')?.click();
@@ -3387,7 +3692,7 @@ function boxRows(){
   const l = S.box || [], pick = st.boxPick || [];
   return l.map(o => { const pk = st.boxSel && pick.includes(o.id);
     const hc = hcOf(o);
-    return `<div class="it bxi${o.done?' done':''}${pk?' picked':''}" data-ref="box|all|${o.id}"${st.boxSel?'':' data-drag'}>${st.boxSel ? '<span class="bxpick"></span>' : mark(o.type==='event' ? 'ev' : 'td', o.done)}${hc ? `<i class="bxdot" style="background:${hc.color}"></i>` : ''}<span class="tx">${esc(o.text)}</span>${o.star ? '<span class="aux star">★</span>' : ''}${tagOf(o.cat, o.sub)}${st.boxSel ? '' : `<button class="bxdel" data-act="boxDel" data-id="${o.id}" aria-label="지우기">✕</button>`}</div>`; }).join('');
+    return `<div class="it bxi${o.done?' done':''}${pk?' picked':''}" data-ref="box|all|${o.id}"${st.boxSel?'':' data-drag'}>${st.boxSel ? '<span class="bxpick"></span>' : mark(o.type==='event' ? 'ev' : 'td', o.done)}${hc ? `<i class="bxdot" style="background:${hc.color}"></i>` : ''}<span class="tx">${esc(o.text)}</span>${o.star ? '<span class="aux star">★</span>' : ''}${tagOf(o.cat, o.sub)}${o.memo ? memoBtn('box|all|' + o.id) : ''}${st.boxSel ? '' : `<button class="bxdel" data-act="boxDel" data-id="${o.id}" aria-label="지우기">✕</button>`}</div>${memoBox('box|all|' + o.id, o.memo)}`; }).join('');
 }
 function boxPanel(items, l, pick){
   const btns = st.boxSel ? `<button class="btn dark" data-act="boxMove"${pick.length?'':' disabled'}>이동${pick.length?` ${pick.length}`:''}</button><button class="btn" data-act="boxSelNo">취소</button>`
@@ -3465,6 +3770,7 @@ function boxAct(t){
   if (act==='boxDel'){ S.box = (S.box || []).filter(o => o.id!==a.dataset.id); save(); drawBox(); return; }
   const it = t.closest('.it[data-ref]'); if (!it) return; const id = it.dataset.ref.split('|')[2];
   if (st.boxSel){ const pk = st.boxPick ||= [], i = pk.indexOf(id); if (i<0) pk.push(id); else pk.splice(i, 1); drawBox(); return; }
+  if (t.closest('.mmo')){ (st.memoOpen ||= {})[it.dataset.ref] = !st.memoOpen[it.dataset.ref]; drawBoxList(); return; }
   if (t.closest('.ck')){ const o = (S.box || []).find(x => x.id===id); if (o){ o.done = !o.done; save(); drawBox(); } return; }
   openEditor(it.dataset.ref);   // the words: the edit bar
 }
