@@ -1108,14 +1108,14 @@ button.ldot:hover i{transform:scale(1.6)}
 
 
 /* 설정 → 테마: ready-made pairs of ink and paper */
-.thms{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.thms{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-width:420px}
 .thm{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;color:var(--sub)}
 .thm .tsw{width:100%;aspect-ratio:1.2;border-radius:9px;background:var(--tp);color:var(--ti);border:1px solid color-mix(in srgb,var(--ink) 14%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:box-shadow .2s}
 .thm .tsw b{font-weight:500;font-size:15px;line-height:1}
 .thm .tsw i{width:46%;height:2px;border-radius:1px;background:var(--ti)}
 .thm.on .tsw{box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px var(--ink)}
 .thm.on .tnm{color:var(--ink)}
-@media (max-width:560px){.thms{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
 html,body{transition:background-color .25s ease,color .25s ease}
 html.dark .ov{background:rgba(0,0,0,.5)}
 html.dark .sheet,html.dark .qpop,html.dark .qcal{box-shadow:0 10px 36px rgba(0,0,0,.5)}
@@ -1199,6 +1199,19 @@ html.dark .ht.split .ln.base{background:color-mix(in srgb,var(--cc,var(--ink)) 5
 .portrait .year{height:auto}
 .portrait .months{height:auto;grid-template-rows:none}
 .portrait .mface{aspect-ratio:7/6}
+
+/* ===== round 25 ===== */
+/* 할일 page: a filled cell keeps a small + at its right end */
+.ht.split .pc:not(.none) .pin{padding-right:30px}
+.pcadd{position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:3;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;color:var(--cc,var(--ink));background:color-mix(in srgb,var(--cc,var(--ink)) 12%,transparent);opacity:.55;transition:opacity .15s}
+.pcadd:hover,.pc:hover .pcadd{opacity:1}
+/* 할일 page: 이정표 circles never sit on top of each other */
+.ht.split .pm.star,.ht.split .pst.star{min-height:24px}
+.ht.split .pin{gap:3px}
+.ht.split .pm.star+.pm.star,.ht.split .pst.star+.pm.star,.ht.split .pm.star+.pst.star{margin-top:2px}
+/* tall week: a little room between Mon… and the list, as on the month page */
+.portrait .board.week .days{margin-top:6px}
+.portrait .board.week .wkbox{margin-top:6px}
 </style>
 
 <div id="app"></div>
@@ -1847,7 +1860,7 @@ function halTable(){
     h += `<button class="hh subh${two?' c2':' top'}${edge}" data-col="${s.id}" data-fk="h:${s.id}" style="grid-row:${top};grid-column:${col};--cc:${cc}" data-act="hsub" data-s="${s.id}" data-c="${s.cat}"><span class="nm">${esc(s.name)}</span><small>${pp}%</small><i class="pbar"><b style="width:${pp}%"></b></i></button>`;
     rows.forEach((r,i) => {
       const inner = entriesOf(s, r, L2) + dotsOf(s, r);
-      h += `<div class="pc${r.blk?' blk':''}${r.td?' td':''}${inner?'':' none'}${edge}${i===last?' rl':''}${i===0?' r0':''}" data-col="${s.id}" data-fk="c:${s.id}:${r.rk}" data-rk="${r.rk}" style="grid-row:${i+top+1};grid-column:${col};--n:${st.view==='week' ? L2.n : 1};--cc:${cc}" data-act="plus" data-t="pc|${s.id}|${r.key}" data-drop="pc|${s.id}|${r.key}">${lanesHTML(s, r, L2)}<div class="pin">${inner}</div><span class="pcplus" aria-hidden="true">+</span></div>`;
+      h += `<div class="pc${r.blk?' blk':''}${r.td?' td':''}${inner?'':' none'}${edge}${i===last?' rl':''}${i===0?' r0':''}" data-col="${s.id}" data-fk="c:${s.id}:${r.rk}" data-rk="${r.rk}" style="grid-row:${i+top+1};grid-column:${col};--n:${st.view==='week' ? L2.n : 1};--cc:${cc}" data-act="plus" data-t="pc|${s.id}|${r.key}" data-drop="pc|${s.id}|${r.key}">${lanesHTML(s, r, L2)}<div class="pin">${inner}</div><span class="pcplus" aria-hidden="true">+</span>${inner ? `<button class="pcadd" data-act="plus" data-t="pc|${s.id}|${r.key}" aria-label="${esc(s.name)}에 추가">+</button>` : ''}</div>`;
     });
   }));
   return `<div class="ht split ${st.view}${rows[0]?.range?' range':''} v${S.set.hv} wide${nolab?' nolab':''}" style="grid-template-columns:${cols.join(' ')};grid-template-rows:${two?'22px ':''}32px repeat(${rows.length},auto)">${h}</div>`;
@@ -2092,10 +2105,8 @@ function sbSample(n){
 const THEMES = [
   {id:'mono',   name:'흑백', ink:'#141414', paper:'#ffffff'},
   {id:'paper',  name:'종이', ink:'#2b261f', paper:'#f7f3ea'},
-  {id:'navy',   name:'남색', ink:'#1c2a46', paper:'#f4f6fa'},
-  {id:'forest', name:'숲',   ink:'#1f3529', paper:'#f2f5f0'},
-  {id:'ink',    name:'먹',   ink:'#e8e6e1', paper:'#171717', dark:true},
-  {id:'night',  name:'밤',   ink:'#dde4f0', paper:'#131a27', dark:true}
+  {id:'pink',   name:'벚꽃', ink:'#33262b', paper:'#fcf4f6'},
+  {id:'ink',    name:'먹',   ink:'#e8e6e1', paper:'#171717', dark:true}
 ];
 const themeOf = () => THEMES.find(x => x.id===S.set.theme) || THEMES[0];   // (an old {ink, paper} choice falls back to 흑백)
 function applyTheme(){
